@@ -34,3 +34,25 @@ def add_customers():
     db.session.commit()
 
     return make_response({"customer" : new_customer.build_dict()}, 200)
+
+@customers_bp.route("/<customer_id", methods = ["PUT"])
+def update_customers(customer_id):
+    '''updates a customer '''
+    customer = Customer.query.get_or_404(customer_id)
+    form_data = request.get_json()
+    customer.name = form_data["name"],
+    phone = request_body["phone"],
+    register_at = request_body["register_at"]
+
+    db.session.commit()
+
+    return make_response({"customer": customer.build_dict()}, 200)
+
+@customers_bp.route("/<customer_id", methods = ["DELETE"])
+def delete_customer(customer_id):
+
+    customer = Customer.query.get_or_404(customer_id)
+    db.session.delete(customer)
+    db.session.commit()
+
+    return make_response({"details" : f"Customer {customer.name} has been deleted"})
