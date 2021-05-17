@@ -11,7 +11,7 @@ load_dotenv()
 
 def create_app(test_config=None):
     app = Flask(__name__)
-    from .customers_routes import customers_bp
+    from .customer_routes import customers_bp
     app.register_blueprint(customers_bp)
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
