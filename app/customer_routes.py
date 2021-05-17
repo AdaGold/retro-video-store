@@ -1,7 +1,6 @@
 from app import db
-from app import helper
-from .models.customer import Customer
-from .models.video import Video
+from .models.customer_video import Customer, Video
+#from .models.video import Video
 from flask import request, Blueprint, make_response, jsonify, Response
 from sqlalchemy import desc, asc
 from datetime import date
