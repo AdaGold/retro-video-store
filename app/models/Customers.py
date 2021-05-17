@@ -20,3 +20,11 @@ class Customer(db.Model):
                                 "Registered": self.register_at #this will need to be a function I think
                                 }
         return customer_dictionary
+
+
+
+
+    @classmethod
+    def new_customer_from_json(cls, body):
+        new_customer = Customer(customer_name=body["name"], customer_zip=body["postal_code"], customer_phone=body["phone"])
+        return new_customer
