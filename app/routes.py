@@ -29,7 +29,7 @@ def post_customer():
     if "name" not in request_body or "postal_code" not in request_body\
         or "phone" not in request_body:
         return ({
-            "errors": ["Not Found"]
+            "errors": ["Must input required data"]
         }, 400)
     else:
         new_customer = Customer.from_json(Customer, request_body)
@@ -51,7 +51,7 @@ def get_customer(customer_id):
         return make_response("No customer found", 404)
 
     return {
-        "customer": customer.to_json()
+        customer.to_json()
     }
 
 @customers_bp.route("/<customer_id>", methods=["PUT"])
