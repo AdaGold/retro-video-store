@@ -39,3 +39,18 @@ def add_customer():
 
     # retrieve_customer = Customer.query.get(new_customer.customer_id)
     return make_response({"id": new_customer.customer_id}, 201)
+
+
+@customers_bp.route("/<customer_id>", methods=["GET"])
+def get_customer_by_id(customer_id):
+    """Gives back details about specific customer."""
+    customer = Customer.query.get(customer_id)
+
+    if customer is None:
+        return make_response({
+            "errors": [
+                "Not Found",
+                "Customer does not exist"
+            ]
+        }, 400)
+    return make_response(customer.to_json(), 200)

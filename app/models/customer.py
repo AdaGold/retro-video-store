@@ -21,7 +21,8 @@ class Customer(db.Model):
             "name": self.name,
             "postal_code": self.postal_code,
             "phone": self.phone,
-            "registered_at": self.registered_at
+            "registered_at": self.registered_at,
+            "videos_checked_out_count": 0
         }
         return response_body
 
@@ -32,3 +33,7 @@ class Customer(db.Model):
         self.phone = json["phone"]
         # self.registered_at = json["registered_at"]
         return self
+
+    # def is_phone_valid():
+    #     """Validates the phone number to follow the pattern XXX-XXX-XXXX""
+    #     pass
