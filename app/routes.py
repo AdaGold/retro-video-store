@@ -26,6 +26,15 @@ def get_all_customers():
     
     return jsonify(customer_response), 200
 
+@customer_bp.route("", methods=["DELETE"])
+def delete_all_customers():
+    customers = Customer.query.all()
+    for customer in customers:
+        db.session.delete(customer)
+    db.session.commit()
+
+    return make_response("All customers have been deleted.", 200)
+
 @customer_bp.route("/<customer_id>", methods=["GET"])
 def get_single_customer(customer_id):
     customer = Customer.query.get(customer_id)
@@ -67,3 +76,12 @@ def post_new_customer():
     db.session.commit()
 
     return make_response(new_customer.to_json(), 201)
+
+
+@customer_bp.route("/<customer_id>", methods=["DELETE"])
+def delete_single_customer(customer_id):
+    customer = Customer.query.get(customer_id)
+    db.session.delete(customer)
+    db.session.commit()
+
+    return make_response(f"Customer {customer.customer_id} has been deleted.", 200)
