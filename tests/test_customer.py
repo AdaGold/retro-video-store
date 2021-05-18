@@ -1,3 +1,4 @@
+from flask.wrappers import Response
 from app.models.customer import Customer
 
 
@@ -40,3 +41,16 @@ def test_get_customer_no_saved_customers(client):
     # Assert
     assert response.status_code == 200
     assert response_body == []
+
+def test_get_customer_by_id(client, two_customers):
+    #Act
+    response = client.get("/customers/1")
+    response_body = response.get_json()
+
+    #Assert
+    assert response.status_code == 200
+    assert response_body["name"] == "minh"
+    assert response_body["postal_code"] == "98123"
+    assert response_body["videos_checked_out_count"] == 0
+    assert response_body["phone"] == "555-555-5555"
+    assert response_body["id"] == 1

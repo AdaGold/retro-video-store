@@ -47,7 +47,7 @@ def is_int(value):
         return False
 
 @customers_bp.route("/<customer_id>", methods=["GET"], strict_slashes=False)
-def get_customers_by_id(customer_id):
+def get_customer_by_id(customer_id):
     customer = Customer.query.get(customer_id)
 
     if customer is None:
