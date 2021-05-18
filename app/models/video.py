@@ -18,5 +18,7 @@ class Video(db.Model):
             "total_inventory" : self.total_inventory, 
             "available_inventory" : self.available_inventory
         }
-    # def due_date(self):
-    #     checked_out_on =date 
+
+    def get_customers(self):
+        join_results = db.session.query(Customer, Video, Rental).join(Customer, Customer.id==Rental.customer_id).join (Customer, Customer.id==Rental.customer_id).filter(Video.id == self.id).all()
+        return join_results

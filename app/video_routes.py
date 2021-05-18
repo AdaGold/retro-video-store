@@ -62,3 +62,8 @@ def delete_video(id):
     db.session.commit()
 
     return make_response({"id" : video.id}, 200)
+
+@videos_bp.route("/<id>/rentals", methods = ["GET"])
+def get_customers_with_video(id):
+    video = Video.query.get_or_404(id)
+    return make_response(video.get_customers(), 200)
