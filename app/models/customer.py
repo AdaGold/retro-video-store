@@ -1,6 +1,7 @@
 from app.models.rental import Rental
 from flask import current_app
 from app import db
+from datetime import date, timedelta
 from .video import Video
 from .rental import Rental
 
@@ -34,6 +35,7 @@ class Customer(db.Model):
         return {
             "customer_id" :  self.id,
             "video_id" : video.id,
+            "due_date" : date.today() + timedelta(7),
             "videos_checked_out_count" : self.get_videos(),
             "available_inventory" : video.available_inventory
         }
