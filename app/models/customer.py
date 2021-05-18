@@ -1,10 +1,9 @@
+from app.models.rental import Rental
 from flask import current_app
 from app import db
 from .video import Video
+from .rental import Rental
 
-class CustomerVideoJoin(db.Model):
-    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), primary_key=True)
-    video_id = db.Column(db.Integer, db.ForeignKey('video.id'), primary_key=True)
 
 
 
@@ -17,7 +16,7 @@ class Customer(db.Model):
     videos_checked_out_count = db.Column(db.Integer, nullable=True)
     
     def get_videos(self):
-        join_results = db.session.query(Customer, Video, CustomerVideoJoin).join(Customer, Customer.id==CustomerVideoJoin.customer_id).join (Video, Video.id==CustomerVideoJoin.video_id).filter(Customer.id == self.id).all()
+        join_results = db.session.query(Customer, Video, Rental).join(Customer, Customer.id==Rental.customer_id).join (Video, Video.id==Rental.video_id).filter(Customer.id == self.id).all()
         return len(join_results)
 
     def build_dict(self):
