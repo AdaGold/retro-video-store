@@ -27,4 +27,4 @@ class Customer(db.Model):
             "registered_at": self.registered_at,
             "postal_code": self.postal_code,
             "phone": self.phone_number,
-            "videos_checked_out_count": self.check_outs}
+            "videos_checked_out_count": int(self.check_outs)}
