@@ -2,7 +2,7 @@ from flask import Blueprint, request, make_response, jsonify
 from sqlalchemy import asc, desc
 from app import db
 from app.models.customer import Customer
-# from app.models.video import Video
+from app.models.video import Video 
 from datetime import datetime
 import requests
 import os
@@ -118,4 +118,5 @@ def delete_customer_by_id(customer_id):
 #=====================================================#
 #                     VIDEO ROUTES                    #
 #=====================================================#
+
 
