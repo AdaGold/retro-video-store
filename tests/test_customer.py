@@ -32,11 +32,11 @@ def test_get_customers(client, two_customers):
     assert response_body[1]["phone"] == "444-444-4444"
 
 
-# def test_get_customer_no_saved_customers(client, one_customer):
-#     # Act
-#     response = client.get("/customers")
-#     response_body = response.get_json()
+def test_get_customer_no_saved_customers(client):
+    # Act
+    response = client.get("/customers")
+    response_body = response.get_json()
 
-#     # Assert
-#     assert response.status_code == 200
-#     assert response_body == []
+    # Assert
+    assert response.status_code == 200
+    assert response_body == []
