@@ -27,5 +27,5 @@ class Customer(db.Model):
             "name": self.name,
             "registered_at": self.registered_at,
             "postal_code": self.postal_code,
-            "phone": self.phone_number,
-            "videos_checked_out_count": int(self.check_outs)}
+            "phone": self.phone,
+            "videos_checked_out_count": (0 if not self.check_outs else len(self.check_outs) )}

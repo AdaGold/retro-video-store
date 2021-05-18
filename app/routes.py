@@ -22,7 +22,7 @@ def get_all_customers():
     customers = Customer.query.all()
     customers_list = []
     for customer in customers:
-        [customers_list.append(customer.get_response) for customer in customers]
+        customers_list.append(customer.get_response())
 
     return jsonify(customers_list), 200
 
