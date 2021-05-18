@@ -8,30 +8,15 @@ class Video(db.Model):
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime)
     total_inventory = db.Column(db.Integer)
+    available_inventory = db.Column(db.Integer)
 
-    # lowercase 'goal.id' looks at a table in your db
-    # goal_id = db.Column(db.Integer, db.ForeignKey(
-    #     'goal.goal_id'), nullable=True)
+    # # 'Task' looks at class in python and loads multiple of those (this is like a pseudo column)
+    # tasks = db.relationship('Task', backref='goal', lazy=True)
 
-    def is_complete(self):
-        if self.completed_at:
-            return True
-        else:
-            return False
-
-    def to_json(self):
+    def to_dict(self):
         return {
-            "id": self.task_id,
+            "id": self.video_id,
             "title": self.title,
-            "description": self.description,
-            "is_complete": self.is_complete()
-        }
-
-    def with_goal(self):
-        return {
-            "id": self.task_id,
-            "title": self.title,
-            "description": self.description,
-            "is_complete": self.is_complete(),
-            "goal_id": self.goal_id
-        }
+            "release_date": self.release_date,
+            "total_inventory": self.total_inventory,
+            "available_inventory": self.available_inventory}
