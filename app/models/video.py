@@ -8,6 +8,11 @@ from flask import current_app
 from app import db
 
 class Video(db.Model):
-    title = db.Column(db.String, primary_key=True)
+    video_id = db.Column(db.Integer, primary_key=True)
+    title_of_video = db.Column(db.String)
     completed_at = db.Column(db.DateTime, nullable = True)
     total_inventory = db.Column(db.Integer)
+
+# class FooBarJoin(db.Model):
+#     foo_id = db.Column(db.Integer, db.ForeignKey('foo.id'), primary_key=True)
+#     bar_id = db.Column(db.Integer, db.ForeignKey('bar.id'), primary_key=True)

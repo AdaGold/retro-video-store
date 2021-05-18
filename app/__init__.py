@@ -30,11 +30,11 @@ def create_app(test_config=None):
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # # Register Blueprints here
-    # from .routes import tasks_bp
-    # app.register_blueprint(tasks_bp)
+    # Register Blueprints here
+    from .routes import customers_bp
+    app.register_blueprint(customers_bp)
 
-    # from .routes import goals_bp 
-    # app.register_blueprint(goals_bp)
+    from .routes import videos_bp 
+    app.register_blueprint(videos_bp)
     
     return app

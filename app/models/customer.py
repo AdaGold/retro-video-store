@@ -10,7 +10,8 @@ from flask import current_app
 from app import db
 
 class Customer(db.Model):
-    name = db.Column(db.String, primary_key=True)
+    customer_id = db.Column(db.Integer, primary_key=True)
+    name_of_customer = db.Column(db.String)
     postal_code = db.Column(db.Integer)
     phone = db.Column(db.Integer)
     completed_at = db.Column(db.DateTime, nullable = True)
@@ -21,3 +22,7 @@ class Customer(db.Model):
             return False
         else: 
             return True
+
+# class FooBarJoin(db.Model):
+#     foo_id = db.Column(db.Integer, db.ForeignKey('foo.id'), primary_key=True)
+#     bar_id = db.Column(db.Integer, db.ForeignKey('bar.id'), primary_key=True)
