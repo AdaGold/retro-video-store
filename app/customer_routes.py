@@ -1,8 +1,6 @@
 from app import db
 from flask import Blueprint, request, jsonify
-#from app.models.customer import Customer
 from app.models.customer import Customer
-
 from datetime import datetime
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
@@ -25,4 +23,19 @@ def create_customer():
     return {
         "id": new_customer.customer_id
     },201
+
+@customers_bp.route("", methods=["GET"], strict_slashes=False)
+def get_customers():
+    name_from_url = request.args.get("name")
+
+    if name_from_url:
+        customers = Customer.query.filter_by(name = name_from_url)
+    
+    customers = Customer.query.all()
+
+    customer_response = []
+    for customer in customers:
+        customer_response.append(customer.to_json())
+
+    return jsonify(customer_response), 200
 

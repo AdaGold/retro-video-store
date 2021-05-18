@@ -12,8 +12,17 @@ class Customer(db.Model):
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
     register_at = db.Column(db.DateTime, nullable=True)
-    #videos_checked_out = db.Column(db.Integer, nullable=True, default=0)
+    videos_checked_out = db.Column(db.Integer, nullable=True, default=0)
     videos = db.relationship(
         "Video",
         secondary=association_table,
         back_populates="customers")
+
+    def to_json(self):
+        customer = {
+            "id": self.customer_id,
+            "name": self.name,
+            "registered_at": self.register_at,
+            "postal_code": self.phone,
+            "videos_checked_out_count": self.videos_checked_out
+        }

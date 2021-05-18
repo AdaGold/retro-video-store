@@ -1,7 +1,7 @@
 from app.models.customer import Customer
 
 
-def test_TEST(client):
+def test_create_customer(client):
     # Act
     response = client.post("/customers", json={
         "name": "Lars Sankar",
@@ -13,3 +13,11 @@ def test_TEST(client):
     # Assert
     assert response.status_code == 201
 
+def test_get_customer_no_saved_customers(client):
+    # Act
+    response = client.get("/customers")
+    response_body = response.get_json()
+
+    # Assert
+    assert response.status_code == 200
+    assert response_body == []
