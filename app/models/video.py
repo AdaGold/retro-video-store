@@ -7,12 +7,14 @@ class Video(db.Model):
             title
             release_date
             total_inventory
+            available_inventory
     """
     id =  db.Column(db.Integer,primary_key=True,autoincrement=True)
     title = db.Column(db.String,nullable=False)
     release_date = db.Column(db.DateTime,nullable=False)
     total_inventory = db.Column(db.Integer,nullable=False)
-
+    available_inventory = db.Column(db.Integer,nullable=True)
+    #backref invisible attribute 'customer'. I can use video.customer to access this attribue value 
 
     def to_python_dict(self):
         """
