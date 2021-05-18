@@ -16,6 +16,8 @@ class Video(db.Model):
             "release_date": self.release_date,
             "total_inventory": self.total_inventory
         }
+        if self.available_inventory:
+            video_json["available_inventory"] = self.available_inventory
         return video_json
 
 
