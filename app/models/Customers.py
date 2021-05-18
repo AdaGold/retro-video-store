@@ -8,7 +8,8 @@ class Customer(db.Model):
     customer_name = db.Column(db.String(64))
     customer_zip = db.Column(db.String(5))
     customer_phone = db.Column(db.String(14))
-    register_at = db.Column(db.DateTime)
+    register_at = db.Column(db.DateTime, nullable=True)
+    videos_checked_out = db.Column(db.Integer, nullable=True)
     #videos_checked_out = foreign keys of video objects in a list maybe? 
 
 

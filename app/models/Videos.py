@@ -6,7 +6,8 @@ class Video(db.Model):
     video_id = db.Column(db.Integer, primary_key=True)
     video_title = db.Column(db.String(120))
     release_date = db.Column(db.DateTime)
-    total_inventory = db.Column(db.Integer) 
+    total_inventory = db.Column(db.Integer, nullable=True) 
+    available_inventory = db.Column(db.Integer, nullable=True)
 
     def to_json(self):
             video_dictionary = { "ID": self.video_id, 
