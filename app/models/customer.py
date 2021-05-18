@@ -30,3 +30,11 @@ class Customer(db.Model):
         } 
         return customer_dict
     
+    def rent_video(self, video):
+        return {
+            "customer_id" :  self.id,
+            "video_id" : video.id,
+            "videos_checked_out_count" : self.get_videos(),
+            "available_inventory" : video.available_inventory
+        }
+    

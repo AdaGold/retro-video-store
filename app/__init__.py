@@ -13,8 +13,11 @@ def create_app(test_config=None):
     app = Flask(__name__)
     from .customer_routes import customers_bp
     from .video_routes import videos_bp
+    from .rental_routes import rentals_bp
+
     app.register_blueprint(videos_bp)
     app.register_blueprint(customers_bp)
+    app.register_blueprint(rentals_bp)
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     if test_config is None:
@@ -26,6 +29,7 @@ def create_app(test_config=None):
             "SQLALCHEMY_TEST_DATABASE_URI")
     from app.models.customer import Customer
     from app.models.video import Video
+    from app.models.rental import Rental
 
     db.init_app(app)
     migrate.init_app(app, db)

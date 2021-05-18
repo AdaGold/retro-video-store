@@ -18,3 +18,5 @@ class Video(db.Model):
             "total_inventory" : self.total_inventory, 
             "available_inventory" : self.available_inventory
         }
+    # def due_date(self):
+    #     checked_out_on =date 
