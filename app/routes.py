@@ -7,18 +7,12 @@ customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 
 def is_valid_customer_data(request_body):
-    if len(request_body) != 3 or \
-        "name" not in request_body or  \
-        "postal_code" not in request_body or \
-        "phone" not in request_body:
+    if len(request_body) != 3:
         return False
     return True
 
 def is_valid_video_data(request_body):
-    if len(request_body) != 3 or \
-        "title" not in request_body or  \
-        "release_date" not in request_body or \
-        "total_inventory" not in request_body:
+    if len(request_body) != 3:
         return False
     return True
 
