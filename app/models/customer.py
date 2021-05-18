@@ -8,4 +8,14 @@ class Customer(db.Model):
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime, nullable=True)
-    videos_checked_out_count = db.Column(db.Integer)
+    videos_checked_out_count = db.Column(db.Integer, default=0)
+
+    def to_dict(self):
+        return {
+            "id": self.customer_id, 
+            "name": self.name,
+            "registered_at": self.registered_at,
+            "postal_code": self.postal_code,
+            "phone": self.phone,
+            "videos_checked_out_count": self.videos_checked_out_count
+            }
