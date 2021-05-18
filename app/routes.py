@@ -20,7 +20,21 @@ def get_customers():
 
 @customers_bp.route("", methods=["POST"])
 def post_customers():
-    pass
+    request_body = request.get_json()
+    try:
+        new_customer = Customer(
+            name=request_body["name"],
+            postal_code=request_body["postal_code"],
+            phone=request_body["phone"],
+            register_at=datetime.now()
+        )
+    except KeyError:
+        return make_response({"details" : "Invalid data"}, 400)
+
+    db.session.add(new_customer)
+    db.session.commit()
+
+    return make_response(new_customer.to_dict(), 201)
 
 @customers_bp.route("/<id>", methods=["GET"])
 def get_customer(active_id):

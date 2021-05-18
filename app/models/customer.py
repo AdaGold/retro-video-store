@@ -7,9 +7,9 @@ from datetime import datetime
 class Customer(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String)
-    phone_number = db.Column(db.String)
+    phone = db.Column(db.String)
     register_at = db.Column(db.DateTime, nullable=True)
-    post_code = db.Column(db.String)
+    postal_code = db.Column(db.String)
     # checked_out = db.relationship('Video', 
     #     secondary=Rentals, 
     #     back_populates='rented_to')
@@ -18,7 +18,8 @@ class Customer(db.Model):
         return {
             "id" : self.id,
             "name" : self.name,
+            "phone" : self.phone,
             "register_at" : self.register_at,
-            "post_code" : self.post_code,
+            "postal_code" : self.postal_code,
             "videos_checked_out_count" : 0
         }
