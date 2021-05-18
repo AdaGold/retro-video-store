@@ -7,7 +7,7 @@ import os
 
 
 db = SQLAlchemy()
-migrate = Migrate()
+migrate = Migrate(compare_type=True)
 # load_dotenv()
 
 

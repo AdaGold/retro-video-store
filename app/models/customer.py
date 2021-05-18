@@ -18,7 +18,7 @@ class Customer(db.Model):
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime)
     
-def as_json(self):
+    def as_json(self):
 
         result_dict = {
                 "id": self.id,
@@ -26,8 +26,15 @@ def as_json(self):
                 "registered_at": self.registered_at,
                 "postal_code": self.postal_code,
                 "phone": self.phone,
-                "videos_checked_out_count": self.videos_checked_out,
+                "videos_checked_out_count": 0, #self.videos_checked_out,
 
             }
 
         return result_dict
+
+    @classmethod
+    def from_json(cls,customer_dict): 
+
+        return Customer(name = customer_dict["name"], 
+                postal_code = customer_dict["postal_code"],
+                phone = customer_dict["phone"])

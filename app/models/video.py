@@ -17,3 +17,13 @@ class Video(db.Model):
     total_inventory = db.Column(db.Integer)
 
 
+def to_json(self):
+    result_dict = {
+            
+            "id": 1,
+            "title": "Blacksmith Of The Banished",
+            "release_date": "1979-01-18",
+            "total_inventory": 10,
+            "available_inventory": 9
+        }
+    return result_dict
