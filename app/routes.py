@@ -26,13 +26,15 @@ def get_one_customer(customer_id):
 @customers_bp.route("", methods=["POST"])
 def create_customer():
     request_body = request.get_json()
-    if check_for_valid_input(request_body):
+    if valid_customer_input(request_body):
         new_customer = Customer(name = request_body["name"],
                         postal_code = request_body["postal_code"],
                         phone = request_body["phone"])
         new_customer.registered_at = datetime.utcnow()
         db.session.add(new_customer)
         db.session.commit()
+        # WHY isn't this working with Wave1 tests??
+        # return (new_customer.to_dict(), 201)
         return ({"id": new_customer.customer_id}, 201) 
     return ({"details": "Invalid data"}, 400)
 
@@ -44,7 +46,7 @@ def update_customer(customer_id):
     customer = Customer.query.get(customer_id)
     if customer:
         form_data = request.get_json()
-        if check_for_valid_input(form_data):
+        if valid_customer_input(form_data):
             customer.name = form_data["name"]
             customer.postal_code = form_data["postal_code"]
             customer.phone = form_data["phone"]
@@ -55,7 +57,7 @@ def update_customer(customer_id):
         return ({"details": "Invalid data"}, 400)
         # return ("Invalid input", 400)
     # return ("", 404)
-    return make_response(f"No customer with ID #{customer_id} found", 404)
+    return (f"No customer with ID #{customer_id} found", 404)
     
 
 # this function probably needs to be more detailed and
@@ -63,7 +65,8 @@ def update_customer(customer_id):
 # this function could be built out so it does...
 # if not "name" in form_data
 #   return ("specific details of error")
-def check_for_valid_input(form_data):
+# consider moving this to the Video model...
+def valid_customer_input(form_data):
     if "name" in form_data and "postal_code" in form_data and "phone" in form_data:
         return True 
     return False
@@ -76,3 +79,66 @@ def delete_customer(customer_id):
         db.session.commit()
         return make_response({"id": customer.customer_id}, 200)
     return make_response(f"No customer with ID #{customer_id} found", 404)
+
+
+@videos_bp.route("", methods=["GET"])
+def get_videos():
+    videos = Video.query.all()
+    videos_response = [video.to_dict() for video in videos]
+    return jsonify(videos_response)
+
+@videos_bp.route("/<video_id>", methods=["GET"])
+def get_one_video(video_id):
+    video = Video.query.get(video_id)
+    if video:
+        return video.to_dict()
+    return (f"No video with ID #{video_id} found", 404)
+
+@videos_bp.route("", methods=["POST"])
+def create_video():
+    request_body = request.get_json()
+    if valid_video_input(request_body):
+        new_video = Video(title = request_body["title"],
+                        release_date = request_body["release_date"],
+                        total_inventory = request_body["total_inventory"])
+        db.session.add(new_video)
+        db.session.commit()
+        return ({"id": new_video.video_id}, 201) 
+    return ({"details": "Invalid data"}, 400)
+
+# condsider moving this to the Video model
+def valid_video_input(form_data):
+    if "title" in form_data and "release_date" in form_data and "total_inventory" in form_data:
+        return True 
+    return False
+
+@videos_bp.route("/<video_id>", methods=["PUT"])
+def update_video(video_id):
+    # need to include a way to return 400 error if 
+    # any of the request body fields are missing or invalid
+    # (or example if the total_inventory is not a number)
+    video = Video.query.get(video_id)
+    if video:
+        form_data = request.get_json()
+        if valid_video_input(form_data):
+            video.title = form_data["title"]
+            video.release_date = form_data["release_date"]
+            video.total_inventory = form_data["total_inventory"]
+            # video.available_inventory = form_data["available_inventory"]
+            db.session.commit()
+            return video.to_dict()
+            # return make_response((video.to_dict()), 200)
+        #probably need to get more specific with the 400 message
+        return ({"details": "Invalid data"}, 400)
+        # return ("Invalid input", 400)
+    # return ("", 404)
+    return (f"No video with ID #{video_id} found", 404)
+
+@videos_bp.route("/<video_id>", methods=["DELETE"])
+def delete_video(video_id):
+    video = Video.query.get(video_id)
+    if video:
+        db.session.delete(video)
+        db.session.commit()
+        return make_response({"id": video.video_id}, 200)
+    return make_response(f"No video with ID #{video_id} found", 404)

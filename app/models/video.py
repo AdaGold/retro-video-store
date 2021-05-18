@@ -8,3 +8,13 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime, nullable=True)
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
+
+    # Wave1 tests only pass when available_inventory is commented out
+    def to_dict(self):
+        return {
+            "id": self.video_id, 
+            "title": self.title,
+            "release_date": self.release_date,
+            "total_inventory": self.total_inventory,
+            # "available_inventory": self.available_inventory,
+            }
