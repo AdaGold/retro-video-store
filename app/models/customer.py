@@ -3,6 +3,8 @@ from flask import current_app
 from app import db
 from sqlalchemy import Table, Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship
+from datetime import datetime
+
 
 # two col table that points to both models
 rentals = db.Table('rentals',
@@ -13,12 +15,11 @@ rentals = db.Table('rentals',
 class Customer(db.Model):
     customer_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
-    registered_at = db.Column(db.DateTime, nullable=True, default=None)
     postal_code = db.Column(db.String)
-    phone_number = db.Column(db.String)
+    phone = db.Column(db.String)
+    registered_at = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
     # connect to rentals table
     check_outs = db.relationship('Video', secondary='rentals', backref='customers', lazy=True)
-
 
     def get_response(self):
         return {
