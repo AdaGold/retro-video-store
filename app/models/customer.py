@@ -8,12 +8,12 @@ from datetime import datetime
 
 # two col table that points to both models
 rentals = db.Table('rentals',
-    db.Column('customer_id', db.Integer, db.ForeignKey('customer.customer_id')),
-    db.Column('video_id', db.Integer, db.ForeignKey('video.video_id')),
+    db.Column('customer_id', db.Integer, db.ForeignKey('customer.id')),
+    db.Column('video_id', db.Integer, db.ForeignKey('video.id')),
     )
 
 class Customer(db.Model):
-    customer_id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
@@ -23,7 +23,7 @@ class Customer(db.Model):
 
     def get_response(self):
         return {
-            "id":self.customer_id,
+            "id":self.id,
             "name": self.name,
             "registered_at": self.registered_at,
             "postal_code": self.postal_code,

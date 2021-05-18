@@ -11,9 +11,6 @@ videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 
 '''
 To Do:
-GET /customers
-GET /customers/<id>
-POST /customers
 PUT /customers/<id>
 DELETE /customers/<id>
 '''
@@ -29,8 +26,11 @@ def get_all_customers():
 @customers_bp.route("/<id>", methods=["GET"])
 def get_customer_id(id):
     customer = Customer.query.get(id)
-    if customer == None: return jsonify(None), 404
-    return jsonify(customer.get_response())
+
+    if customer == None: 
+        return {"error":f"Customer ID {id} not found."}, 404
+    return jsonify(customer.get_response()),200
+
 
 @customers_bp.route("", methods=["POST"])
 def create_customer():
@@ -43,4 +43,10 @@ def create_customer():
                         phone=request_body["phone"])
     db.session.add(new_customer)
     db.session.commit()
-    return {"id":new_customer.customer_id},201
+    return {"id":new_customer.id},201
+
+@customers_bp.route("/<id>", methods=["PUT"])
+def update_customer_info(id):
+    customer = Customer.query.get(id)
+    form_data = request.get_json()
+
