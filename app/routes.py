@@ -21,7 +21,7 @@ def get_all_customers():
 
 @customers_bp.route("", methods=["POST"])
 def add_customer():
-    """Creates a new video with the given Request Body Parameters."""
+    """Creates a new customer with the given Request Body Parameters."""
     request_body = request.get_json()
 
     if not (
@@ -113,3 +113,35 @@ def delete_customer_by_id(customer_id):
 
 # -------------- CRUD for /videos ------------------------
 
+
+@videos_bp.route("", methods=["GET"])
+def get_all_videos():
+    """Lists all existing videos and details about each video."""
+    videos = Video.query.all()
+    response = [video.to_json() for video in videos]
+    return jsonify(response), 200
+
+
+@videos_bp.route("", methods=["POST"])
+def add_video():
+    """Creates a new video with the given Request Body Parameters."""
+    request_body = request.get_json()
+
+    if not (
+            "title" in request_body and "release_date" in request_body and "total_inventory" in request_body):
+        return make_response({
+            "errors": [
+                "Bad Request",
+                "'title' is required",
+                "'release_date' is required",
+                "'total_inventory' is required"
+            ]
+        }, 400)
+
+    new_video = Video()
+    new_video = new_video.from_json(request_body)
+    db.session.add(new_video)
+    db.session.commit()
+
+    # retrieve_customer = Customer.query.get(new_customer.customer_id)
+    return make_response(new_video.to_json(), 201)
