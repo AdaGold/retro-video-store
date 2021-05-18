@@ -2,13 +2,30 @@ from app import db
 from app.models.customer import Customer
 from app.models.video import Video
 from flask import request, Blueprint, jsonify
-from datetime import datetime
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 
+def is_valid_customer_data(request_body):
+    if len(request_body) != 3 or \
+        "name" not in request_body or  \
+        "postal_code" not in request_body or \
+        "phone" not in request_body:
+        return False
+    return True
+
+def is_valid_video_data(request_body):
+    if len(request_body) != 3 or \
+        "title" not in request_body or  \
+        "release_date" not in request_body or \
+        "total_inventory" not in request_body:
+        return False
+    return True
+
 def get_client_error_response(code=400):
     return {"details": "Invalid data"}, code
+
+####################### CUSTOMER ROUTES #######################
 
 @customers_bp.route("", methods=["GET"])
 def get_customers():
@@ -31,7 +48,7 @@ def get_customer_info(customer_id):
 def add_customer():
     """Adds new customer."""
     request_body = request.get_json()
-    if len(request_body) != 3:
+    if not is_valid_customer_data(request_body):
         return get_client_error_response()
     customer = Customer(
         name = request_body["name"],
@@ -49,7 +66,7 @@ def update_customer(customer_id):
     if not customer:
         return get_client_error_response(code=404)
     request_body = request.get_json()
-    if len(request_body) != 3:
+    if not is_valid_customer_data(request_body):
         return get_client_error_response()
     customer.name = request_body["name"]
     customer.postal_code = request_body["postal_code"]
@@ -66,6 +83,8 @@ def delete_customer(customer_id):
     db.session.delete(customer)
     db.session.commit()
     return jsonify({"id": int(customer_id)}), 200
+
+####################### VIDEO ROUTES #######################
 
 @videos_bp.route("", methods=["GET"])
 def get_videos():
@@ -88,7 +107,7 @@ def get_video_info(video_id):
 def add_video():
     """Creates a new video with the given params."""
     request_body = request.get_json()
-    if len(request_body) != 3:
+    if not is_valid_video_data(request_body):
         return get_client_error_response()
     video = Video(
         title = request_body["title"],
@@ -106,7 +125,7 @@ def update_video(video_id):
     if not video:
         return get_client_error_response(code=404)
     request_body = request.get_json()
-    if len(request_body) != 3:
+    if not is_valid_video_data(request_body):
         return get_client_error_response()
     video.title = request_body["title"]
     video.release_date = request_body["release_date"]
