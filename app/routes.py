@@ -37,7 +37,7 @@ def create_customer():
                     postal_code = request_body["postal_code"],
                     phone = request_body["phone"],
                     registered_at = request_body["registered_at"],
-                    videos_out = request_body["videos_out"])
+                    videos_out_count = request_body["videos_out_count"])
     db.session.add(new_customer)
     db.session.commit()
     return jsonify(new_customer.to_json()), 201
