@@ -31,12 +31,13 @@ def get_customer_id(id):
         return {"error":f"Customer ID {id} not found."}, 404
     return jsonify(customer.get_response()),200
 
-
 @customers_bp.route("", methods=["POST"])
 def create_customer():
     request_body = request.get_json()
-    if "name" not in request_body or "postal_code" not in request_body or "phone" not in request_body:
+
+    if not valid_customer_data(request_body):
             return {"details":"Invalid data"}, 400
+
     new_customer = Customer(
                         name=request_body["name"],
                         postal_code=request_body["postal_code"],
@@ -48,5 +49,36 @@ def create_customer():
 @customers_bp.route("/<id>", methods=["PUT"])
 def update_customer_info(id):
     customer = Customer.query.get(id)
-    form_data = request.get_json()
 
+    if customer == None: 
+        return {"error":f"Customer ID {id} not found."}, 404
+
+    request_body = request.get_json()
+    if not valid_customer_data(request_body):
+            return {"details":"Invalid data"}, 400
+
+    customer.name = request_body["name"]
+    customer.postal_code = request_body["postal_code"]
+    customer.phone = request_body["phone"]
+    db.session.commit()
+    return jsonify(customer.get_response()), 200
+    
+@customers_bp.route("/<id>", methods=["DELETE"])
+def delete_customer(id):
+    customer = Customer.query.get(id)
+    if customer == None: 
+        return {"error":f"Customer ID {id} not found."}, 404
+    db.session.delete(customer)
+    db.session.commit()
+    return {
+        "id":customer.id
+    }, 200
+
+
+def valid_customer_data(request_body):
+    if "name" not in request_body or "postal_code" not in request_body or "phone" not in request_body:
+        return False
+        # How can you validate data types for not required params?
+    # elif not isinstance(request_body["name"],str) or not isinstance(request_body["phone"],str) or not isinstance(request_body["postal_code"],str):
+    #     return False
+    return True
