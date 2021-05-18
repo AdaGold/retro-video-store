@@ -23,6 +23,9 @@ class Customer(db.Model):
             "id": self.customer_id,
             "name": self.name,
             "registered_at": self.register_at,
-            "postal_code": self.phone,
+            "phone": self.phone,
+            "postal_code": self.postal_code,
             "videos_checked_out_count": self.videos_checked_out
         }
+
+        return customer

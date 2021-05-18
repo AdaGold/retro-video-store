@@ -13,11 +13,30 @@ def test_create_customer(client):
     # Assert
     assert response.status_code == 201
 
-def test_get_customer_no_saved_customers(client):
+def test_get_customers(client, two_customers):
     # Act
     response = client.get("/customers")
     response_body = response.get_json()
 
     # Assert
     assert response.status_code == 200
-    assert response_body == []
+    assert len(response_body) == 2
+    assert response_body[0]["name"] == "minh"
+    assert response_body[0]["postal_code"] == "98123"
+    assert response_body[0]["videos_checked_out_count"] == 0
+    assert response_body[0]["phone"] == "555-555-5555"
+
+    assert response_body[1]["name"] == "summer"
+    assert response_body[1]["postal_code"] == "98123"
+    assert response_body[1]["videos_checked_out_count"] == 0
+    assert response_body[1]["phone"] == "444-444-4444"
+
+
+# def test_get_customer_no_saved_customers(client, one_customer):
+#     # Act
+#     response = client.get("/customers")
+#     response_body = response.get_json()
+
+#     # Assert
+#     assert response.status_code == 200
+#     assert response_body == []

@@ -16,7 +16,8 @@ def create_customer():
 
     new_customer = Customer(name = body["name"],
                             postal_code = body["postal_code"],
-                            phone = body["phone"])
+                            phone = body["phone"],
+                            register_at = datetime.utcnow())
     db.session.add(new_customer)
     db.session.commit()
 

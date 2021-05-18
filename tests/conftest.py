@@ -25,6 +25,22 @@ def client(app):
     return app.test_client()
 
 
+@pytest.fixture
+def two_customers(app):
+    c1 = Customer(name = "minh",
+                postal_code = 98123,
+                phone = "555-555-5555",
+                register_at = datetime.utcnow())
+
+    c2 = Customer(name = "summer",
+                postal_code = 98123,
+                phone = "444-444-4444",
+                register_at = datetime.utcnow()) 
+    
+    db.session.add(c1)
+    db.session.add(c2)
+    db.session.commit()
+
 # @pytest.fixture
 # def one_task(app):
 #     new_task = Task(
