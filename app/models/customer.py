@@ -13,8 +13,8 @@ class Customer(db.Model):
     name = db.Column(db.String)
     postal_code = db.Column(db.Integer)
     phone = db.Column(db.String)
-    register_at = db.Column(db.DateTime)
-    videos_checked_out = db.Column(db.Integer, nullable=True)
+    registered_at = db.Column(db.DateTime)
+    videos_checked_out_count = db.Column(db.Integer, nullable=True)
     
     def get_videos(self):
         join_results = db.session.query(Customer, Video, CustomerVideoJoin).join(Customer, Customer.id==CustomerVideoJoin.customer_id).join (Video, Video.id==CustomerVideoJoin.video_id).filter(Customer.id == self.id).all()
@@ -26,8 +26,8 @@ class Customer(db.Model):
             "name" : self.name,
             "postal_code" : self.postal_code,
             "phone" : self.phone,
-            "register_at" : self.register_at,
-            "videos_checked_out" : self.get_videos()
+            "registered_at" : self.registered_at,
+            "videos_checked_out_count" : self.get_videos()
         } 
         return customer_dict
     

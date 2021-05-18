@@ -13,23 +13,25 @@ def get_customers():
     '''gets all customers from database'''
     customers_query = Customer.query.all()
 
-    return make_response(jsonify([customer.build_dict() for customer in customers_query]))
+    return make_response(jsonify([customer.build_dict() for customer in customers_query]), 200)
 @customers_bp.route("/<id>", methods = ["GET"])
 def get_customer(id):
     '''gets one customer'''
     customer = Customer.query.get_or_404(id)
 
-    return make_response({"customer": customer.build_dict()}, 200)
+    return make_response(customer.build_dict(), 200)
 
 @customers_bp.route("", methods = ["POST"])
 def add_customers():
     '''adds customers'''
     request_body = request.get_json()
+    if "name" not in request_body.keys() or "postal_code" not in request_body.keys() or "phone" not in request_body.keys():
+        return make_response({"details" : "Insufficient data"}, 400) 
     new_customer = Customer(
         name = request_body["name"],
         postal_code = request_body["postal_code"],
         phone = request_body["phone"],
-        register_at = datetime.now()
+        registered_at = datetime.now()
     )
     db.session.add(new_customer)
     db.session.commit()
@@ -41,14 +43,15 @@ def update_customers(id):
     '''updates a customer '''
     customer = Customer.query.get_or_404(id)
     form_data = request.get_json()
+    if "name" not in form_data.keys() or "postal_code" not in form_data.keys() or "phone" not in form_data.keys():
+        return make_response({"details" : "Insufficient data"}, 400) 
     customer.name = form_data["name"]
     customer.postal_code = form_data["postal_code"]
-    customer.phone = request_body["phone"]
-    customer.register_at = datetime.now()
+    customer.phone = form_data["phone"]
 
     db.session.commit()
 
-    return make_response({"customer": customer.build_dict()}, 200)
+    return make_response(customer.build_dict(), 200)
 
 @customers_bp.route("/<id>", methods = ["DELETE"])
 def delete_customer(id):
@@ -57,4 +60,4 @@ def delete_customer(id):
     db.session.delete(customer)
     db.session.commit()
 
-    return make_response({"details" : f"Customer {customer.name} has been deleted"})
+    return make_response({"id" : customer.id}, 200)
