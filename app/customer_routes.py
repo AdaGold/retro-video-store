@@ -2,7 +2,7 @@ from flask import request, Blueprint, make_response, jsonify
 from app import db
 from dotenv import load_dotenv
 from app.models.customer import Customer
-from app.models.rental import Rentals
+from app.models.rental import Rental
 from datetime import datetime
 
 load_dotenv()
