@@ -76,16 +76,14 @@ def valid_customer_data(request_body):
     if "name" not in request_body or "postal_code" not in request_body or "phone" not in request_body:
         return False
     # How can you validate data types for not required params?
-    # elif not isinstance(request_body["name"],str) or not isinstance(request_body["phone"],str) or not isinstance(request_body["postal_code"],str):
-    #     return False
+    # elif not isinstance((request_body["name"]),str) or not isinstance((request_body["phone"]),str) or not isinstance((request_body["postal_code"]),str):
+    # elif (type(request_body["name"])) is not str or (type(request_body["phone"])) is not str or (type(request_body["postal_code"])) is not str:
+    # 
+        # return False
     return True
 
 '''
 CRUD routes for Videos
-
-POST /videos
-PUT /videos/<id>
-DELETE /videos/<id>
 '''
 
 @videos_bp.route("", methods=["GET"])
@@ -118,6 +116,33 @@ def create_new_video():
     db.session.commit()
     return {"id":new_video.id},201
 
+@videos_bp.route("/<id>", methods=["PUT"])
+def update_video_info(id):
+    video = Video.query.get(id)
+
+    if video == None: 
+        return {"error":f"Video ID {id} not found."}, 404
+
+    request_body = request.get_json()
+    if not valid_video_data(request_body):
+            return {"details":"Invalid data"}, 400
+
+    video.title = request_body["title"]
+    video.release_date = request_body["release_date"]
+    video.total_inventory = request_body["total_inventory"]
+    db.session.commit()
+    return jsonify(video.get_response()), 200
+
+@videos_bp.route("/<id>", methods=["DELETE"])
+def delete_customer(id):
+    video = Video.query.get(id)
+    if video == None: 
+        return {"error":f"Video ID {id} not found."}, 404
+    db.session.delete(video)
+    db.session.commit()
+    return {
+        "id":video.id
+    }, 200
 
 def valid_video_data(request_body):
     if "title" not in request_body or "release_date" not in request_body or "total_inventory" not in request_body:
