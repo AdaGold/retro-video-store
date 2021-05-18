@@ -6,12 +6,7 @@ from flask import request, Blueprint, jsonify
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 
-def is_valid_customer_data(request_body):
-    if len(request_body) != 3:
-        return False
-    return True
-
-def is_valid_video_data(request_body):
+def is_valid_data(request_body):
     if len(request_body) != 3:
         return False
     return True
@@ -42,7 +37,7 @@ def get_customer_info(customer_id):
 def add_customer():
     """Adds new customer."""
     request_body = request.get_json()
-    if not is_valid_customer_data(request_body):
+    if not is_valid_data(request_body):
         return get_client_error_response()
     customer = Customer(
         name = request_body["name"],
@@ -60,7 +55,7 @@ def update_customer(customer_id):
     if not customer:
         return get_client_error_response(code=404)
     request_body = request.get_json()
-    if not is_valid_customer_data(request_body):
+    if not is_valid_data(request_body):
         return get_client_error_response()
     customer.name = request_body["name"]
     customer.postal_code = request_body["postal_code"]
@@ -101,7 +96,7 @@ def get_video_info(video_id):
 def add_video():
     """Creates a new video with the given params."""
     request_body = request.get_json()
-    if not is_valid_video_data(request_body):
+    if not is_valid_data(request_body):
         return get_client_error_response()
     video = Video(
         title = request_body["title"],
@@ -119,7 +114,7 @@ def update_video(video_id):
     if not video:
         return get_client_error_response(code=404)
     request_body = request.get_json()
-    if not is_valid_video_data(request_body):
+    if not is_valid_data(request_body):
         return get_client_error_response()
     video.title = request_body["title"]
     video.release_date = request_body["release_date"]
