@@ -1,8 +1,8 @@
-"""Adds Video and Customer models
+"""empty message
 
-Revision ID: 5540b408842e
+Revision ID: e4ab9f442014
 Revises: 
-Create Date: 2021-05-17 10:06:26.291460
+Create Date: 2021-05-17 15:36:20.286975
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '5540b408842e'
+revision = 'e4ab9f442014'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,9 +21,9 @@ def upgrade():
     op.create_table('customer',
     sa.Column('customer_id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(), nullable=True),
-    sa.Column('postal_code', sa.Integer(), nullable=True),
-    sa.Column('phone_number', sa.Integer(), nullable=True),
-    sa.Column('register_at', sa.DateTime(), nullable=True),
+    sa.Column('postal_code', sa.String(), nullable=True),
+    sa.Column('phone', sa.String(), nullable=True),
+    sa.Column('registered_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('customer_id')
     )
     op.create_table('video',
