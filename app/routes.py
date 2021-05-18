@@ -18,6 +18,8 @@ def customer_not_found(func):
     inner.__name__ = func.__name__
     return inner
 
+#---------------------# CUSTOMER ENDPOINTS #---------------------#
+
 @customers_bp.route("", methods=["GET"], strict_slashes=False)
 def customers_index():
     customers = Customer.query.all()
@@ -41,3 +43,24 @@ def create_customer():
     db.session.add(new_customer)
     db.session.commit()
     return jsonify(new_customer.to_json()), 201
+
+@customers_bp.route("/<customer_id>", methods=["PUT"], strict_slashes=False)
+@customer_not_found
+def update_customer(customer_id):
+    customer = Customer.query.get(customer_id)
+    response_body = request.get_json()
+    customer.name = response_body["name"]
+    customer.postal_code = response_body["postal_code"]
+    customer.phone = response_body["phone"]
+    customer.registered_at = response_body["registered_at"]
+    customer.videos_out_count = response_body["videos_out_count"]
+    db.session.commit()
+    return jsonify(customer.to_json()), 200
+
+@customers_bp.route("/<customer_id>", methods=["DELETE"], strict_slashes=False)
+@customer_not_found
+def delete_customer(customer_id):
+    customer = Customer.query.get(customer_id)
+    db.session.delete(customer)
+    db.session.commit()
+    return jsonify({"details":f'customer {customer.id} "{customer.name}" successfully deleted'}), 200
