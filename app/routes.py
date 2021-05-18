@@ -7,12 +7,8 @@ from datetime import datetime
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 
-def get_customer_response(customer, code=200):
-    return customer.to_dict(), code
-
 def get_client_error_response(code=400):
     return {"details": "Invalid data"}, code
-
 
 @customers_bp.route("", methods=["GET"])
 def get_customers():
@@ -29,7 +25,7 @@ def get_customer_info(customer_id):
     customer = Customer.query.get(customer_id)
     if not customer:
         return get_client_error_response(code=404)
-    return get_customer_response(customer) 
+    return customer.to_dict(), 200
 
 @customers_bp.route("", methods = ["POST"])
 def add_customer():
@@ -59,7 +55,7 @@ def update_customer(customer_id):
     customer.postal_code = request_body["postal_code"]
     customer.phone = request_body["phone"]
     db.session.commit()
-    return get_customer_response(customer)
+    return customer.to_dict(), 200
 
 @customers_bp.route("/<customer_id>", methods=["DELETE"])
 def delete_customer(customer_id):
@@ -70,3 +66,60 @@ def delete_customer(customer_id):
     db.session.delete(customer)
     db.session.commit()
     return jsonify({"id": int(customer_id)}), 200
+
+@videos_bp.route("", methods=["GET"])
+def get_videos():
+    """Lists all existing videos and details about each video."""  
+    videos = Video.query.all()
+    response_body = [] 
+    for video in videos:
+        response_body.append(video.to_dict())
+    return jsonify(response_body), 200
+
+@videos_bp.route("/<video_id>", methods=["GET"]) 
+def get_video_info(video_id):
+    """Gives back details about specific video in the store's inventory."""
+    video = Video.query.get(video_id)
+    if not video:
+        return get_client_error_response(code=404)
+    return video.to_dict(), 200
+
+@videos_bp.route("", methods = ["POST"])
+def add_video():
+    """Creates a new video with the given params."""
+    request_body = request.get_json()
+    if len(request_body) != 3:
+        return get_client_error_response()
+    video = Video(
+        title = request_body["title"],
+        release_date = request_body["release_date"],
+        total_inventory = request_body["total_inventory"]
+        )  
+    db.session.add(video)
+    db.session.commit()
+    return jsonify({"id": video.video_id}), 201
+
+@videos_bp.route("/<video_id>", methods=["PUT"])
+def update_video(video_id):
+    """Gives back details about specific video in the store's inventory."""
+    video = Video.query.get(video_id)
+    if not video:
+        return get_client_error_response(code=404)
+    request_body = request.get_json()
+    if len(request_body) != 3:
+        return get_client_error_response()
+    video.title = request_body["title"]
+    video.release_date = request_body["release_date"]
+    video.total_inventory = request_body["total_inventory"]
+    db.session.commit()
+    return video.to_dict(), 200
+
+@videos_bp.route("/<video_id>", methods=["DELETE"])
+def delete_video(video_id):
+    """Deletes a specific video."""
+    video = Video.query.get(video_id)
+    if not video:
+        return get_client_error_response(code=404)
+    db.session.delete(video)
+    db.session.commit()
+    return jsonify({"id": int(video_id)}), 200
