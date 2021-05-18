@@ -1,5 +1,6 @@
 from app import db, helper
-from .models.customer_video import Customer, Video
+#from .models.customer import Customer
+from .models.video import Video
 from flask import request, Blueprint, make_response, jsonify, Response
 from sqlalchemy import desc, asc
 from datetime import date
@@ -7,7 +8,7 @@ import os
 import requests
 import json
 
-#WAVE 1 CURD / VIDEO
+#WAVE 1 CRUD / VIDEO
 
 video_bp = Blueprint("videos", __name__, url_prefix="/videos")
 
@@ -15,27 +16,26 @@ video_bp = Blueprint("videos", __name__, url_prefix="/videos")
 @video_bp.route("", methods=["GET"], strict_slashes=False)
 def get_videos():
     
-    videos = []
-    
     videos = Video.query.all()
     
     video_response =[]
     for video in videos:
         video_response.append(video.video_details())
+        
     return jsonify(video_response), 200
 
 
 #GET video with specific ID
 @video_bp.route("/<id>", methods=["GET"], strict_slashes=False)
-def get_specific_video(video_id):
+def get_specific_video(id):
     
-    if not helper.is_int(video_id):
+    if not helper.is_int(id):
         return {
             "message": "id must be an integer",
             "success": False
         },400
     
-    video =  Video.query.get(video_id)
+    video =  Video.query.get(id)
     
     if video == None:
         return Response ("" , status=404)
@@ -68,9 +68,9 @@ def add_videos():
 
 #PUT update a customer detail
 @video_bp.route("<id>", methods=["PUT"], strict_slashes=False)
-def update_video(video_id):
+def update_video(id):
     
-    video = Video.query.get(video_id)
+    video = Video.query.get(id)
     
     if ("title" not in video or 
         "total_inventory" not in video or 
@@ -99,9 +99,9 @@ def update_video(video_id):
 
 #DELETE a video
 @video_bp.route("<id>", methods=["DELETE"], strict_slashes=False)
-def delete_video(video_id):
+def delete_video(id):
     
-    video = Video.query.get(video_id)
+    video = Video.query.get(id)
     
     if video == None:
         return Response("", status=404)
@@ -110,5 +110,5 @@ def delete_video(video_id):
         db.session.delete(video)
         db.session.commit()
         
-        return jsonify(id=video.video_id), 200
+        return jsonify(id=str(id)), 200
     
