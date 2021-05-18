@@ -2,6 +2,7 @@ from flask import request, Blueprint, make_response, jsonify
 from app import db
 from dotenv import load_dotenv
 from app.models.customer import Customer
+from app.models.rental import Rentals
 from datetime import datetime
 
 load_dotenv()
@@ -61,3 +62,8 @@ def delete_customer(id):
     db.session.commit()
 
     return make_response({"id" : customer.id}, 200)
+
+@customers_bp.route("/<id>/rentals", methods = ["GET"])
+def list_rentals(id):
+    customer = Customer.query.get_or_404(id)
+    return make_response(customer.get_videos(), 200)
