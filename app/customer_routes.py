@@ -13,10 +13,9 @@ customer_bp = Blueprint("customers", __name__, url_prefix="/customers")
 
 # GET all customers
 @customer_bp.route("", methods=["GET"], strict_slashes=False)
-def get_tasks():
+def get_customers():
     
     customers = []
-    
     customers = Customer.query.all()
     
     customer_response =[]
@@ -90,7 +89,7 @@ def update_customer(customer_id):
         form_data = request.details_of_customer_response()
         
         customer.name = form_data["name"]
-        customer.str(postal_code) = form_data["postal_code"]
+        customer.postal_code = form_data["postal_code"]
         customer.phone = form_data["phone"]
         
         db.session.commit()

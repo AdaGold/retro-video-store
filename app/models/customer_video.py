@@ -16,7 +16,7 @@ class Customer(db.Model):
     phone_number = db.Column(db.String) 
     register_at = db.Column(db.DateTime, nullable=False)
     #establish relationship
-    videos_checked_out = db.relationship('Video', secondary=association_table, backref=db.backref('customers', lazy=True))
+    videos_checked_out_count = db.relationship('Video', secondary=association_table, backref=db.backref('customers', lazy=True))
 
     def details_of_customer_response(self):
         return {
@@ -25,7 +25,7 @@ class Customer(db.Model):
                 "registered_at": self.register_at,
                 "postal_code": self.postal_code,
                 "phone": self.phone_number,
-                "videos_checked_out_count": len(self.videos_checked_out)
+                "videos_checked_out_count": len(self.videos_checked_out_count)
                 }
 
     def add_new_customer(self):
@@ -42,13 +42,14 @@ class Video(db.Model):
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime, nullable=False)
     total_inventory = db.Column(db.Integer, nullable=False)
-  
+    available_inventory = db.Column(db.Integer, nullable=False)
+    
     customer_vids = db.relationship('customer_vids', secondary=association_table, backref=db.backref('videos', lazy=True))
     
     def calculate_available_inventory(self):
         pass
     
-    def video_response(self):
+    def video_details(self):
         return  {
                     "id": self.video_id,
                     "title": self.title,
