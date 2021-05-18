@@ -1,7 +1,7 @@
 import pytest
 from app import create_app
-from app.models.test_models import Customer
-from app.models.test_models import Video
+from app.models.customer import Customer
+from app.models.video import Video
 from app import db
 from datetime import datetime
 

@@ -1,7 +1,7 @@
 from app import db
 from flask import Blueprint, request, jsonify
 #from app.models.customer import Customer
-from app.models.test_models import Customer
+from app.models.customer import Customer
 
 from datetime import datetime
 

@@ -1,4 +1,4 @@
-from app.models.test_models import Customer
+from app.models.customer import Customer
 
 
 def test_TEST(client):
@@ -11,5 +11,5 @@ def test_TEST(client):
     response_body = response.get_json()
 
     # Assert
-    assert response.status_code == 200
+    assert response.status_code == 201
 
