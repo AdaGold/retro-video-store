@@ -17,5 +17,6 @@ class Customer(db.Model):
             "name": self.name,
             "postal_code": self.postal_code,
             "phone": self.phone,
-            "register_at": self.register_at
+            "register_at": self.registered_at,
+            "videos_out": self.videos_out
         }

@@ -8,12 +8,13 @@ class Video(db.Model):
     title = db.Column(db.String)
     release_date = db.Column(db.Integer)
     total_inventory = db.Column(db.Integer)
+    available_inventory = db.Column(db.Integer)
 
     def to_json(self):
         return {
             "id": self.id,
-            "name": self.name,
-            "postal_code": self.postal_code,
-            "phone": self.phone,
-            "register_at": self.register_at
+            "title": self.title,
+            "release_date": self.release_date,
+            "total_inventory": self.total_inventory,
+            "available_inventory": self.available_inventory
         }
