@@ -12,7 +12,7 @@ import requests
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
-#rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals") ### might not need this one
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 
 def bad_request():
@@ -90,6 +90,7 @@ def delete_customer(customer_id):
 def no_video_found(video_id):
     return ({"errors":["Not Found"]}, 404)
 
+
 @videos_bp.route("", methods=["GET"])
 def get_videos_details():
     videos = Video.query.all()
@@ -123,6 +124,7 @@ def get_one_video(video_id):
         return make_response(video.to_json(), 200) 
     return no_video_found(video_id)
 
+
 @videos_bp.route("/<video_id>", methods=["PUT"])
 def update_video(video_id):
     video = Video.query.get(video_id)
@@ -154,3 +156,19 @@ def delete_video(video_id):
 
 
 
+
+@rentals_bp.route("/check-out", methods=["POST"])
+def rental_checkout():
+    pass
+
+@rentals_bp.route("/check-in", methods=["POST"])
+def rental_checkin():
+    pass
+
+@customers_bp.route("/<customer_id>/rentals", methods=["GET"])
+def customer_log(customer_id):
+    pass
+
+@videos_bp.route("/<video_id>/rentals", methods=["GET"])
+def video_log(video_id):
+    pass
