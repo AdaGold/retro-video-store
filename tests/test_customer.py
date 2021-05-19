@@ -42,7 +42,7 @@ def test_get_customer_no_saved_customers(client):
     assert response.status_code == 200
     assert response_body == []
 
-def test_get_customer_by_id(client, two_customers):
+def test_get_customer_by_id(client, one_customer):
     #Act
     response = client.get("/customers/1")
     response_body = response.get_json()
@@ -54,3 +54,21 @@ def test_get_customer_by_id(client, two_customers):
     assert response_body["videos_checked_out_count"] == 0
     assert response_body["phone"] == "555-555-5555"
     assert response_body["id"] == 1
+
+def test_update_customer(client, one_customer):
+    #Act
+    response = client.put("/customers/1", json={
+        "name": "Updated Customer name",
+        "postal_code": "Updated postal code",
+        "phone": "Updated phone number"
+    })
+    response_body = response.get_json()
+
+    #Assert
+    assert response.status_code == 200
+    assert response_body["name"] == "Updated Customer name"
+    assert response_body["postal_code"] == "Updated postal code"
+    assert response_body["videos_checked_out_count"] == 0
+    assert response_body["phone"] == "Updated phone number"
+    assert response_body["id"] == 1
+    
