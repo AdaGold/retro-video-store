@@ -8,10 +8,12 @@ class Video(db.Model):
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
 
-    # def to_json_video(self):
-    #     return {
-    #         "id": self.video_id,
-    #         "title": self.title,
-    #         "release_date": self.release_date,
-    #         "total_inventory": self.total_inventory
-    #     }
+    # __tablename__ = "video_id"
+
+    def to_json_video(self):
+        return {
+            "id": self.video_id,
+            "title": self.title,
+            "release_date": self.release_date,
+            "total_inventory": self.total_inventory
+        }
