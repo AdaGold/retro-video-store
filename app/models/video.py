@@ -13,6 +13,17 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime, nullable = True)
     total_inventory = db.Column(db.Integer)
 
+
+#helper function 
+def to_json_video(self):
+    return {
+    "id": self.id,
+    "title": self.title,
+    "release_date": self.release_date,
+    "total_inventory": self.total_inventory 
+    }
+
+
 # class FooBarJoin(db.Model):
 #     foo_id = db.Column(db.Integer, db.ForeignKey('foo.id'), primary_key=True)
 #     bar_id = db.Column(db.Integer, db.ForeignKey('bar.id'), primary_key=True)

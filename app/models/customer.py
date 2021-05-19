@@ -17,11 +17,21 @@ class Customer(db.Model):
     register_at = db.Column(db.DateTime, nullable = True)
 
 
-    def complete_task(self):
-        if self.completed_at == None:
+    def registered_customer(self):
+        if self.register_at == None:
             return False
         else: 
             return True
+
+#helper function 
+    def to_json_customer(self):
+        return {
+        "id": self.id,
+        "name": self.name,
+        "postal_code": self.postal_code,
+        "register_at": self.register_at # or self.registered_customer()
+        }
+
 
 # class FooBarJoin(db.Model):
 #     foo_id = db.Column(db.Integer, db.ForeignKey('foo.id'), primary_key=True)
