@@ -10,11 +10,11 @@ from flask import current_app
 from app import db
 
 class Customer(db.Model):
-    customer_id = db.Column(db.Integer, primary_key=True)
-    name_of_customer = db.Column(db.String)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
     postal_code = db.Column(db.Integer)
     phone = db.Column(db.Integer)
-    completed_at = db.Column(db.DateTime, nullable = True)
+    register_at = db.Column(db.DateTime, nullable = True)
 
 
     def complete_task(self):

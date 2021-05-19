@@ -8,9 +8,9 @@ from flask import current_app
 from app import db
 
 class Video(db.Model):
-    video_id = db.Column(db.Integer, primary_key=True)
-    title_of_video = db.Column(db.String)
-    completed_at = db.Column(db.DateTime, nullable = True)
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String)
+    release_date = db.Column(db.DateTime, nullable = True)
     total_inventory = db.Column(db.Integer)
 
 # class FooBarJoin(db.Model):
