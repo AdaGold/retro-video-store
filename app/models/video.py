@@ -6,6 +6,7 @@ class Video(db.Model):
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime)
     total_copies = db.Column(db.Integer)
+    availible_inventory = db.Column(db.Integer)
 
     def make_json(self):
         return {
@@ -13,6 +14,6 @@ class Video(db.Model):
             "title": self.title,
             "release_date": self.release_date,
             "total_inventory": self.total_copies,
-            "availible_inventory": 0
+            # "availible_inventory": self.availible_inventory
                     }
     

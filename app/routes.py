@@ -1,7 +1,8 @@
-from flask import Blueprint, request, make_response
+from flask import Blueprint, request, make_response, jsonify
 from app.models.customer import Customer
 from app.models.video import Video
 from app import db
+from datetime import datetime
 import requests
 import os
 
@@ -12,24 +13,26 @@ def handle_get_customers():
         customers = Customer.query.all()
         get_response =[]
         for customer in customers:
-            get_response.append(customer.make_json)
+            get_response.append(customer.make_json())
 
-        return get_response
-    
+        return jsonify(get_response)
+
     elif request.method == "POST":
         request_body = request.get_json()
-
-        if "name" not in request_body.keys() \
-            or "postal_code" not in request_body.keys() \
-                or "phone" not in request_body.keys():
-                return make_response({"details": "Invalid data"}, 400) 
+        
+        if "name" not in request_body.keys() or "postal_code" not in \
+            request_body.keys() or "phone" not in request_body.keys():
+            
+            return make_response({"details": "Invalid data"}, 400)
         
         new_customer = Customer(name=request_body["name"],\
-            postal_code=request_body["postal_code"], phone=request_body["phone"])
+            postal_code=request_body["postal_code"], phone_number=request_body["phone"],\
+                register_at=datetime.utcnow())
         
         db.session.add(new_customer)
         db.session.commit()
-        return make_response(new_customer.make_json, 201)
+
+        return make_response(new_customer.make_json(), 201)
 
 @customers_bp.route("/<id>", methods = ["GET", "PUT", "DELETE"])
 def handle_customer(id):
@@ -39,20 +42,23 @@ def handle_customer(id):
         return make_response("", 404)
 
     elif request.method == "GET":
-        return customer.make_json
+        return customer.make_json()
     
     elif request.method == "PUT":
         request_body = request.get_json()
-
+        
         if "name" not in request_body.keys() \
             or "postal_code" not in request_body.keys() \
-                or "phone" not in request_body.keys():
+                or "phone" not in request_body.keys() \
+                    or not isinstance(request_body["name"], str) \
+                        or not isinstance(request_body["postal_code"], int) \
+                            or not isinstance(request_body["phone"], str):
                 return make_response({"details": "Invalid data"}, 400) 
         
         customer.name = request_body["name"]
         customer.postal_code = request_body["postal_code"]
-        customer.phone = request_body["phone"]
-        return customer.make_json
+        customer.phone_number = request_body["phone"]
+        return customer.make_json()
     
     elif request.method == "DELETE":
         db.session.delete(customer)
@@ -69,17 +75,16 @@ def handle_videos():
         videos = Video.query.all()
         get_response =[]
         for video in videos:
-            get_response.append(video.make_json)
+            get_response.append(video.make_json())
 
-        return get_response
+        return jsonify(get_response)
     
     elif request.method == "POST":
         request_body = request.get_json()
 
         if "title" not in request_body.keys()\
             or "release_date" not in request_body.keys() \
-                or "total_inventory" not in request_body.keys() \
-                    or not isinstance(request_body["total_inventory"], int):
+                or "total_inventory" not in request_body.keys():
                 return make_response({"details": "Invalid data"}, 400) 
         
         new_video = Video(title=request_body["title"],\
@@ -87,7 +92,7 @@ def handle_videos():
         
         db.session.add(new_video)
         db.session.commit()
-        return make_response(new_video.make_json, 201)
+        return make_response(new_video.make_json(), 201)
 
 @videos_bp.route("/<id>", methods = ["GET", "PUT", "DELETE"])
 def handle_video(id):
@@ -97,26 +102,25 @@ def handle_video(id):
         return make_response("", 404)
 
     elif request.method == "GET":
-        return video.make_json
+        return video.make_json()
     
     elif request.method == "PUT":
         request_body = request.get_json()
 
         if "title" not in request_body.keys() \
             or "release_date" not in request_body.keys() \
-                or "total_inventory" not in request_body.keys() \
-                    or not isinstance(request_body["total_inventory"], int):
+                or "total_inventory" not in request_body.keys():
                 return make_response({"details": "Invalid data"}, 400) 
         
         video.title = request_body["title"]
         video.release_date = request_body["release_date"]
         video.total_copies = request_body["total_inventory"]
-        return video.make_json
+        return video.make_json()
     
     elif request.method == "DELETE":
         db.session.delete(video)
         db.session.commit()
         return {
             "details": \
-                (f"Video {video.id} \"{video.name}\" successfully deleted")
+                (f"Video {video.id} \"{video.title}\" successfully deleted")
         }
