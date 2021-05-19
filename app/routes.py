@@ -66,7 +66,7 @@ def add_customer():
                 "Bad Request",
                 "'name' is required",
                 "'postal_code' is required and should be a number",
-                "'phone' is required",
+                "'phone' is required and should be (XXX) XXX-XXXX",
             ]
         }, 400)
 
@@ -109,7 +109,7 @@ def update_customer_by_id(customer_id):
                 "'postal_code' is required",
                 "'phone' is required",
                 "'registered_at' is required",
-                "'videos_checked_out_count' is required"
+                "'videos_checked_out_count' is required and should be a number"
             ]
         }, 400)
 
@@ -150,6 +150,21 @@ def get_all_videos():
     return jsonify(response), 200
 
 
+@videos_bp.route("/<video_id>", methods=["GET"])
+def get_video_by_id(video_id):
+    """Gives back details about specific video."""
+    video = Video.query.get(video_id)
+
+    if video is None:
+        return make_response({
+            "errors": [
+                "Not Found",
+                "Video does not exist"
+            ]
+        }, 404)
+    return make_response(video.to_json(), 200)
+
+
 @videos_bp.route("", methods=["POST"])
 def add_video():
     """Creates a new video with the given Request Body Parameters."""
@@ -173,21 +188,6 @@ def add_video():
 
     retrieve_video = Video.query.get(new_video)
     return make_response(retrieve_video.to_json(), 201)
-
-
-@videos_bp.route("/<video_id>", methods=["GET"])
-def get_video_by_id(video_id):
-    """Gives back details about specific video."""
-    video = Video.query.get(video_id)
-
-    if video is None:
-        return make_response({
-            "errors": [
-                "Not Found",
-                "Video does not exist"
-            ]
-        }, 404)
-    return make_response(video.to_json(), 200)
 
 
 @videos_bp.route("/<video_id>", methods=["PUT"])
@@ -214,19 +214,19 @@ def update_video_by_id(video_id):
         return make_response({
             "errors": [
                 "Bad Request",
-                "'total_inventory' is required",
-                "'available_inventory' is required"
+                "'total_inventory' is required and should be a number",
+                "'available_inventory' is required and should be a number"
             ]
         }, 400)
 
     video = video.from_json(request_body)
     db.session.commit()
-    retrieve_video = video.query.get(video_id)
+    retrieve_video = Video.query.get(video_id)
 
     return make_response(retrieve_video.to_json(), 200)
 
 
-@videos_bp.route("/<video_id>", methods=["DELETE"])
+@ videos_bp.route("/<video_id>", methods=["DELETE"])
 def delete_video_by_id(video_id):
     """Deletes a specific video."""
     video = Video.query.get(video_id)
