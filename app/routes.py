@@ -32,13 +32,13 @@ def create_customer():
             name=request_body["name"],
             postal_code=request_body["postal_code"],
             phone=request_body["phone"],
-            registered_at=datetime.Now()
+            registered_at=datetime.now()
         )
         db.session.add(new_customer)
         db.session.commit()
         # customer_response = {{new_customer.customer_id}}
         # return jsonify(customer_response), 201
-        return jsonify({new_customer.to_json()}), 201
+        return jsonify(new_customer.to_json()), 201
     return make_response({"details": "Invalid data: you must include a name, postal code, and phone number"}, 400)
 
 
@@ -47,7 +47,7 @@ def get_one_customer(customer_id):
     customer = Customer.query.get(customer_id)
     if customer is None:
         return make_response("Customer does not exist", 404)
-    return jsonify({customer.to_json()}), 200
+    return jsonify(customer.to_json()), 200
 
 
 @customers_bp.route("/<customer_id>", methods=["PUT"], strict_slashes=False)
@@ -61,7 +61,7 @@ def update_customer(customer_id):
         customer.postal_code = form_data["postal_code"]
         customer.phone = form_data["phone"]
         db.session.commit()
-        return jsonify({customer.to_json()}), 200
+        return jsonify(customer.to_json()), 200
     return make_response("Bad Request", 400)
 
 
@@ -72,8 +72,9 @@ def delete_customer(customer_id):
         return make_response("Customer does not exist", 404)
     db.session.delete(customer)
     db.session.commit()
-    customer_response = {{customer.customer_id}}
-    return jsonify(customer_response), 200
+    return jsonify(customer.to_json()), 200
+    #     customer_response = {customer.customer_id}
+    # return jsonify(customer_response), 200
 
 
 # --------------------------
@@ -98,8 +99,9 @@ def create_video():
         )
         db.session.add(new_video)
         db.session.commit()
-        video_response = {{new_video.video_id}}
-        return jsonify(video_response), 201
+        # video_response = {{new_video.video_id}}
+        # return jsonify(video_response), 201
+        return jsonify(new_video.to_dict()), 201
     return make_response({"details": "Invalid data: you must include a title, release date, and total inventory"}, 400)
 
 
@@ -108,7 +110,7 @@ def get_one_video(video_id):
     video = Video.query.get(video_id)
     if video is None:
         return make_response("Video does not exist", 404)
-    return jsonify({video.to_dict()}), 200
+    return jsonify(video.to_dict()), 200
 
 
 @videos_bp.route("/<video_id>", methods=["PUT"], strict_slashes=False)
@@ -122,7 +124,7 @@ def update_video(video_id):
         video.release_date = form_data["release_date"]
         video.total_inventory = form_data["total_inventory"]
         db.session.commit()
-        return jsonify({video.to_dict()}), 200
+        return jsonify(video.to_dict()), 200
     return make_response("Bad Request", 400)
 
 
@@ -133,5 +135,6 @@ def delete_video(video_id):
         return make_response("Video does not exist", 404)
     db.session.delete(video)
     db.session.commit()
-    video_response = {{video.video_id}}
-    return jsonify(video_response), 200
+    return jsonify(video.to_dict()), 200
+    # video_response = {video.video_id}
+    # return jsonify(video_response), 200
