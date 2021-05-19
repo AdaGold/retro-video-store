@@ -118,3 +118,14 @@ def update_video(video_id):
         "details": "Invalid data"
         }), 400
     return "", 404
+
+@video_bp.route("/<video_id>", methods=["DELETE"], strict_slashes=False)
+def delete_video(video_id):
+    video = Video.query.get(video_id)
+    if video:
+        db.session.delete(video)
+        db.session.commit()
+        return jsonify({
+        "id": video.video_id
+        }), 200
+    return "", 404
