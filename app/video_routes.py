@@ -102,5 +102,9 @@ def delete_video(id):
         db.session.delete(video)
         db.session.commit()
         
-        return jsonify(id=id), 200
+        return jsonify(id=int(id)), 200
     
+#WAVE 2 - GET /customers/<id>/rentals
+@video_bp.route("/<id>/rentals", methods=["GET"], strict_slashes=False)
+def get_customers_with_videos(id):
+    pass
