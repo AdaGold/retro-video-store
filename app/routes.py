@@ -1,12 +1,98 @@
 from app import db
 from flask import Blueprint
-from .models.task import Task
-from .models.goal import Goal
+from .models.customer import Customer
+from .models.video import Video
+from .models.rental import Rental
 from flask import request
 from flask import jsonify, make_response
 from sqlalchemy import asc, desc 
 import requests
 import os
+
+# creating instance of the model, first arg is name of app's module
+customer_bp = Blueprint("customers", __name__, url_prefix="/customers") # details
+
+#create a customer with null completed at
+@customer_bp.route("", methods = ["POST"], strict_slashes = False)
+def create_customer():
+    try:
+        request_body = request.get_json()
+        new_customer = Customer.from_json_to_customer(request_body)
+        db.session.add(new_customer) # "adds model to the db"
+        db.session.commit() # commits the action above
+        return jsonify(id = new_customer.id), 201
+    except KeyError:
+        return {"details": "Bad Request"}, 400
+        # return "Bad Request", 400
+
+
+# Retrieve all /customers  
+@customer_bp.route("", methods = ["GET"], strict_slashes = False)
+def retrieve_customers_data():
+    customers = Customer.query.all() 
+    customers_response = []
+
+    if customers != None:  
+        
+        customers_response = [customer.customer_to_json_response() \
+                for customer in customers]
+    return jsonify(customers_response), 200
+
+# Retrieve one /customers/1     
+@customer_bp.route("/<customer_id>", methods=["GET"], strict_slashes = False)
+def retrieve_single_customer(customer_id):
+    customer = Customer.query.get(customer_id)
+    if customer != None:
+        return customer.customer_to_json_response(), 200
+        # response = customer.customer_to_json_response()
+        # if customer.goal_id:
+        #     response['task']['goal_id'] = customer.goal_id
+        # return response, 200
+    return make_response('Not Found', 404)
+
+#Update a customer
+@customer_bp.route("/<customer_id>", methods=["PUT"], strict_slashes = False)  
+def update_customer(customer_id):
+    customer = Customer.query.get(customer_id) #SQL ALCHEMY QUERY?
+    if customer: # if successful quering customer with given customer_id
+        form_data = request.get_json()
+        if not "name" in form_data or not "postal_code" in form_data \
+            or not "phone" in form_data:
+            return jsonify("Bad Request"), 400
+
+        # if "name" in form_data: 
+        customer.name = form_data["name"]
+        # if "postal_code" in form_data:
+        customer.postal_code = form_data["postal_code"]
+        # if "phone" in form_data:
+        customer.phone = form_data["phone"]
+        
+        db.session.commit() # commiting changes to db
+        return customer.customer_to_json_response(), 200
+
+    return jsonify("Not Found"), 404
+
+# Delete a customer
+@customer_bp.route("/<customer_id>", methods=["DELETE"], strict_slashes = False)
+def customer_task(customer_id):  
+    customer = Customer.query.get(customer_id) 
+    if customer != None:
+        db.session.delete(customer)
+        db.session.commit()
+        details_str = f"Customer {customer_id} \"{customer.name}\" successfully deleted"
+        return jsonify(id = customer.id, detais = details_str), 200
+        # return jsonify(id = customer.id), 200
+
+    return jsonify("Not Found"), 404
+
+
+
+
+
+
+
+
+## TASK / GOAL ROUTES ----------------------------------------------
 
 # creating instance of the model, first arg is name of app's module
 task_bp = Blueprint("tasks", __name__, url_prefix="/tasks")

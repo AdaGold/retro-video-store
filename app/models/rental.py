@@ -4,20 +4,20 @@ from datetime import datetime # do I need this?
 
 # Establishing many-to-many relationships to between
 # Customer and Video Models
-# tasks = db.relationship('Task', backref="goal", lazy=True) # ask about backref
-# CustomerVideojoin
+# CustomerVideojoin Model/Table
 class Rental(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True) ##??
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), \
         primary_key=True) # how about nullable= True or False?
     video_id = db.Column(db.Integer, db.ForeignKey('video.id'), \
         primary_key=True)# how about nullable= True or False?, do I add lazy?
+    # fake columns
+    
+    # Customer to Rental is a one to many relationship just like Goal to Task
     rental_date = db.Column(db.DateTime, default=datetime.utcnow(),  
         nullable=False) # maybe
-    # fake columns
-    customer = db.relationship("Customer", backref="rental", lazy=True)
-    video = db.relationship("Video", backref="rental", lazy=True)
-    # tasks = db.relationship('Task', backref="goal", lazy=True) 
+
+    
 
     # user = relationship(User, backref=backref("orders", cascade="all, delete-orphan"))
     # product = relationship(Product, backref=backref("orders", cascade="all, delete-orphan"))

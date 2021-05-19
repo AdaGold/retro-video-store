@@ -7,24 +7,64 @@ from datetime import datetime #added -  I need it for register_at
 class Customer(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String, nullable=False)
-    postal_code = db.Column(db.String, nullable=False) # can phone be null? 
+    postal_code = db.Column(db.Integer, nullable=False) # can be null? 
     phone = db.Column(db.String, nullable=True) # DOUBLE CHECK
-    register_at = db.Column(db.DateTime, default=datetime.utcnow(),  
-        nullable=False) # check if utcnow() is the right format
+    # date/time when video was released - now?
+    registered_at = db.Column(db.DateTime, \
+        default=datetime.now(),
+        # default=(datetime.now()).strftime("%a, %d %b %Y %X %z"),  
+        nullable=False) 
+    # what is the difference btw the lines below and line 13?
+    # register_at = db.Column(db.DateTime, server_default=db.func.current_timestamp()) 
+    videos_checked_out_count = db.Column(db.Integer, default=0) 
+    # rentals = Customer has many Rentals, and a Rental belongs to a customer
+    # backref
+
+    # Establishing relationship 
+    # videos = relationship("Video", secondary="rental", lazy=True) # how abbout lazy=true?
+
+    def customer_to_json_response(self):
+        '''
+        Converts a Customer instance into JSON format
+        Output: Returns a Python dictionary in the shape of JSON response 
+        that the API returns in the route that is called (GET route).
+        '''
+        return  {"id": self.id,
+                "name": self.name,
+                "registered_at": self.registered_at.strftime("%a, %d %b %Y %X %z"),
+                "postal_code": str(self.postal_code),
+                "phone": self.phone,
+                "videos_checked_out_count": self.videos_checked_out_count
+                } # Whyyyyyyy did I have to change it to INT?????
+                
+    @staticmethod
+    def from_json_to_customer(request_body):
+        '''
+        Converts JSON request body into a new instance of Customer
+        input: Takes in a dictionary in the shape of the JSON the API 
+        receives. 
+        '''
+        # could add an if to check that the request body is good -
+        # then create customer
     
-    # what is the difference btw line 10 and 13?
-    # register_at = db.Column(db.DateTime, server_default=db.func.current_timestamp()) # database more efficient?
-    # register_at = db.Column(db.DateTime, default=datetime.now().strftime("%c"))  
-    # has to look like this "Wed, 16 Apr 2014 21:40:20 -0700"
+        new_customer = Customer(name=request_body["name"],
+                postal_code=request_body["postal_code"],
+                phone = request_body["phone"])
 
-    # Establishing many-to-many relationship 
-    # or is it  relationship("Video", secondary= ...) - call CHO
-    videos = db.relationship("Video", secondary="rental", lazy=True) # how abbout lazy=true?
-
-    # Establishing one-to-many relationships to Task Model
-    # tasks = db.relationship('Task', backref="goal", lazy=True) # ask about backref
-
+        return new_customer
     
+    # def register_customer(self):   
+    #     '''
+    #     Updates the attribute registered_at of the instance of a customer
+    #     to the current date/time in the .strftime format 
+    #     "Wed, 16 Apr 2014 21:40:20 -0700".
+    #     '''
+    #     register_time = (datetime.now()).strftime("%a, %d %b %Y %X %z")  
+    #     self.registered_at = register_time 
+        # need to call on a post method when registering a new 
+        # new customer
+
+
     # def goal_to_json_response(self):
     #     '''
     #     Converts a Goal's instance into JSON response

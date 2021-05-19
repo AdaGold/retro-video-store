@@ -5,12 +5,18 @@ from datetime import datetime
 class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)  
     title = db.Column(db.String) # name of movie
-    release_date = db.Column(db.DateTime, nullable=False) # date/time when video was released
-    available_inventory = db.Column(db.Integer, nullable=False) # set it to false, ok?
+    # date/time when video was released - not now
+    release_date = db.Column(db.DateTime, nullable=False)
+    # default=datetime(0).strftime("%a, %d %b %Y %X %z")
     total_inventory = db.Column(db.Integer, nullable=False)
+    available_inventory = db.Column(db.Integer, nullable=False) # set it to false, ok?
 
-    customers = db.relationship("Customer", secondary="rental", lazy=True) # add lazy?
+    # video has many rentals - like goal to task
+    # Video has many Rentals, and a Rental belongs to a Video
+    # Video to Rental is a one-to-many relationship
 
+
+    ## TASK MODEL --------------------------------------
     # description = db.Column(db.String)
     # completed_at = db.Column(db.DateTime, nullable=True)
     # adding one to many relationship  tasks to goal ==> dog to person 
