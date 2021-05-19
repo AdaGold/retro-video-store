@@ -39,7 +39,7 @@ def create_customer():
     
     
 @customer_bp.route("",methods=["GET"],strict_slashes=False)    
-def all_customers():
+def get_customers():
     """
         Input: query to get all instances of customer from DB
         Output: list of dicts of all queries in database
@@ -64,7 +64,7 @@ def get_customer(id):
 
 
 @customer_bp.route("/<id>",methods=["PUT"],strict_slashes=False)
-def edit_customer(id):   
+def update_customer(id):   
     """
         Input: request to update a customer by id
         Output: 404 if the customer does not exist or dictionary of updated customer

@@ -12,7 +12,7 @@ class Customer(db.Model):
         videos_checked_out_count
     """
     id = db.Column(db.Integer,primary_key=True,autoincrement=True)
-    name = db.Column(db.String,nullable=False)#required attributes
+    name = db.Column(db.String, nullable=False)#required attributes
     postal_code = db.Column(db.String,nullable=False)#required attributes
     phone = db.Column(db.String,nullable=False)#required attributes
     registered_at = db.Column(db.DateTime,nullable=True)
@@ -27,9 +27,10 @@ class Customer(db.Model):
 
         """
         return {
-            
+            "id": self.id,
             "name": self.name,
             "postal_code": self.postal_code,
             "phone": self.phone,
-            "videos_checked_out_count": self.videos_checked_out_count
+            "videos_checked_out_count": self.videos_checked_out_count,
+            "registered_at": self.registered_at
             }
