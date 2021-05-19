@@ -89,5 +89,4 @@ def all_customers():
 
 
 
-
 #@videos_bp.route("/<video_id>", methods=["GET", "PUT","DELETE"])
