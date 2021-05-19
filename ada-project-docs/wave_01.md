@@ -23,30 +23,29 @@ Our goal for this wave is to be able to do all CRUD actions for these two entiti
 
 It's crucial for all APIs to be able to handle errors. For every required endpoint described in this project, handle errors in this pattern.
 
-If something goes wrong, your API should return:
-- an appropriate [HTTP status code](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status)
-- a list of errors
+If something goes wrong...
+- Your API should return an appropriate HTTP status code.
+- For POST and PUT requests, responses with 4XX response codes should also return a response body with some indication of what went wrong.
 
-For this project, the list of errors should be formatted like this:
+
+If something goes wrong...
+- Your API should return an appropriate HTTP status code.
+- For POST and PUT requests, responses with 4XX response codes should also return a response body with some indication of what went wrong.
+
+This could be something as simple as:
 
 ```json
 {
-  "errors": {
-    "available_inventory": [
-      "can't be blank",
-      "is not a number"
-    ]
-  }
+        "details": "Invalid data"
 }
+```
 
-// ...or...
-
-{
-    "errors": [
-        "Not Found"
-    ]
-}
-
+...or something slightly more complex like:
+```json
+[
+   "title must be provided and it must be a string",
+   "total_inventory must be provided and it must be a number"
+]
 ```
 
 # Requirements
