@@ -1,10 +1,12 @@
+from flask.globals import session
 from app import db
 from app.models.customer import Customer
 from app.models.video import Video
+from app.models.rentals import Rental
 from flask import Blueprint, request, make_response, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import asc, desc
-from datetime import datetime
+from datetime import datetime, timedelta
 import os 
 from dotenv import load_dotenv
 
@@ -62,6 +64,20 @@ def delete_customer(active_id):
     db.session.commit()
     return ({"id" : int(active_id)}, 200)
 
+@customers_bp.route("/<active_id>/rentals", methods=["GET"])
+def get_rentals_by_customer(active_id):
+    customer = Customer.query.get_or_404(active_id)
+
+    rental_list = []
+    for rental in customer.active_rentals:
+        video = Video.query.get_or_404(rental.video_id)
+        rental_list.append({"release_date" : video.release_date,
+            "title" : video.title,
+            "due_date" : rental.due_date
+            })
+
+    return jsonify(rental_list)
+
 # ===== Videos ======================================================
 videos_bp = Blueprint("video", __name__, url_prefix="/videos")
 
@@ -114,4 +130,80 @@ def delete_video(active_id):
     db.session.commit()
     return ({"id" : int(active_id)}, 200)
 
+@videos_bp.route("/<active_id>/rentals", methods=["GET"])
+def get_rentals_by_video(active_id):
+    video = Video.query.get_or_404(active_id)
+
+    rental_list = []
+    for rental in video.active_rentals:
+        customer = Customer.query.get_or_404(rental.customer_id)
+        rental_list.append({"name" : customer.name,
+            "phone" : customer.phone,
+            "postal_code" : customer.postal_code,
+            "due_date" : rental.due_date
+            })
+
+    return jsonify(rental_list)
+
 # ===== Rentals =====================================================
+rentals_bp = Blueprint("rental", __name__, url_prefix="/rentals")
+
+@rentals_bp.route("/check-out", methods=["POST"])
+def check_out_rental():
+    request_body = request.get_json()
+
+    try:
+        if type(request_body["customer_id"]) is not int or type(request_body["video_id"]) is not int:
+            return make_response({"details" : "Invalid data"}, 400)
+    except KeyError:
+        return make_response({"details" : "Invalid data"}, 400)
+
+    customer = Customer.query.get_or_404(request_body["customer_id"])
+    video = Video.query.get_or_404(request_body["video_id"])
+
+    if (video.total_inventory - len(video.active_rentals)) < 1:
+        return make_response({"details" : "Not available"}, 400)
+
+    new_rental = Rental(
+            customer_id=customer.id,
+            video_id=video.id,
+            due_date=(datetime.now() + timedelta(days=7))
+        )
+
+    db.session.add(new_rental)
+    db.session.commit()
+
+    ret_body = new_rental.to_dict()
+    ret_body["videos_checked_out_count"] = len(customer.active_rentals)
+    ret_body["available_inventory"] = video.total_inventory - len(video.active_rentals)
+
+    return make_response(ret_body, 200)
+
+@rentals_bp.route("/check-in", methods=["POST"])
+def check_in_rental():
+    request_body = request.get_json()
+
+    try:
+        rental = Rental.query.filter_by(
+            customer_id=request_body["customer_id"], 
+            video_id=request_body["video_id"]
+            ).first()
+    except KeyError:
+        return make_response({"details" : "Invalid data"}, 400)
+
+    if not rental:
+        return make_response({"details" : "Invalid data"}, 400)
+
+    db.session.delete(rental)
+    db.session.commit()
+
+    customer = Customer.query.get(rental.customer_id)
+    video = Video.query.get(rental.video_id)
+
+    ret_body = {"customer_id" : rental.customer_id,
+        "video_id" : rental.video_id,
+        "videos_checked_out_count" : len(customer.active_rentals),
+        "available_inventory" : video.total_inventory - len(video.active_rentals)
+        }
+
+    return make_response(ret_body, 200)
