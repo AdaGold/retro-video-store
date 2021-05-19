@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 
 db = SQLAlchemy()
-migrate = Migrate()
+migrate = Migrate(compare_type=True)
 load_dotenv()
 
 
@@ -24,7 +24,7 @@ def create_app(test_config=None):
 
     # Import models here for Alembic setup
     from app.models.customer import Customer
-    # from app.models.goal import Goal
+    from app.models.video import Video
 
     db.init_app(app)
     migrate.init_app(app, db)

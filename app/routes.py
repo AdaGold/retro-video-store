@@ -47,7 +47,7 @@ def get_customer_by_id(customer_id):
     if customer is None:
         return make_response("Customer not found", 404)
 
-    customer_response = {"customer": customer.to_json()}
+    customer_response = customer.to_json()
     return customer_response
 
 
@@ -88,6 +88,15 @@ def update_customer_by_id(customer_id):
         return make_response("Customer not found", 404)
 
     request_body = request.get_json()
+    try:
+        request_body["name"]
+        request_body["postal_code"]
+        request_body["phone"]
+    except:
+        return make_response(jsonify({
+            "details": "Invalid data"
+        }), 400)
+
     customer.name = request_body["name"]
     customer.postal_code = request_body["postal_code"]
     customer.phone = request_body["phone"]
@@ -111,7 +120,7 @@ def delete_customer_by_id(customer_id):
     db.session.commit()
 
     return make_response({
-        "details": f'Customer {customer_id} "{customer.name}" successfully deleted'
+        "id": customer_id
     })
 
 
@@ -120,3 +129,106 @@ def delete_customer_by_id(customer_id):
 #=====================================================#
 
 
+@videos_bp.route("", methods=["GET"])
+def get_list_all_videoss():
+    """
+    Get all Videos in asc, desc, or unsorted order
+    """
+    sort_query = request.args.get("sort")
+
+    if sort_query == "asc":
+        videos = Video.query.order_by(asc("name"))
+    elif sort_query == "desc":
+        videos = Video.query.order_by(desc("name"))
+    else:
+        videos = Video.query.all()
+
+    videos_response = [video.to_json() for video in videos]
+
+    return jsonify(videos_response)
+
+
+@videos_bp.route("/<int:video_id>", methods=["GET"])
+def get_video_by_id(video_id):
+    """
+    Get one Video by id
+    """
+    video = Video.query.get(video_id)
+
+    if video is None:
+        return make_response("Video not found", 404)
+
+    video_response = video.to_json()
+    return video_response
+
+@videos_bp.route("", methods=["POST"])
+def add_new_video():
+    """
+    Create a new Video
+    """
+    request_body = request.get_json()
+
+    try:
+        request_body["title"]
+        request_body["release_date"]
+        request_body["total_inventory"]
+    except:
+        return make_response(jsonify({
+            "details": "Invalid data"
+        }), 400)
+
+    new_video = Video(title=request_body["title"],
+                    release_date=request_body["release_date"],
+                    total_inventory=request_body["total_inventory"])
+
+    db.session.add(new_video)
+    db.session.commit()
+
+    return make_response({"id": new_video.video_id}, 201)
+
+
+@videos_bp.route("/<int:video_id>", methods=["PUT"])
+def update_video_by_id(video_id):
+    """ 
+    Update one Video by id
+    """
+    video = Video.query.get(video_id)
+
+    if video is None:
+        return make_response("Video not found", 404)
+
+    request_body = request.get_json()
+    try:
+        request_body["title"]
+        request_body["release_date"]
+        request_body["total_inventory"]
+    except:
+        return make_response(jsonify({
+            "details": "Invalid data"
+        }), 400)
+
+    video.title = request_body["title"]
+    video.release_date = request_body["release_date"]
+    video.total_inventory = request_body["total_inventory"]
+
+    db.session.commit()
+
+    return make_response(video.to_json(), 200)
+
+
+@videos_bp.route("/<int:video_id>", methods=["DELETE"])
+def delete_video_by_id(video_id):
+    """
+    Delete one Video by id
+    """
+    video = Video.query.get(video_id)
+
+    if video is None:
+        return make_response("Video not found", 404)
+    
+    db.session.delete(video)
+    db.session.commit()
+
+    return make_response({
+        "id": video_id
+    })
