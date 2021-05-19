@@ -1,6 +1,4 @@
-from flask.wrappers import Response
 from app.models.customer import Customer
-
 
 def test_create_customer(client):
     # Act
@@ -82,4 +80,3 @@ def test_delete_customer(client, one_customer):
     assert response_body == {"id": 1}
     assert Customer.query.get(1) == None
 
-    

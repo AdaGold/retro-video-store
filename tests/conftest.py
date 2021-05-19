@@ -52,26 +52,13 @@ def two_customers(app):
     db.session.add(c2)
     db.session.commit()
 
-# # This fixture gets called in every test that
-# # references "completed_task"
-# # This fixture creates a task with a
-# # valid completed_at date
-# @pytest.fixture
-# def completed_task(app):
-#     new_task = Task(
-#         title="Go on my daily walk 🏞", description="Notice something new every day", completed_at=datetime.utcnow())
-#     db.session.add(new_task)
-#     db.session.commit()
 
-
-# # This fixture gets called in every test that
-# # references "one_goal"
-# # This fixture creates a goal and saves it in the database
-# @pytest.fixture
-# def one_goal(app):
-#     new_goal = Goal(title="Build a habit of going outside daily")
-#     db.session.add(new_goal)
-#     db.session.commit()
+@pytest.fixture
+def one_video(app):
+    v = Video(title = "Howls Moving Castle",
+            release_date = "2005-07-17",
+            total_inventory = 10,
+            current_inventory = 10)
 
 
 # # This fixture gets called in every test that
