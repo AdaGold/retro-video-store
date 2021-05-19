@@ -6,8 +6,10 @@ from flask import json, request, Blueprint, make_response, jsonify
 import os
 import requests
 
+# Create blueprints
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 '''
 CRUD routes for Customers
@@ -72,20 +74,20 @@ def delete_customer(id):
         "id":customer.id
     }, 200
 
+# Helper Function to ensure request body contians valid data
 def valid_customer_data(request_body):
     if "name" not in request_body or "postal_code" not in request_body or "phone" not in request_body:
         return False
-    # How can you validate data types for not required params?
     # elif not isinstance((request_body["name"]),str) or not isinstance((request_body["phone"]),str) or not isinstance((request_body["postal_code"]),str):
-    # elif (type(request_body["name"])) is not str or (type(request_body["phone"])) is not str or (type(request_body["postal_code"])) is not str:
-    # 
-        # return False
+    elif (type(request_body["name"])) is not str or (type(request_body["phone"])) is not str or (type(request_body["postal_code"])) is not str:
+        return False
+    if "videos_checked_out_count" in request_body and (type(request_body["videos_checked_out_count"])) is not int:
+        return False
     return True
 
 '''
 CRUD routes for Videos
 '''
-
 @videos_bp.route("", methods=["GET"])
 def get_all_videos():
     videos = Video.query.all()
@@ -148,3 +150,48 @@ def valid_video_data(request_body):
     if "title" not in request_body or "release_date" not in request_body or "total_inventory" not in request_body:
         return False
     return True
+
+'''
+POST /rentals/check-out
+POST /rentals/check-in
+GET /customers/<id>/rentals
+GET /videos/<id>/rentals
+'''
+
+@rentals_bp.route("/check-out", methods=["POST"])
+def check_out_rental():
+    request_body = request.get_json()
+
+    user_id = request_body["customer_id"]
+    rental_id = request_body["video_id"]
+
+    if user_id == None:
+        return {"error":"Please provide a customer ID"}
+    if rental_id == None:
+        return {"error":"Please provide a video ID"}
+
+    customer = Customer.query.get(user_id)
+    video = Video.query.get(rental_id)
+
+    if customer == None:
+        return {"error":"Please provide a customer ID"}
+    if rental_id == None:
+        return {"error":"Please provide a video ID"}
+        
+    '''
+    increase the customer's videos_checked_out_count by one
+    decrease the video's available_inventory by one
+    create a due date. The rental's due date is the seven days from the current date.
+    '''
+
+@rentals_bp.route("", methods=["POST"])
+def check_in_rental():
+    pass
+
+@customers_bp.route("/<id>", methods=["GET"])
+def get_customer_check_outs():
+    pass
+
+@videos_bp.route("/<id>", methods=["GET"])
+def get_customers_who_checked_out_video():
+    pass
