@@ -18,9 +18,9 @@ class Video(db.Model):
         response_body = {
             "id": self.video_id,
             "title": self.title,
+            "release_date": self.release_date,
             "total_inventory": self.total_inventory,
-            "available_inventory": self.available_inventory,
-            "release_date": self.release_date
+            "available_inventory": self.available_inventory
         }
         return response_body
 
@@ -28,6 +28,6 @@ class Video(db.Model):
         """Converts JSON into a new instance of Video"""
         self.title = json["title"]
         self.total_inventory = json["total_inventory"]
-        # self.available_inventory = json["available_inventory"]
+        self.available_inventory = json["available_inventory"]
         self.release_date = json["release_date"]
         return self

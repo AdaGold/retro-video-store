@@ -40,8 +40,8 @@ def add_customer():
     db.session.add(new_customer)
     db.session.commit()
 
-    # retrieve_customer = Customer.query.get(new_customer.customer_id)
-    return make_response(new_customer.to_json(), 201)
+    retrieve_customer = Customer.query.get(new_customer)
+    return make_response(retrieve_customer.to_json(), 201)
 
 
 @customers_bp.route("/<customer_id>", methods=["GET"])
@@ -55,7 +55,7 @@ def get_customer_by_id(customer_id):
                 "Not Found",
                 "Customer does not exist"
             ]
-        }, 400)
+        }, 404)
     return make_response(customer.to_json(), 200)
 
 
@@ -70,7 +70,7 @@ def update_customer_by_id(customer_id):
                 "Not Found",
                 "Customer to update does not exist"
             ]
-        }, 400)
+        }, 404)
 
     request_body = request.get_json()
 
@@ -143,5 +143,72 @@ def add_video():
     db.session.add(new_video)
     db.session.commit()
 
-    # retrieve_customer = Customer.query.get(new_customer.customer_id)
-    return make_response(new_video.to_json(), 201)
+    retrieve_video = Video.query.get(new_video)
+    return make_response(retrieve_video.to_json(), 201)
+
+
+@videos_bp.route("/<video_id>", methods=["GET"])
+def get_video_by_id(video_id):
+    """Gives back details about specific video."""
+    video = Video.query.get(video_id)
+
+    if video is None:
+        return make_response({
+            "errors": [
+                "Not Found",
+                "Video does not exist"
+            ]
+        }, 404)
+    return make_response(video.to_json(), 200)
+
+
+@videos_bp.route("/<video_id>", methods=["PUT"])
+def update_video_by_id(video_id):
+    """Updates and returns details about specific video."""
+    video = Video.query.get(video_id)
+
+    if video is None:
+        return make_response({
+            "errors": [
+                "Not Found",
+                "Video to update does not exist"
+            ]
+        }, 404)
+
+    request_body = request.get_json()
+
+    if not (
+            "total_inventory" in request_body and "available_inventory" in request_body):
+        return make_response({
+            "errors": [
+                "Bad Request",
+                "'total_inventory' is required",
+                "'available_inventory' is required"
+            ]
+        }, 400)
+
+    video = video.from_json(request_body)
+    db.session.commit()
+    retrieve_video = video.query.get(video_id)
+
+    return make_response(retrieve_video.to_json(), 200)
+
+
+@videos_bp.route("/<video_id>", methods=["DELETE"])
+def delete_video_by_id(video_id):
+    """Deletes a specific video."""
+    video = Video.query.get(video_id)
+
+    if video is None:
+        return make_response({
+            "errors": [
+                "Not Found",
+                "Video to delete does not exist"
+            ]
+        }, 404)
+
+    db.session.delete(video)
+    db.session.commit()
+    # return ({"id": video_id, "details": 'Video has been successfully
+    # deleted'}, 200)
+    return ({"id": video_id}, 200)
