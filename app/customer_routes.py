@@ -77,23 +77,17 @@ def update_customer(id):
     
     form_data = request.get_json()
     
-       # validate request body 
-    if not form_data or not form_data["name"] or not form_data["postal_code"] or not form_data["phone"]:
-        return Response("", 400)
-    # if form_data == None:
-    #     return jsonify("", 400)
-    
-    # if form_data["name"] == None or form_data["postal_code"] == None or form_data["phone"] == None:
-    #     return jsonify("", 404)
+    if (form_data != None and "name" in form_data.keys() and "postal_code" in form_data and "phone" in form_data):
         
-    customer.name = form_data["name"]
-    customer.postal_code = form_data["postal_code"]
-    customer.phone = form_data["phone"]
+        customer.name = form_data["name"]
+        customer.postal_code = form_data["postal_code"]
+        customer.phone = form_data["phone"]
+        
+        db.session.commit()
+        
+        return customer.details_of_customer_response(), 200
     
-    db.session.commit()
-    
-    return customer.details_of_customer_response(), 200
-    
+    return jsonify(""), 400 
 
 #DELETE a customer
 @customer_bp.route("/<id>", methods=["DELETE"], strict_slashes=False)
@@ -116,3 +110,6 @@ def delete_customer(id):
 def get_videos_checkedout(id):
     pass
 
+
+#OPTIONAL ENHANCEMENTs 
+#GET /customers/<id>/history

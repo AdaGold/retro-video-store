@@ -18,7 +18,7 @@ class Video(db.Model):
                     "title": self.title,
                     "release_date": self.release_date,
                     "total_inventory": self.total_inventory,
-                    "available_inventory": self.calculate_available_inventory()
+                    #"available_inventory": self.calculate_available_inventory()
                 }
   
 #     customer_vids = db.relationship('customer_vids', secondary=association_table, backref=db.backref('videos', lazy=True))

@@ -108,3 +108,7 @@ def delete_video(id):
 @video_bp.route("/<id>/rentals", methods=["GET"], strict_slashes=False)
 def get_customers_with_videos(id):
     pass
+
+
+#OPTIONAL ENHANCEMENTs 
+#GET /videos/<id>/history

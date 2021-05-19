@@ -11,3 +11,9 @@ import json
 rental_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 
+
+#OPTIONAL ENHANCEMENTS
+#GET /rentals/overdue
+
+
+
