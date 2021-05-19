@@ -69,7 +69,15 @@ def update_customer(customer_id):
     if customer is None:
         return ("", 404)
     
+    if not is_int(customer_id):
+        return ("", 400)
+    
     form_data = request.get_json()
+    
+    if ("name" not in  form_data.keys() or
+        "postal_code" not in form_data.keys() or
+        "phone" not in form_data.keys()):
+        return {"error" : "Invalid data"}, 400
 
     customer.name = form_data["name"]
     customer.postal_code = form_data["postal_code"]
