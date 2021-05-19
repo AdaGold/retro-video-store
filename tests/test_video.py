@@ -53,3 +53,19 @@ def test_get_customer_by_id(client, one_video):
     assert response_body["title"] == "Howls Moving Castle"
     assert response_body["total_inventory"] == 10
     assert response_body["available_inventory"] == 10
+
+
+def test_update_video(client, one_video):
+    #Act
+    response = client.put("/videos/1", json={
+        "title": "Updated Title name",
+        "release_date": "2005-11-01",
+        "total_inventory": 11,
+    })
+    response_body = response.get_json()
+
+    #Assert
+    assert response.status_code == 200
+    assert response_body["title"] == "Updated Title name"
+    assert response_body["total_inventory"] == 11
+    assert response_body["id"] == 1

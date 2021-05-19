@@ -58,3 +58,28 @@ def get_video_by_id(video_id):
         return ("", 400)
     
     return video.to_json(), 200
+
+@videos_bp.route("/<video_id>", methods=["PUT"], strict_slashes=False)
+def update_video(video_id):
+    video = Video.query.get(video_id)
+
+    if video is None:
+        return ("", 404)
+    
+    if not is_int(video_id):
+        return ("", 400)
+
+    form_data = request.get_json()
+
+    if ("title" not in  form_data.keys() or
+        "release_date" not in form_data.keys() or
+        "total_inventory" not in form_data.keys()):
+        return {"error" : "Invalid data"}, 400
+
+    video.title = form_data["title"]
+    video.release_date = form_data["release_date"]
+    video.total_inventory = form_data["total_inventory"]
+
+    db.session.commit()
+
+    return video.to_json(), 200
