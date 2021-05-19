@@ -18,13 +18,16 @@ def create_app(test_config=None):
             "SQLALCHEMY_DATABASE_URI")
 
     from app.models.customer import Customer
-    #from app.models.video import Video
+    from app.models.video import Video
 
     db.init_app(app)
     migrate.init_app(app, db)
 
     from .routes import customer_bp
     app.register_blueprint(customer_bp)
+
+    from .routes import video_bp
+    app.register_blueprint(video_bp)
 
 
     return app
