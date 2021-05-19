@@ -11,9 +11,9 @@ class Video(db.Model):
 
     def to_json(self):
         return {
-        "id": self.id,
+        "id": int(self.id),
         "title": self.title,
         "release_date": self.release_date,
-        "total_inventory": self.total_inventory,
-        "available_inventory": self.available_inventory
+        "total_inventory": self.total_inventory
+        #"available_inventory": self.available_inventory
         }

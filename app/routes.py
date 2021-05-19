@@ -45,7 +45,7 @@ def create_customers():
             phone=request_body["phone"])
     db.session.add(new_customer)
     db.session.commit()
-    return ({"id":f"{new_customer.id}"}, 201) # id in the dict
+    return ({"id":new_customer.id}, 201) 
 
 
 @customers_bp.route("/<customer_id>", methods=["GET"])
@@ -81,9 +81,8 @@ def delete_customer(customer_id):
     if customer:
         db.session.delete(customer)
         db.session.commit()
-        return ({"id":f"{customer_id}"}, 200)
+        return ({"id":int(customer_id)}, 200)
     return no_customer_found(customer_id)
-
 
 
 
@@ -114,14 +113,14 @@ def create_videos():
     total_inventory=request_body["total_inventory"])
     db.session.add(new_video)
     db.session.commit()
-    return ({"id":f"{new_video.id}"}, 201) # id in dict
+    return ({"id":new_video.id}, 201) 
 
 
 @videos_bp.route("/<video_id>", methods=["GET"])
 def get_one_video(video_id):
     video = Video.query.get(video_id)
     if video:
-        return jsonify(video.to_json(), 200) #
+        return make_response(video.to_json(), 200) 
     return no_video_found(video_id)
 
 @videos_bp.route("/<video_id>", methods=["PUT"])
@@ -129,17 +128,17 @@ def update_video(video_id):
     video = Video.query.get(video_id)
     if video:
         updated_info = request.get_json()
-        if not "title" in updated_info or not updated_info.get("title"):   #from here
+        if not "title" in updated_info or not updated_info.get("title"): 
             return bad_request()
         if not "release_date" in updated_info or not updated_info.get("release_date"):
             return bad_request()
         if not "total_inventory" in updated_info or not updated_info.get("total_inventory"):
-            return bad_request()    #to here
+            return bad_request()   
         video.title = updated_info["title"]
         video.release_date = updated_info["release_date"]
         video.total_inventory = updated_info["total_inventory"]
         db.session.commit()
-        return make_response(video.to_json(), 200) #
+        return make_response(video.to_json(), 200) 
     return no_video_found(video_id)
 
 
@@ -149,5 +148,5 @@ def delete_video(video_id):
     if video:
         db.session.delete(video)
         db.session.commit()
-        return {"id":f"{video_id}"}, 200
+        return {"id":int(video_id)}, 200
     return no_video_found(video_id)
