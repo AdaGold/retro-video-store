@@ -73,7 +73,7 @@ def update_customer(customer_id):
         return ("", 400)
     
     form_data = request.get_json()
-    
+
     if ("name" not in  form_data.keys() or
         "postal_code" not in form_data.keys() or
         "phone" not in form_data.keys()):
@@ -86,3 +86,19 @@ def update_customer(customer_id):
     db.session.commit()
 
     return customer.to_json(), 200
+
+
+@customers_bp.route("/<customer_id>", methods=["DELETE"], strict_slashes=False)
+def delete_customer(customer_id):
+    customer = Customer.query.get(customer_id)
+
+    if customer is None:
+        return ("", 404)
+    
+    if not is_int(customer_id):
+        return ("", 400)
+    
+    db.session.delete(customer)
+    db.session.commit()
+
+    return {f"id: {customer.customer_id}"},200
