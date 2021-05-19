@@ -38,18 +38,21 @@ def create_customers():
         return jsonify(customers_response)
 
 
-@customers_bp.route("/<customer_id>", methods=["GET","PUT","DELETE","PATCH"], strict_slashes = False)
+@customers_bp.route("/<int:customer_id>", methods=["GET","PUT","DELETE"], strict_slashes = False)
 def a_single_customer(customer_id):
     customer = Customer.query.get(customer_id)
-
+    
     if customer is None:
-        return make_response(" ", 404)
+        return make_response({"details": "Invalid data"}, 404)
     
     if request.method == "GET":
         return make_response(customer.to_json(),200)
 
     elif request.method == "PUT":
+        
         form_data = request.get_json()
+        if "name" not in form_data or "postal_code" not in form_data or "phone" not in form_data or bool(form_data) is False: 
+            return ({"details":"Invalid data"},400)
         customer.name = form_data["name"]
         customer.phone = form_data["phone"]
         customer.postal_code = form_data["postal_code"]
@@ -61,7 +64,7 @@ def a_single_customer(customer_id):
         db.session.delete(customer)
         db.session.commit()
 
-        return make_response({id:customer.customer_id})
+        return make_response({"id":customer_id}, 200)
 
 
 
@@ -71,7 +74,7 @@ def create_videos():
     if request.method == "POST":
         request_body = request.get_json()
         
-        if "title" not in request_body:
+        if "title" not in request_body or "release_date" not in request_body or "total_inventory" not in request_body:
             return ({"details":"Invalid data"},400)
         else:
             video = Video(title=request_body["title"],
@@ -92,18 +95,20 @@ def create_videos():
         return jsonify(videos_response)
 
 
-@customers_bp.route("/<video_id>", methods=["GET","PUT","DELETE","PATCH"], strict_slashes = False)
-def a_single_video(customer_id):
-    video = Video.query.get(customer_id)
+@videos_bp.route("/<int:video_id>", methods=["GET","PUT","DELETE"], strict_slashes = False)
+def a_single_video(video_id):
+    video = Video.query.get(video_id)
 
     if video is None:
-        return make_response(" ", 404)
+        return make_response({"details": "Invalid data"}, 404)
     
     if request.method == "GET":
         return make_response(video.video_to_json(),200)
 
     elif request.method == "PUT":
         form_data = request.get_json()
+        if "name" not in form_data or "postal_code" not in form_data or "phone" not in form_data or bool(form_data) is False: 
+            return ({"details":"Invalid data"},400)
         video.name = form_data["title"]
         video.total_inventory = form_data["total_inventory"]
         
@@ -112,7 +117,8 @@ def a_single_video(customer_id):
         return make_response(video.video_to_json(),200)
 
     elif request.method == "DELETE":
+
         db.session.delete(video)
         db.session.commit()
 
-        return make_response({id:video.video_id})
+        return make_response({"id":video_id}, 200)
