@@ -36,9 +36,9 @@ def create_customer():
         )
         db.session.add(new_customer)
         db.session.commit()
-        # customer_response = {{new_customer.customer_id}}
-        # return jsonify(customer_response), 201
-        return jsonify(new_customer.to_json()), 201
+        customer_response = {"id": new_customer.customer_id}
+        return jsonify(customer_response), 201
+        # return jsonify(new_customer.to_json()), 201
     return make_response({"details": "Invalid data: you must include a name, postal code, and phone number"}, 400)
 
 
@@ -62,7 +62,8 @@ def update_customer(customer_id):
         customer.phone = form_data["phone"]
         db.session.commit()
         return jsonify(customer.to_json()), 200
-    return make_response("Bad Request", 400)
+        # JSON DICTIONARY !why dis only one
+    return make_response({"error": "Bad Request"}, 400)
 
 
 @customers_bp.route("/<customer_id>", methods=["DELETE"], strict_slashes=False)
@@ -72,9 +73,9 @@ def delete_customer(customer_id):
         return make_response("Customer does not exist", 404)
     db.session.delete(customer)
     db.session.commit()
-    return jsonify(customer.to_json()), 200
-    #     customer_response = {customer.customer_id}
-    # return jsonify(customer_response), 200
+    # return jsonify(customer.to_json()), 200
+    customer_response = {"id": customer.customer_id}
+    return jsonify(customer_response), 200
 
 
 # --------------------------
@@ -99,9 +100,9 @@ def create_video():
         )
         db.session.add(new_video)
         db.session.commit()
-        # video_response = {{new_video.video_id}}
-        # return jsonify(video_response), 201
-        return jsonify(new_video.to_dict()), 201
+        video_response = {"id": new_video.video_id}
+        return jsonify(video_response), 201
+        # return jsonify(new_video.to_dict()), 201
     return make_response({"details": "Invalid data: you must include a title, release date, and total inventory"}, 400)
 
 
@@ -135,6 +136,6 @@ def delete_video(video_id):
         return make_response("Video does not exist", 404)
     db.session.delete(video)
     db.session.commit()
-    return jsonify(video.to_dict()), 200
-    # video_response = {video.video_id}
-    # return jsonify(video_response), 200
+    # return jsonify(video.to_dict()), 200
+    video_response = {"id": video.video_id}
+    return jsonify(video_response), 200
