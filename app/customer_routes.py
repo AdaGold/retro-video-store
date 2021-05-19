@@ -103,10 +103,4 @@ def delete_customer(id):
         db.session.delete(customer)
         db.session.commit()
         
-        return jsonify(id=id),200
-    
-
-        
-    
-
-        
+        return jsonify(id=id), 200

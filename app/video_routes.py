@@ -41,14 +41,14 @@ def get_specific_video(id):
         return Response ("" , status=404)
     
     if video:
-        return video.video_details(), 200
+        return make_response(video.video_details(), 200)
     
 
 #POST /video details
 @video_bp.route("", methods=["POST"], strict_slashes=False)
 def add_videos():
     
-    request_body = request.video_details()
+    request_body = request.get_json()
     
     if ("title" not in request_body or 
         "release_date" not in request_body or 
@@ -57,8 +57,8 @@ def add_videos():
         return jsonify(details="Bad request"),400
     
     new_video = Video(title=request_body["title"],
-                            release_date=request_body["release_date"],
-                            total_inventory=request_body["total_inventory"])
+                        release_date=request_body["release_date"],
+                        total_inventory=request_body["total_inventory"])
     
     db.session.add(new_video)
     db.session.commit()
@@ -72,29 +72,21 @@ def update_video(id):
     
     video = Video.query.get(id)
     
-    if ("title" not in video or 
-        "total_inventory" not in video or 
-        "release_date" not in video or
-        "available_inventory" not in video):
-        
-        return jsonify(details="bad request"),404
-    
-    if video == None:
+    if video == None or not video:
         return Response("", status=404)
     
-    if not video:
-        return Response("", status=404)
+
+    form_data = request.get_json()
     
-    if video:
-        form_data = request.details_of_customer_response()
-        
-        video.title = form_data["title"]
-        video.release_date = form_data["release_date"]
-        video.total_inventory = form_data["total_inventory"]
-        
-        db.session.commit()
-        
-        return video.video_details(), 200
+    if not form_data or not form_data["title"] or not form_data["release_date"] or not form_data["total_inventory"]:
+        return Response("", 400)
+    video.title = form_data["title"]
+    video.release_date = form_data["release_date"]
+    video.total_inventory = form_data["total_inventory"]
+    
+    db.session.commit()
+    
+    return video.video_details(), 200
     
 
 #DELETE a video
@@ -110,5 +102,5 @@ def delete_video(id):
         db.session.delete(video)
         db.session.commit()
         
-        return jsonify(id=str(id)), 200
+        return jsonify(id=id), 200
     
