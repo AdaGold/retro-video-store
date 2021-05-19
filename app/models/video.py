@@ -1,10 +1,10 @@
 from flask import current_app
 from app import db
+from sqlalchemy import DateTime
 from app.models.customer_video_join import association_table  
 
 def get_total_inventory(context):
     return context.get_current_parameters()['total_inventory']
-
 
 class Video(db.Model):
     __tablename__ = 'right'
@@ -27,3 +27,4 @@ class Video(db.Model):
             "total_inventory": self.total_inventory,
             "available_inventory": self.available_inventory
         }
+        return video

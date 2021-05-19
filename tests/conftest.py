@@ -58,8 +58,27 @@ def one_video(app):
     v = Video(title = "Howls Moving Castle",
             release_date = "2005-07-17",
             total_inventory = 10,
-            current_inventory = 10)
+            available_inventory = 10)
 
+    db.session.add(v) 
+    db.session.commit()
+
+
+@pytest.fixture
+def two_videos(app):
+    v1 = Video(title = "Howls Moving Castle",
+            release_date = "2005-07-17",
+            total_inventory = 10,
+            available_inventory = 10)
+    
+    v2 = Video(title = "10 Things I Hate About You",
+            release_date = "1999-03-31",
+            total_inventory = 3,
+            available_inventory = 3)
+
+    db.session.add(v1)
+    db.session.add(v2)
+    db.session.commit()
 
 # # This fixture gets called in every test that
 # # references "one_task_belongs_to_one_goal"
