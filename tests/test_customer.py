@@ -71,4 +71,15 @@ def test_update_customer(client, one_customer):
     assert response_body["videos_checked_out_count"] == 0
     assert response_body["phone"] == "Updated phone number"
     assert response_body["id"] == 1
+
+def test_delete_customer(client, one_customer):
+    #Act
+    response = client.delete("/customers/1")
+    response_body = response.get_json()
+
+    #Assert
+    assert response.status_code == 200
+    assert response_body == {"id": 1}
+    assert Customer.query.get(1) == None
+
     

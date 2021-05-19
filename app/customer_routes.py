@@ -101,4 +101,4 @@ def delete_customer(customer_id):
     db.session.delete(customer)
     db.session.commit()
 
-    return {f"id: {customer.customer_id}"},200
+    return {"id": customer.customer_id},200
