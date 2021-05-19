@@ -12,7 +12,7 @@ from datetime import datetime
 class Customer(db.Model):
     customer_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
-    postal_code = db.Column(db.String)
+    postal_code = db.Column(db.Integer)
     phone = db.Column(db.String) 
     register_at = db.Column(db.DateTime, nullable=True)
     videos_checked_out_count = db.Column(db.Integer, server_default=db.text("0"))
