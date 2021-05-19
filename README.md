@@ -33,7 +33,54 @@ The full functionality is spelled out further in the "Project Directions" files 
 
 ## Postman Tests instead of Pytest
 
-This project is designed to be more open ended than anything you've written in the past.  To that end, we will not be giving you Pytest tests like we have on previous projects.  We invite you to write your own tests, using the tests from Task List as a framework, but writing tests is not a required part of the project.  We will provide a suite of Postman tests, which are scripts that can be run inside of Postman to test your API. 
+This project is designed to be more open ended than anything you've written in the past.  To that end, we will not be giving you Pytest tests like we have on previous projects.  We invite you to write your own tests, using the tests from Task List as a framework, but writing tests is not a required part of the project.  We will provide a suite of Postman (Smoke) tests, which are scripts that can be run inside of Postman to test your API. 
+
+### Smoke Tests
+
+#### What are Smoke Tests?
+APIs are made to be used in combination with other apps. Think back to other projects where we've used an API. Wouldn't it be nice if we had tests that made sure an API was working as intended?
+
+To this end, we have provided a set of [smoke tests](http://softwaretestingfundamentals.com/smoke-testing/) written in Postman to exercise all the endpoints.
+
+Smoke tests are a *type of automated test.* The responsibility of smoke tests is to use more language/tool-agnostic set of test cases and to verify if something works very broadly. They are written to be fast and to check the most important features of an app.
+
+Our smoke tests are *not* written in Python. They are formatted in JSON, and we will use Postman to run them (and not `pytest`.) This layer of testing helps us test that the API works, without relying on Python's Pytest.
+
+<details>
+  <summary>Want a little bit more explanation about smoke tests, unit tests, integration tests?</summary>
+
+  The tests we've been using before this are *unit tests.* Unit tests are focused on testing small, detailed features within the same code base as the app. Our unit tests are usually written in the same language as our implementation code.
+
+  We can imagine that unit tests feel like a detailed checklist that helps us verify that our code is correct-- we have lab coats, we observe our app in the labratory, and we check things one-by-one off a clipboard.
+
+  Smoke tests are intentionally written to be more vague and loose. We can also think of them as a kind of [*integration test*](https://en.wikipedia.org/wiki/Integration_testing), or tests that check to make sure one or more systems are correct, from an "outside perspective."
+
+  Our smoke tests are integration tests because they are run in Postman, and they will not be detailed about the Flask app's implementation. (They don't even are that our app was written with Flask or Python.) They will only check that for a given request, it comes back with a specific response.
+</details>
+
+### How do we use Smoke Tests?
+
+The smoke tests will verify that your API looks correct to the outside world, by sending actual HTTP requests to your running server and checking the results. They test things like:
+
+- Did I get a success response for a valid request?
+- Did the API return JSON?
+- Does the JSON contain the expected property names?
+
+The smoke tests live in the [test folder](postman-tests). To run them:
+
+#### Import the Smoke Tests
+
+1. Open Postman
+1. Click `Import` in the top left
+1. Drag-and-drop the file into the box
+1. In the left sidebar, click on the `Collections` tab
+
+#### Run the Smoke Tests
+1. Run your server. You'll need a running server open before Postman can reach any of your endpoints.
+1. Explore! There are ways to run the whole collection of tests and ways to run each individual test.
+1. To run a collection of tests:
+    1. Click the blue `Run` button. This will launch the collection runner.
+    1. In the collection runner, scroll down in the center pane and click the blue `Start Test` button
 
 ## How to Complete and Submit
 
