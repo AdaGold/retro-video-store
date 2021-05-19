@@ -16,8 +16,8 @@ class Video(db.Model):
             video_dictionary = { "id": self.video_id, 
                                     "title": self.video_title, 
                                     "release_date": self.release_date, 
-                                    "total_inventory": self.total_inventory
-                                    # "available_inventory": self.available_inventory
+                                    "total_inventory": self.total_inventory,
+                                    "available_inventory": self.available_inventory
                                     }
             return video_dictionary
 

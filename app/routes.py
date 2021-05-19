@@ -1,9 +1,10 @@
 from flask import Blueprint
 from app.models.Videos import Video 
 from app.models.Customers import Customer
+from app.models.Rentals import Rental
 from flask import Blueprint, make_response, jsonify, request
 from app import db 
-from datetime import datetime
+from datetime import datetime, date, timedelta
 import requests 
 import os 
 
@@ -18,6 +19,10 @@ def return_404():
 
 def update_customer_from_json(body):
     pass
+
+def get_due_date():
+    due_date = date.today() + timedelta(days=7)
+    return due_date
 
 
 @customer_bp.route("", methods=["GET"])
@@ -72,7 +77,7 @@ def update_single_customer(customer_id):
 def post_new_customer():
     request_body = request.get_json()
     try:
-        new_customer = Customer(customer_name=request_body["name"], customer_zip=request_body["postal_code"], customer_phone=request_body["phone"], register_at=datetime.now(), videos_checked_out_count=0)
+        new_customer = Customer(customer_name=request_body["name"], customer_zip=request_body["postal_code"], customer_phone=request_body["phone"], register_at=datetime.now(), videos_checked_out_count=5)
     except KeyError:
         return make_response({"That didn't work.": "Invalid data or format."}, 400)
     db.session.add(new_customer)
@@ -93,6 +98,25 @@ def delete_single_customer(customer_id):
 
     return make_response({"id": customer.customer_id}, 200)
 
+@customer_bp.route("/<customer_id>/rentals", methods=["GET"])
+def get_customers_rentals(customer_id):
+
+    customer_info = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
+            .join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id == customer_id).all()
+    if customer_info is None:
+        return return_404()
+    whatever_list = []
+    for whatever in customer_info:
+        whatever = dict(whatever)
+        whatever_list.append(whatever)
+
+    return whatever_list, 200
+
+
+
+
+
+
 
 @video_bp.route("", methods=["GET"])
 def get_all_videos():
@@ -106,7 +130,7 @@ def get_all_videos():
 def create_new_video():
     request_body = request.get_json()
     try:
-        new_video = Video(video_title=request_body["title"], release_date=request_body["release_date"], total_inventory=request_body["total_inventory"])
+        new_video = Video(video_title=request_body["title"], release_date=request_body["release_date"], total_inventory=request_body["total_inventory"], available_inventory=1)
 
     except KeyError:
         return make_response({"That didn't work.": "Invalid data or format."}, 400)
@@ -163,3 +187,51 @@ def delete_all_videos():
     db.session.commit()
 
     return make_response("All of the videos in the database have been deleted.", 200)
+
+@rental_bp.route("/check-out", methods=["POST"])
+def check_out_video(): 
+    request_body = request.get_json()
+    customer_id = request_body["customer_id"]
+    video_id = request_body["video_id"]
+
+    customer = Customer.query.get(customer_id)
+    video = Video.query.get(video_id)
+
+    if customer is None or video is None:
+        return return_404()
+
+    if video.available_inventory == 0:
+        return make_response({"Error":"We don't have any of that video in stock."}, 400)
+    else:
+        new_rental = Rental(customer_id=customer_id, video_id=video_id)
+
+        customer.videos_checked_out_count += 1
+        video.available_inventory -= 1
+        new_rental.due_date = get_due_date()
+
+    db.session.add(new_rental)
+    db.session.commit()
+    
+    return make_response({"customer_id": customer.customer_id, 
+                        "video_id": video.video_id, 
+                        "due_date": new_rental.due_date,
+                        "videos_checked_out_count": customer.videos_checked_out_count, 
+                        "available_inventory": video.available_inventory}, 200)
+
+
+# @rental_bp.route("/check-in", methods=["POST"])
+# def check_in_video():
+
+#     request_body = request.get_json
+#     customer_id = request_body["customer_id"]
+
+#     customer = Customer.query.get(customer_id)
+
+#     if customer is None:
+#         return return_404()
+    
+    
+    
+
+
+

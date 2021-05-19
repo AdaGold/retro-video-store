@@ -13,3 +13,10 @@ class Rental(db.Model):
     customer = relationship("Customer", back_populates="videos")
     video = relationship("Video", back_populates="customers")
 
+
+    def to_json(self):
+        video_rental = {"release_date": self.video.release_date, 
+                        "title": self.video.title, 
+                        "due_date": self.due_date
+        }
+        return video_rental
