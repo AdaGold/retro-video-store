@@ -36,8 +36,8 @@ def create_app(test_config=None):
     from .routes import retro_video_store_bp
     app.register_blueprint(retro_video_store_bp)
 
-    # from .routes import video_bp
-    # app.register_blueprint(video_bp)
+    from .routes import video_bp
+    app.register_blueprint(video_bp)
 
 
     # from .routes import rental_bp

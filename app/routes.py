@@ -10,6 +10,8 @@ import os
 
 
 retro_video_store_bp = Blueprint("Customer",__name__)
+video_bp = Blueprint("videos", __name__, url_prefix="/videos")
+
 
 @retro_video_store_bp.route("/customers", methods=["GET"])
 def retrieve_all_customers(): 
@@ -50,12 +52,16 @@ def retrieve_one_customer(customer_id):
     if customer is None: 
         return make_response("", 404)
 
+
     if request.method == "GET":   
-        return jsonify({
-                "customer": customer.as_json()
-        }) 
+        return jsonify(customer.as_json()) 
+
     elif request.method == "PUT": 
         form_data = request.get_json()
+
+        for customer_attribute in ["name", "postal_code","phone"]: 
+            if customer_attribute not in form_data:
+                return make_response(jsonify({}), 400)
 
         customer.name = form_data["name"]
         customer.postal_code = form_data["postal_code"]
@@ -63,120 +69,84 @@ def retrieve_one_customer(customer_id):
 
 
         db.session.commit()
-        
-        return jsonify({customer.as_json()
-        })
 
-#     elif request.method == "DELETE":
-#         db.session.delete(customer)
-#         db.session.commit()
-#         return jsonify (
-#         {
-#             "details": (f{task.id} "{task.title}" successfully deleted')
-#         })
-                
-    
+        return jsonify(customer.as_json())
+
+    elif request.method == "DELETE":
+        db.session.delete(customer)
+        db.session.commit()
+        return jsonify (
+        {
+            "id": customer.id
+        })          
 
 
-
-
-# video_bp = Blueprint("videos", __name__, url_prefix="/videos")
-# @videos_bp.route("", methods=["POST"])
-# def create_a_video(): 
-#     request_body = request.get_json()
-
-#     if not ("title" in request_body):        
-#          return make_response(jsonify({
-#             "details": "Invalid data"
-#         }), 400)
         
 
-#     new_goal = Goal(title=request_body["title"])
+#Routes for Videos
+
+@video_bp.route("", methods=["GET"])
+def retrieve_all_videos():
+    videos = Video.query.all()
+    return jsonify([
+        video.to_json() for video in videos
+ ])
+
+
+
+@video_bp.route("/<video_id>", methods=["GET", "PUT", "DELETE"])
+def retrieve_one_video(video_id): 
+    video = Video.query.filter_by(id=video_id).first()
+
+    if video is None: 
+        return make_response("", 404)
+    
+    if request.method == "GET":
+       return jsonify( video.to_json() 
+        )
+
+    elif request.method == "PUT": 
+        form_data = request.get_json()
+
+        video.title = form_data["title"]
+        video.release_date = form_data["release_date"]
+        video.total_inventory = form_data["total_inventory"]
+
+    
+        db.session.commit()
         
-#     db.session.add(new_goal)
-#     db.session.commit()
+        return jsonify(video.to_json())
 
-
-#     response = {
-#             "goal": new_goal.to_json()
-#         }
-#     return make_response(jsonify(response), 201)
-
-# @goals_bp.route("", methods=["GET"])
-# def retrieve_all_goals():
-  
-#     if "sort" in request.args and request.args["sort"] == "title": 
-#     # if "sort" in request.args == "title": # always false, because it reduces to `if True == "title"`
-#         goals = Goal.query.order_by(Goal.title.asc()).all()
-    
-#     else: 
-#         goals = Goal.query.all()
-
-#     return jsonify([goal.to_json() for goal in goals])
-
-
-
-
-# @goals_bp.route("/<goal_id>", methods=["GET", "PUT", "DELETE"])
-# def retrieve_one_goals_tasks(goal_id): 
-#     goal = Goal.query.filter_by(goal_id=goal_id).first()
-
-#     if goal is None: 
-#         return make_response("", 404)
-    
-#     if request.method == "GET":
-#        return jsonify(
-#             {"goal":goal.to_json() }
-#         )
-
-#     elif request.method == "PUT": 
-#         form_data = request.get_json()
-
-#         goal.title = form_data["title"]
-    
-#         db.session.commit()
+    elif request.method == "DELETE":
+        db.session.delete(video)
+        db.session.commit()
         
-#         return jsonify({ "goal": goal.to_json() })
+        return jsonify (
+        {
+            "id": video.id 
+        })   
 
-#     elif request.method == "DELETE":
-#         db.session.delete(goal)
-#         db.session.commit()
-#         return jsonify (
-#         {
-#             "details": (f'Goal {goal.goal_id} "{goal.title}" successfully deleted')
-#         })
-
-
-# @goals_bp.route("/<goal_id>/tasks", methods=["POST"])
-# def send_task_ids_goal(goal_id): 
-  
-
-#     request_body = request.get_json()
-#     task_ids = request_body['task_ids']
-#     for task_id in task_ids:
-#         task = Task.query.filter_by(id = task_id).first()
-#         task.goal_id = goal_id
-
-#     db.session.commit()
-#     response = {
-#                 "id": int(goal_id),
-#                 "task_ids": task_ids,
-#             }
-#     return make_response(jsonify(response), 200)
-
-# @goals_bp.route("/<goal_id>/tasks", methods=["GET"])
-# def retrieve_one_task(goal_id): 
-#     goal = Goal.query.filter_by(goal_id=goal_id).first()
-#     tasks = Task.query.filter_by(goal_id=goal_id).all()
+        
     
-#     if goal is None: 
-#         return make_response("", 404)
+@video_bp.route("", methods=["POST"])
+def create_a_video(): 
+    request_body = request.get_json()
+
+    for video_attribute in ["title", "total_inventory", "release_date"]: 
+        if not (video_attribute in request_body): 
+            return jsonify({}), 400 
+
+    new_video = Video.from_json(request_body)  
+    db.session.add(new_video)
+    db.session.commit()
 
 
-#     response = goal.to_json() # creates a dictionary with id and title entries
-#     response["tasks"] = [task.as_json() for task in tasks] # adds a third entry to that dictionary
+    response = {
+             "id": new_video.id 
 
+               }
+    return make_response(jsonify(response), 201)
+        
+   
 
-
-#     return make_response(jsonify(response), 200)
     
