@@ -1,8 +1,8 @@
-"""Created two models
+"""Created Rental model
 
-Revision ID: c8fcb667f60e
+Revision ID: 08c8da093a22
 Revises: 
-Create Date: 2021-05-18 15:53:41.643905
+Create Date: 2021-05-18 21:09:44.090274
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'c8fcb667f60e'
+revision = '08c8da093a22'
 down_revision = None
 branch_labels = None
 depends_on = None
