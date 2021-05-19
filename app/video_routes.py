@@ -83,3 +83,19 @@ def update_video(video_id):
     db.session.commit()
 
     return video.to_json(), 200
+
+
+@videos_bp.route("/<video_id>", methods=["DELETE"], strict_slashes=False)
+def delete_video(video_id):
+    video = Video.query.get(video_id)
+
+    if video is None:
+        return ("", 404)
+    
+    if not is_int(video_id):
+        return ("", 400)
+    
+    db.session.delete(video)
+    db.session.commit()
+
+    return {"id": video.video_id},200

@@ -69,3 +69,14 @@ def test_update_video(client, one_video):
     assert response_body["title"] == "Updated Title name"
     assert response_body["total_inventory"] == 11
     assert response_body["id"] == 1
+
+
+def test_delete_video(client, one_video):
+    #Act
+    response = client.delete("/videos/1")
+    response_body = response.get_json()
+
+    #Assert
+    assert response.status_code == 200
+    assert response_body == {"id": 1}
+    assert Video.query.get(1) == None
