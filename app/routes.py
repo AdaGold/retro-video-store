@@ -3,11 +3,14 @@ from app import db
 from flask import jsonify
 from .models.customer import Customer
 from .models.video import Video
+from .models.rental import Rental
+
 import requests
 import os
 
 customer_bp = Blueprint("customers", __name__, url_prefix="/customers")
 video_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rental_bp = Blueprint("rental", __name__, url_prefix="/rentals")
 
 
 @customer_bp.route("", methods=["POST"], strict_slashes=False)
@@ -129,3 +132,18 @@ def delete_video(video_id):
         "id": video.video_id
         }), 200
     return "", 404
+
+@customer_bp.route("", methods=["POST"], strict_slashes=False)
+def add_customer():
+    request_body = request.get_json()
+    if "name" not in request_body or "postal_code" not in request_body or "phone" not in request_body:
+        return jsonify({
+        "details": "Invalid data"
+        }), 400
+    new_customer = Customer(name=request_body["name"],
+                            postal_code=request_body["postal_code"],
+                            phone=request_body["phone"])
+    
+    db.session.add(new_customer)
+    db.session.commit()
+    return new_customer.to_json(), 201
