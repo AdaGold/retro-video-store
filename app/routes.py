@@ -36,17 +36,31 @@ def post_customers():
 
     return make_response(new_customer.to_dict(), 201)
 
-@customers_bp.route("/<id>", methods=["GET"])
+@customers_bp.route("/<active_id>", methods=["GET"])
 def get_customer(active_id):
-    pass
+    customer = Customer.query.get_or_404(active_id)
+    return make_response(customer.to_dict(), 200)
 
-@customers_bp.route("/<id>", methods=["PUT"])
+@customers_bp.route("/<active_id>", methods=["PUT"])
 def put_customer(active_id):
-    pass
+    customer = Customer.query.get_or_404(active_id)
+    request_body = request.get_json()
+    try:
+        customer.name = request_body["name"]
+        customer.postal_code = request_body["postal_code"]
+        customer.phone = request_body["phone"]
+    except KeyError:
+        return make_response({"details" : "Invalid data"}, 400)
 
-@customers_bp.route("/<id>", methods=["DELETE"])
+    db.session.commit()
+    return make_response(customer.to_dict(), 200)
+
+@customers_bp.route("/<active_id>", methods=["DELETE"])
 def delete_customer(active_id):
-    pass
+    customer = Customer.query.get_or_404(active_id)
+    db.session.delete(customer)
+    db.session.commit()
+    return ({"id" : int(active_id)}, 200)
 
 # ===== Videos ======================================================
 videos_bp = Blueprint("video", __name__, url_prefix="/videos")

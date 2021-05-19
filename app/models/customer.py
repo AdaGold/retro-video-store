@@ -19,7 +19,7 @@ class Customer(db.Model):
             "id" : self.id,
             "name" : self.name,
             "phone" : self.phone,
-            "register_at" : self.register_at,
+            "registered_at" : self.register_at,
             "postal_code" : self.postal_code,
             "videos_checked_out_count" : 0
         }
