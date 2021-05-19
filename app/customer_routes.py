@@ -77,52 +77,27 @@ def delete_customer(customer_id):
 def update_customer(customer_id):
 
     customer = Customer.query.get(customer_id)
+
+    if customer is None:
+        return jsonify({"error": "Customer does not exist"}), 400
     
     if customer: 
 
         form_data = request.get_json()
 
-        # customer.name = form_data["name"]
-        # customer.phone_number = form_data["phone"]
-        # customer.postal_code = form_data["postal_code"]
-        # customer.registered_at = datetime.utcnow()
-        # db.session.commit()
-        
-        # if customer.videos_checked_out is None:
-        #     customer.videos_checked_out = 0
-        #     db.session.commit()
-
-        if customer.name != form_data["name"]: 
+        if "name" in form_data.keys():
             customer.name = form_data["name"]
             db.session.commit()
 
-            updated_customer = customer.to_json_customer()
-            return jsonify(updated_customer), 200
-
-        elif customer.phone_number != form_data["phone"]:
+        if "phone" in form_data.keys():
             customer.phone_number = form_data["phone"]
             db.session.commit()
-
-            updated_customer = customer.to_json_customer()
-            return jsonify(updated_customer), 200
-
-        elif customer.postal_code != form_data["postal_code"]:
+            
+        if "postal_code" in form_data.keys():
             customer.postal_code = form_data["postal_code"]
             db.session.commit()
         
-            updated_customer = customer.to_json_customer()
-            return jsonify(updated_customer), 200
+        updated_customer = customer.to_json_customer()
 
+        return jsonify(updated_customer), 200
 
-        # updated_customer = {
-        #         "id": customer.customer_id,
-        #         "name": customer.name,
-        #         "phone": customer.phone_number,
-        #         "postal_code": customer.postal_code,
-        #         "registered_at": customer.registered_at,
-        #         "videos_checked_out_count": customer.videos_checked_out
-        # }
-
-
-    else: 
-        return make_response("", 404) 

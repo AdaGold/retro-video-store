@@ -1,6 +1,5 @@
 from flask import current_app
 from app import db
-# from app.models.association_cust_vid import customer_video_assoc
 
 class Customer(db.Model):
     customer_id = db.Column(db.Integer, primary_key=True)

@@ -2,7 +2,6 @@ from flask import Blueprint, request, make_response, jsonify
 from app import db 
 from app.models.video import Video
 from dotenv import load_dotenv
-from datetime import datetime
 
 
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
@@ -65,7 +64,7 @@ def delete_video(video_id):
         db.session.delete(video)
         db.session.commit()
 
-        response = {"details": "Video successfully deleted"}
+        response = {"details": f"Video {video_id} successfully deleted"}
 
         return jsonify(response), 200
     
@@ -81,49 +80,21 @@ def update_video(video_id):
 
         form_data = request.get_json()
 
-        print(form_data)
-
-        # customer.name = form_data["name"]
-        # customer.phone_number = form_data["phone"]
-        # customer.postal_code = form_data["postal_code"]
-        # customer.registered_at = datetime.utcnow()
-        # db.session.commit()
-        
-        # if customer.videos_checked_out is None:
-        #     customer.videos_checked_out = 0
-        #     db.session.commit()
-
-        if video.name != form_data["title"]: 
+        if "title" in form_data.keys():
             video.name = form_data["title"]
             db.session.commit()
 
-            updated_video = video.to_json_video()
-            return jsonify(updated_video), 200
-
-        elif video.release_date != form_data["release_date"]:
+        if "release_date" in form_data.keys():
             video.release_date = form_data["release_date"]
             db.session.commit()
 
-            updated_video = video.to_json_video()
-            return jsonify(updated_video), 200
-
-        elif video.total_inventory != form_data["total_inventory"]:
+        if "total_inventory" in form_data.keys():
             video.total_inventory = form_data["total_inventory"]
             db.session.commit()
+    
+        updated_video = video.to_json_video()
         
-            updated_video = video.to_json_video()
-            return jsonify(updated_video), 200
-
-
-        # updated_customer = {
-        #         "id": customer.customer_id,
-        #         "name": customer.name,
-        #         "phone": customer.phone_number,
-        #         "postal_code": customer.postal_code,
-        #         "registered_at": customer.registered_at,
-        #         "videos_checked_out_count": customer.videos_checked_out
-        # }
-
+        return jsonify(updated_video), 200
 
     else: 
         return make_response("", 404) 

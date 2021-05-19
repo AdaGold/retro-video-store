@@ -32,5 +32,6 @@ def create_app(test_config=None):
 
     app.register_blueprint(customers_bp)
     app.register_blueprint(videos_bp)
+    
     return app
 
