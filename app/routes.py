@@ -6,6 +6,7 @@ import requests
 import os
 from app.models.video import Video
 
+
 videos_bp = Blueprint(
     "videos", __name__, url_prefix="/videos")
 customers_bp = Blueprint(
@@ -35,8 +36,9 @@ def create_customer():
         )
         db.session.add(new_customer)
         db.session.commit()
-        customer_response = {{new_customer.customer_id}}
-        return jsonify(customer_response), 201
+        # customer_response = {{new_customer.customer_id}}
+        # return jsonify(customer_response), 201
+        return jsonify({new_customer.to_json()}), 201
     return make_response({"details": "Invalid data: you must include a name, postal code, and phone number"}, 400)
 
 
@@ -115,10 +117,10 @@ def update_video(video_id):
     form_data = request.get_json()
     if video is None:
         return make_response("Video does not exist", 404)
-    elif "title" in form_data and "release_date" in form_data and "total_inventory" in form_data and "avaiable_inventory" in form_data:
-        video.name = form_data["title"]
-        video.postal_code = form_data["release_date"]
-        video.phone = form_data["total_inventory"]
+    elif "title" in form_data and "release_date" in form_data and "total_inventory" in form_data:
+        video.title = form_data["title"]
+        video.release_date = form_data["release_date"]
+        video.total_inventory = form_data["total_inventory"]
         db.session.commit()
         return jsonify({video.to_dict()}), 200
     return make_response("Bad Request", 400)
