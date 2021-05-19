@@ -22,5 +22,13 @@ def add_task():
     db.session.commit()
     return new_customer.to_json(), 201
 
+@customer_bp.route("", methods=["GET"], strict_slashes=False)
+def customer_index():
+    customers = Customer.query.all()
+    customer_response = []
+    for customer in customers:
+        customer_response.append(customer.to_json())
+
+    return jsonify(customer_response), 200
 
 
