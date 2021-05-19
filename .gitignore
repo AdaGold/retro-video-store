@@ -1,8 +1,13 @@
+<<<<<<< HEAD
 helper.py
 
 .vscode
 .DS_Store
 project_notes.md
+=======
+.vscode
+.DS_Store
+>>>>>>> e1c3c1769d31cdb580201ef3ccd67c7e164b3657
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -12,10 +17,13 @@ __pycache__/
 # C extensions
 *.so
 
+<<<<<<< HEAD
 # test folder
 
 tests/
 
+=======
+>>>>>>> e1c3c1769d31cdb580201ef3ccd67c7e164b3657
 # Distribution / packaging
 .Python
 build/

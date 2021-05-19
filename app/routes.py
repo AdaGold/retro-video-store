@@ -8,6 +8,7 @@ import re
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 # ----------------- helper functions ------------------------
 
@@ -244,3 +245,11 @@ def delete_video_by_id(video_id):
     # return ({"id": video_id, "details": 'Video has been successfully
     # deleted'}, 200)
     return ({"id": video_id}, 200)
+
+# -------------- Custom endpoints for /rentals ------------------------
+
+
+@rentals_bp.route("/check-out", methods=["POST"])
+def check_out_video_to_customer():
+    """Checks out a video to a customer, and updates the data in the database as such."""
+    request_body = request.get_json()
