@@ -38,3 +38,23 @@ def get_videos():
         videos_response.append(video.to_json())
 
     return jsonify(videos_response), 200
+
+
+def is_int(value):
+    try:
+        return int(value)
+    except ValueError:
+        return False
+
+
+@videos_bp.route("/<video_id>", methods=["GET"], strict_slashes=False)
+def get_video_by_id(video_id):
+    video = Video.query.get(video_id)
+
+    if video is None:
+        return ("", 404)
+    
+    if not is_int(video_id):
+        return ("", 400)
+    
+    return video.to_json(), 200

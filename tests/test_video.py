@@ -40,3 +40,16 @@ def test_get_customers(client, two_videos):
     assert response_body[1]["title"] == "10 Things I Hate About You"
     assert response_body[1]["total_inventory"] == 3
     assert response_body[1]["available_inventory"] == 3
+
+
+def test_get_customer_by_id(client, one_video):
+    #Act
+    response = client.get("/videos/1")
+    response_body = response.get_json()
+
+    #Assert
+    assert response.status_code == 200
+    assert response_body["id"] == 1
+    assert response_body["title"] == "Howls Moving Castle"
+    assert response_body["total_inventory"] == 10
+    assert response_body["available_inventory"] == 10
