@@ -25,19 +25,21 @@ def create_app(test_config=None):
 
 
     # Import models here for Alembic setup
-    # from app.models.task import Task
-    # from app.models.goal import Goal
-    # from .routes import tasks_bp
-    # from .routes import goals_bp
+    from app.models.customer import Customer
+    from app.models.video import Video
+    
 
     db.init_app(app)
     migrate.init_app(app, db)
+
+    from .routes import customers_bp
+    from .routes import videos_bp
 
 
     
 
     # Register Blueprints here
-    # app.register_blueprint(tasks_bp)
-    # app.register_blueprint(goals_bp)
+    app.register_blueprint(customers_bp)
+    app.register_blueprint(videos_bp)
 
     return app
