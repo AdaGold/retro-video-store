@@ -32,18 +32,20 @@ def handle_customer():
 
     elif request.method == "POST":
         request_body = request.get_json()
-        if "name" in request_body and "postal code" in request_body and "phone" in request_body:
-            new_customer = Customer(name = request_body["name"],
+        if "name" not in request_body or "postal code" not in request_body or "phone" not in request_body:
+            return {
+                "details": "Invalid data"
+            }, 400
+
+        elif "name" in request_body and "postal code" in request_body and "phone" in request_body:
+            new_customer = Customer(
+                            name = request_body["name"],
                             postal_code = request_body["postal code"],
                             phone = request_body["phone"])
             db.session.add(new_customer)
             db.session.commit()
-            return jsonify(new_customer), 201
+            return new_customer.to_json_with_id(), 201
 
-        else:
-            return {
-                "details": "Invalid data"
-            }, 400
 
 @customers_bp.route("/<id>", methods = ["PUT", "GET", "DELETE"], strict_slashes=False)
 def customer_by_id(id):
