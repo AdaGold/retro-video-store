@@ -65,4 +65,53 @@ def delete_customer(active_id):
 # ===== Videos ======================================================
 videos_bp = Blueprint("video", __name__, url_prefix="/videos")
 
+@videos_bp.route("", methods=["GET"])
+def get_videos():
+    videos = Video.query.all()
+    return jsonify([video.to_dict() for video in videos])
+
+@videos_bp.route("", methods=["POST"])
+def post_videos():
+    request_body = request.get_json()
+    try:
+        new_video = Video(
+            title=request_body["title"],
+            release_date=request_body["release_date"],
+            total_inventory=request_body["total_inventory"]
+        )
+    except KeyError:
+        return make_response({"details" : "Invalid data"}, 400)
+
+    db.session.add(new_video)
+    db.session.commit()
+
+    return make_response(new_video.to_dict(), 201)
+
+@videos_bp.route("/<active_id>", methods=["GET"])
+def get_video(active_id):
+    video = Video.query.get_or_404(active_id)
+    return make_response(video.to_dict(), 200)
+
+@videos_bp.route("/<active_id>", methods=["PUT"])
+def put_video(active_id):
+    video = Video.query.get_or_404(active_id)
+    request_body = request.get_json()
+
+    try:
+        video.title=request_body["title"],
+        video.release_date=request_body["release_date"],
+        video.total_inventory=request_body["total_inventory"]
+    except KeyError:
+        return make_response({"details" : "Invalid data"}, 400)
+
+    db.session.commit()
+    return make_response(video.to_dict(), 200)
+
+@videos_bp.route("/<active_id>", methods=["DELETE"])
+def delete_video(active_id):
+    video = Video.query.get_or_404(active_id)
+    db.session.delete(video)
+    db.session.commit()
+    return ({"id" : int(active_id)}, 200)
+
 # ===== Rentals =====================================================
