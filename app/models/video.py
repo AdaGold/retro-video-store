@@ -10,6 +10,7 @@ class Video(db.Model):
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
 
+
     def video_response(self):
         if self.release_date:
             release_date = datetime.date(self.release_date)

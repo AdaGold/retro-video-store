@@ -2,11 +2,14 @@ from flask import Blueprint, request, make_response, jsonify
 from app import db
 from .models.video import Video
 from .models.customer import Customer
+from .models.rental import Rental
 from datetime import datetime
 
 customer_bp = Blueprint("customers", __name__, url_prefix="/customers")
 video_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rental_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
+#Customer Functions/Wave 1*******************************************************************************************************************************************
 @customer_bp.route("", methods=["GET", "POST"], strict_slashes=False)
 def customer_functions():
 
@@ -64,6 +67,7 @@ def customer_id_functions(customer_id):
             "id": a_customer.customer_id
         }), 200
 
+#Video Functions/Wave 1********************************************************************************************************************************************
 @video_bp.route("", methods=["GET", "POST"], strict_slashes=False)
 def video_functions():
 
@@ -119,3 +123,85 @@ def video_id_functions(video_id):
         return jsonify({
             "id": a_video.video_id
         }), 200
+
+#Rental Funtions/Wave2*******************************************************************************************************************************************
+@rental_bp.route("/check-out", methods=["POST"], strict_slashes=False)
+def check_out_video():
+    request_body = request.get_json()
+    a_video = Video.query.get_or_404(request_body["video_id"])
+    a_customer = Customer.query.get_or_404(request_body["customer_id"])
+
+    if not str(a_video).isnumeric() and not str(a_customer).isnumeric():
+        return make_response({"details":"Give video id"}, 400)
+
+    if a_video.available_inventory == 0:
+        return make_response({"There are no videos like this available"}, 400)
+
+    checked_out_video = Rental(customer_id = request_body["customer_id"], video_id = request_body["video_id"])
+
+    a_video.available_inventory = a_video.available_inventory-1
+    a_customer.videos_checked_out_count = a_customer.videos_checked_out_count+1
+
+    db.session.add(checked_out_video)
+    db.session.commit()
+
+    return jsonify(
+        check_out_video.rental_response()
+    ), 200
+
+@rental_bp.route("/check-in", methods=["POST"], strict_slashes=False)
+def check_in_video():
+    request_body = request.get_json()
+    a_video = Video.query.get_or_404(request_body["video_id"])
+    a_customer = Customer.query.get_or_404(request_body["customer_id"])
+
+    if a_video is None and a_customer is None:
+        return make_response({"The customer and the video do not exist"}, 400)
+
+    checked_in_video = Rental(customer_id = request_body["customer_id"], video_id = request_body["video_id"])
+
+    a_video.available_inventory = a_video.available_inventory+1
+    a_customer.videos_checked_out_count = a_customer.videos_checked_out_count-1
+
+    db.session.add(checked_in_video)
+    db.session.commit()
+
+    return jsonify(
+        check_in_video.rental_response()
+    ), 200
+
+@customer_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
+def customer_rentals(customer_id):
+    if Customer.query.get(customer_id) is None:
+        return make_response({"Customer does not exist"}, 404)
+
+    #use the join query for customer. pattern customer, video, customer
+    all_rentals = db.session.query(Rental).join(Customer, Customer.customer_id==Rental.customer_id).join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id == customer_id).all()
+
+    list_of_rentals = []
+    for rental in all_rentals:
+        #create the return statement and to get the values the set up is the same how rental response is set up. but instead of self use all_rentals. because of the join clause
+        list_of_rentals.append({
+            "release_date": Video.query.get(all_rentals.video_id).release_date,
+            "title": Video.query.get(all_rentals.video_id).title,
+            "due_date": all_rentals.due_date
+        })
+    return jsonify(list_of_rentals), 200
+
+@video_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
+def video_rentals(video_id):
+    if Customer.query.get(video_id) is None:
+        return make_response({"Video does not exist"}, 404)
+
+    #do the same as above just change the filter part so its for videos
+    all_rentals = db.session.query(Rental).join(Customer, Customer.customer_id==Rental.customer_id).join(Video, Video.video_id==Rental.video_id).filter(Video.video_id == video_id).all()
+
+    list_of_rentals = []
+    for rental in all_rentals:
+        list_of_rentals.append({
+            "due_date": all_rentals.due_date,
+            "name": Customer.query.get(all_rentals.customer_id).name,
+            "phone": Customer.query.get(all_rentals.customer_id).phone,
+            "postal_code": Customer.query.get(all_rentals.customer_id).postal_code
+        })
+    return jsonify(list_of_rentals), 200
