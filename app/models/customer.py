@@ -8,3 +8,13 @@ class Customer(db.Model):
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime)
     videos_checked_out_count = db.Column(db.Integer, default=0)
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "postal_code": self.postal_code,
+            "phone": self.phone,
+            "registered_at": self.registered_at,
+            "videos_checked_out_count": self.videos_checked_out_count
+        }

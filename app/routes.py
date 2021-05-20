@@ -51,14 +51,16 @@ def customer_details():
             db.session.add(new_customer)
             db.session.commit()
 
-            return make_response({
-                "id": new_customer.id,
-                "name": new_customer.name,
-                "postal_code": new_customer.postal_code,
-                "phone": new_customer.phone,
-                "register_at": new_customer.registered_at,
-                "videos_checked_out_count": new_customer.videos_checked_out_count
-                }, 201)
+            # return make_response({
+            #     "id": new_customer.id,
+            #     "name": new_customer.name,
+            #     "postal_code": new_customer.postal_code,
+            #     "phone": new_customer.phone,
+            #     "register_at": new_customer.registered_at,
+            #     "videos_checked_out_count": new_customer.videos_checked_out_count
+            #     }, 201)
+
+            return new_customer.to_json(), 201
         
 # endpoint retrieves, updates and deletes records of a specific customer
 @customers_bp.route("/<customer_id>", methods=["GET", "PUT", "DELETE"], strict_slashes=False)
@@ -72,14 +74,16 @@ def specific_customer(customer_id):
         return make_response(), 404
     
     elif request.method == "GET":
-        return jsonify({
-            "id": customer.id,
-            "name": customer.name,
-            "registered_at": customer.registered_at,
-            "postal_code": customer.postal_code,
-            "phone": customer.phone,
-            "videos_checked_out_count": customer.videos_checked_out_count
-        }), 200
+        # return jsonify({
+        #     "id": customer.id,
+        #     "name": customer.name,
+        #     "registered_at": customer.registered_at,
+        #     "postal_code": customer.postal_code,
+        #     "phone": customer.phone,
+        #     "videos_checked_out_count": customer.videos_checked_out_count
+        # }), 200
+
+        return customer.to_json(), 200
 
     # UPDATE (PUT) & return details about specific customer
 
@@ -96,14 +100,16 @@ def specific_customer(customer_id):
 
             db.session.commit()
 
-            return jsonify({
-                "id": customer.id,
-                "name": customer.name,
-                "registered_at": customer.registered_at,
-                "postal_code": customer.postal_code,
-                "phone": customer.phone,
-                "videos_checked_out_count": customer.videos_checked_out_count
-            }), 200
+            # return jsonify({
+            #     "id": customer.id,
+            #     "name": customer.name,
+            #     "registered_at": customer.registered_at,
+            #     "postal_code": customer.postal_code,
+            #     "phone": customer.phone,
+            #     "videos_checked_out_count": customer.videos_checked_out_count
+            # }), 200
+
+            return customer.to_json(), 200
     
     # DELETE a specific customer
     elif request.method == "DELETE":
@@ -173,13 +179,15 @@ def specific_video(video_id):
         return make_response(), 404
     
     elif request.method == "GET":
-        return jsonify({
-            "id": video.id,
-            "title": video.title,
-            "release_date": video.release_date,
-            "total_inventory": video.total_inventory,
-            # "available_inventory": 0
-        }), 200
+        # return jsonify({
+        #     "id": video.id,
+        #     "title": video.title,
+        #     "release_date": video.release_date,
+        #     "total_inventory": video.total_inventory,
+        #     # "available_inventory": 0
+        # }), 200
+
+        return video.to_json(), 200
 
 #     # UPDATE (PUT) & return details about specific video
 
@@ -195,13 +203,15 @@ def specific_video(video_id):
             video.total_inventory = form_data["total_inventory"]
             db.session.commit()
 
-            return jsonify({
-                "id": video.id,
-                "title": video.title,
-                "release_date": video.release_date,
-                "total_inventory": video.total_inventory,
-                # "available_inventory": 0
-            }), 200
+            # return jsonify({
+            #     "id": video.id,
+            #     "title": video.title,
+            #     "release_date": video.release_date,
+            #     "total_inventory": video.total_inventory,
+            #     # "available_inventory": 0
+            # }), 200
+
+            return video.to_json(), 200
     
     # DELETE a specific video
     elif request.method == "DELETE":
