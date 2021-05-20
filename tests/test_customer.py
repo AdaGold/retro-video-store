@@ -3,14 +3,16 @@ from app.models.customer import Customer
 def test_create_customer(client):
     # Act
     response = client.post("/customers", json={
-        "name": "Lars Sankar",
-        "postal_code": "75007",
-        "phone": "111-111-1111"
+        "name": "minh",
+        "postal_code": "98123",
+        "phone": "555-555-5555"
     })
     response_body = response.get_json()
 
     # Assert
     assert response.status_code == 201
+    assert response_body["id"] == 1
+    
 
 def test_get_customers(client, two_customers):
     # Act

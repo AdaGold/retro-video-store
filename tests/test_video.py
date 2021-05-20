@@ -1,6 +1,6 @@
 from app.models.video import Video
 
-def test_add_video(client):
+def test_create_video(client):
     # Act
     response = client.post("/videos", json={
         "title": "Howls Moving Castle",
@@ -12,6 +12,8 @@ def test_add_video(client):
 
     # Assert
     assert response.status_code == 201
+    assert response_body["id"] == 1
+
 
 
 def test_get_video_no_saved_videos(client):

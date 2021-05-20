@@ -12,8 +12,6 @@ class Customer(db.Model):
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
     register_at = db.Column(db.DateTime, nullable=True)
-    videos_checked_out = db.Column(db.Integer, nullable=True, default=0)
-
     videos = db.relationship("Video", secondary="rentals", back_populates="customers")
 
     def to_json(self):
@@ -23,7 +21,10 @@ class Customer(db.Model):
             "registered_at": self.register_at,
             "phone": self.phone,
             "postal_code": self.postal_code,
-            "videos_checked_out_count": self.videos_checked_out
+            "videos_checked_out_count": self.get_checked_out()
         }
 
         return customer
+
+    def get_checked_out(self):
+        return len(self.videos)
