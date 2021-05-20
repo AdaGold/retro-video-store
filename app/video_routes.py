@@ -11,7 +11,7 @@ def add_video():
     if ("title" not in body.keys() or
         "release_date" not in body.keys() or
         "total_inventory" not in body.keys()):
-        return {"error" : "Invalid data"}, 400
+        return {"error" : "Not Found"}, 404
 
     new_video = Video(title = body["title"],
                     release_date = body["release_date"],

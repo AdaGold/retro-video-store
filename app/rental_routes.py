@@ -11,9 +11,14 @@ rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 def create_rental():
     body = request.get_json()
 
+    video = Video.query.get(body["video_id"])
+
     if ("customer_id" not in body.keys() or
         "video_id" not in body.keys()):
-        return {"error" : "Invalid data"}, 400
+        return {"error" : "Not Found"}, 404
+    
+    if video.get_available_inventory() == 0:
+        return{"error": "No Available Inventory"}, 400
     
     new_rental = Rental(customer_id = body["customer_id"],
                         video_id = body["video_id"])
@@ -22,7 +27,6 @@ def create_rental():
     db.session.commit()
 
     customer = Customer.query.get(body["customer_id"])
-    video = Video.query.get(body["video_id"])
 
     return {
         "customer_id": customer.customer_id,

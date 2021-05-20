@@ -12,7 +12,7 @@ def create_customer():
     if ("name" not in body.keys() or
         "postal_code" not in body.keys() or
         "phone" not in body.keys()):
-        return {"error" : "Invalid data"}, 400
+        return {"error" : "Not Found"}, 404
 
     new_customer = Customer(name = body["name"],
                             postal_code = body["postal_code"],
