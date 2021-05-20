@@ -1,17 +1,17 @@
 from flask import current_app
+from sqlalchemy.orm import relationship
 from app import db
 from datetime import datetime
 
 
 class Video(db.Model):
+    __tablename__ = 'videos'
     video_id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String)
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
-    release_date = db.Column(
-        db.DateTime,
-        nullable=True,
-        default=datetime.now())
+    release_date = db.Column(db.DateTime)
+    # customers = relationship("Rental", back_populates="video")
 
     def to_json(self):
         """Converts a Video instance into JSON"""
@@ -28,6 +28,6 @@ class Video(db.Model):
         """Converts JSON into a new instance of Video"""
         self.title = json["title"]
         self.total_inventory = json["total_inventory"]
-        self.available_inventory = json["available_inventory"]
+        # self.available_inventory = json["available_inventory"]
         self.release_date = json["release_date"]
         return self

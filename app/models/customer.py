@@ -1,18 +1,21 @@
 from datetime import datetime
 from flask import current_app
+from sqlalchemy.orm import relationship
 from app import db
 from datetime import datetime
 
 
 class Customer(db.Model):
+    __tablename__ = 'customers'
     customer_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
     postal_code = db.Column(db.Integer)
     phone = db.Column(db.String)
+    videos_checked_out_count = db.Column(db.Integer, default=0)
     registered_at = db.Column(
         db.DateTime,
-        nullable=True,
         default=datetime.now())
+    # videos = relationship("Rental", back_populates="customer")
 
     def to_json(self):
         """Converts a Customer instance into JSON"""
@@ -22,7 +25,7 @@ class Customer(db.Model):
             "postal_code": self.postal_code,
             "phone": self.phone,
             "registered_at": self.registered_at,
-            "videos_checked_out_count": 0
+            "videos_checked_out_count": self.videos_checked_out_count
         }
         return response_body
 
