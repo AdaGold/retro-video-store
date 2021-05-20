@@ -1,8 +1,8 @@
-
+from app import db
 import datetime
 from flask import current_app
 from sqlalchemy import Table, Column, Integer, ForeignKey
-from app import db
+
 
 # this is telling flask about my database task table
 
