@@ -34,7 +34,10 @@ def post_customers():
     except TypeError as err:
         return make_response({"details":f"Invalid data: {err}"}, 400)
 
-
+@customers_bp.route("/<id>", methods=["GET"])
+def get_customer():
+    customer = Customer.query.get_or_404(id)
+    return make_response(customer.get_customer_data_structure(), 200)
 
 """ 
 @goals_bp.route("/<goal_id>", methods=["GET", "PUT", "DELETE"])
