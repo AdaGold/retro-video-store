@@ -1,11 +1,14 @@
 import requests
 from flask import Blueprint, jsonify, make_response, request
 from app import db
-from app.models.customer import Customer
-from app.models.video import Video
+from app.models.models import Customer, Video, Rental
+
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
+
+# START OF CUSTOMER CRUD ROUTES
 
 
 @customers_bp.route("", methods=["GET"])
@@ -71,7 +74,7 @@ def delete_customer(customer_id):
         200)
 
 
-# START OF VIDEO ROUTES
+# START OF VIDEO CRUD ROUTES
 
 
 @videos_bp.route("", methods=["GET"])
@@ -135,3 +138,28 @@ def delete_video(video_id):
     db.session.delete(video)
     db.session.commit()
     return make_response(jsonify(details="video \"{video.name}\" successfully deleted", id=video.video_id), 200)
+
+
+
+# START OF RENTALS ENDPOINTS
+def invalid_check_request_body(request_body):
+    if "customer_id" not in request_body or "video_id" not in request_body:
+        return True
+    if Video.query.get_or_404(int(request_body["video_id"])).get_inventory() == 0:
+        return True
+    return False
+
+
+@rentals_bp.route("/check-out", methods=["POST"])
+def check_out_video():
+    request_body = request.get_json()
+
+    if invalid_check_request_body(request_body):
+        return make_response({"details": "Missing required data"}, 400)
+
+    rental = Rental(customer_id=request_body["customer_id"], video_id=request_body["video_id"])
+
+    db.session.add(rental)
+    db.session.commit()
+
+    return make_response(rental.as_dict(), 200)
