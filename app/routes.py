@@ -1,8 +1,9 @@
 import requests
 from flask import Blueprint, jsonify, make_response, request
 from app import db
-from app.models.models import Customer, Video, Rental
-
+from app.models.customer import Customer
+from app.models.rental import Rental
+from app.models.video import Video
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
@@ -74,6 +75,16 @@ def delete_customer(customer_id):
         200)
 
 
+@customers_bp.route("/<int:customer_id>/rentals", methods=["GET"])
+def get_rentals_by_customer(customer_id):
+    customer = Customer.query.get_or_404(customer_id)
+
+    rentals = [{"release_date": rental.video.release_date.strftime("%Y-%m-%d"), "title": rental.video.title,
+                "due_date": rental.due_date.strftime("%Y-%m-%d")} for rental in customer.videos]
+
+    return make_response(jsonify(rentals), 200)
+
+
 # START OF VIDEO CRUD ROUTES
 
 
@@ -140,12 +151,36 @@ def delete_video(video_id):
     return make_response(jsonify(details="video \"{video.name}\" successfully deleted", id=video.video_id), 200)
 
 
+@videos_bp.route("/<int:video_id>/rentals", methods=["GET"])
+def get_rentals_by_video(video_id):
+    video = Video.query.get_or_404(video_id)
+
+    rentals = [
+        {"name": rental.customer.name,
+         "phone": rental.customer.phone,
+         "postal_code": rental.customer.postal_code,
+         "due_date": rental.due_date.strftime("%Y-%m-%d")}
+        for rental in video.customers]
+
+    return make_response(jsonify(rentals), 200)
+
 
 # START OF RENTALS ENDPOINTS
-def invalid_check_request_body(request_body):
+
+
+def invalid_check_out_request_body(request_body):
     if "customer_id" not in request_body or "video_id" not in request_body:
         return True
-    if Video.query.get_or_404(int(request_body["video_id"])).get_inventory() == 0:
+
+    if not is_integer(request_body["video_id"]) or not is_integer(request_body["customer_id"]):
+        return True
+
+    video = Video.query.get_or_404(request_body["video_id"])
+
+    if video.get_inventory() == 0:
+        return True
+
+    if Rental.query.get((request_body["customer_id"], request_body["video_id"])):
         return True
     return False
 
@@ -154,12 +189,49 @@ def invalid_check_request_body(request_body):
 def check_out_video():
     request_body = request.get_json()
 
-    if invalid_check_request_body(request_body):
+    if invalid_check_out_request_body(request_body):
         return make_response({"details": "Missing required data"}, 400)
 
     rental = Rental(customer_id=request_body["customer_id"], video_id=request_body["video_id"])
 
     db.session.add(rental)
     db.session.commit()
+    rental_dict = rental.as_dict()
+    rental_dict["due_date"] = rental.due_date.strftime("%Y-%m-%d")
+    return make_response(rental_dict, 200)
 
-    return make_response(rental.as_dict(), 200)
+
+def invalid_check_in_request_body(request_body):
+    if "customer_id" not in request_body or "video_id" not in request_body:
+        return True
+
+    if not is_integer(request_body["video_id"]) or not is_integer(request_body["customer_id"]):
+        return True
+
+    if not Rental.query.get((request_body["customer_id"], request_body["video_id"])):
+        return True
+    return False
+
+
+@rentals_bp.route("/check-in", methods=["POST"])
+def check_in_video():
+    request_body = request.get_json()
+
+    if invalid_check_in_request_body(request_body):
+        return make_response({"details": "Missing required data"}, 400)
+
+    rental = Rental.query.get_or_404((request_body["customer_id"], request_body["video_id"]))
+
+    db.session.delete(rental)
+    rental_dict = rental.as_dict()
+    db.session.commit()
+    return make_response(rental_dict, 200)
+
+
+def is_integer(n):
+    try:
+        float(n)
+    except ValueError:
+        return False
+    else:
+        return float(n).is_integer()
