@@ -136,3 +136,29 @@ def delete_video(video_id):
     return jsonify({"details":"video successfully deleted",
                     "id": video.id,
                     "title": video.title}), 200
+
+#---------------------# RENTALS ENDPOINTS #---------------------#
+
+@rentals_bp.route("/check-out", methods=["POST"], strict_slashes=False)
+def check_out_video():
+    request_body = request.get_json()
+    #could check for customer and video id in request body
+    customer_id = request_body["customer_id"]
+    video_id = request_body["video_id"]
+    # if not isinstance(video_id, int) or not isinstance(customer_id, int):
+    #     return invalid_input()
+    customer = Customer.query.get(customer_id)
+    video = Video.query.get(video_id)
+
+    if customer is None or video is None:
+        return jsonify({"details": "customer or video not Found"}), 404
+    if video.available_inventory == 0:
+        return jsonify({"details": "Video out of stock"}), 400
+    customer.videos_checked_out_count += 1
+    video.available_inventory -= 1
+    new_rental = Rental(customer_id = customer_id,
+                    video_id = video_id,
+                    due_date = datetime.now() + timedelta(7))
+    db.session.add(new_rental)
+    db.session.commit()
+    return jsonify(new_rental.to_json()), 200
