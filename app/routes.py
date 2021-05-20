@@ -77,7 +77,7 @@ def update_single_customer(customer_id):
 def post_new_customer():
     request_body = request.get_json()
     try:
-        new_customer = Customer(customer_name=request_body["name"], customer_zip=request_body["postal_code"], customer_phone=request_body["phone"], register_at=datetime.now(), videos_checked_out_count=5)
+        new_customer = Customer(customer_name=request_body["name"], customer_zip=request_body["postal_code"], customer_phone=request_body["phone"], register_at=datetime.now(), videos_checked_out_count=0)
     except KeyError:
         return make_response({"That didn't work.": "Invalid data or format."}, 400)
     db.session.add(new_customer)
@@ -98,19 +98,26 @@ def delete_single_customer(customer_id):
 
     return make_response({"id": customer.customer_id}, 200)
 
+
+
 @customer_bp.route("/<customer_id>/rentals", methods=["GET"])
 def get_customers_rentals(customer_id):
 
     customer_info = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
             .join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id == customer_id).all()
-    if customer_info is None:
-        return return_404()
-    whatever_list = []
-    for whatever in customer_info:
-        whatever = dict(whatever)
-        whatever_list.append(whatever)
+    print(customer_info)
+    rental_list = []
+    for tuple_set in customer_info:
+        video = tuple_set[1]
+        rental = tuple_set[2]
+        rental_list.append({"release_date": video.release_date, 
+                            "title": video.video_title, 
+                            "due_date": rental.due_date})
 
-    return whatever_list, 200
+
+
+
+    return jsonify(rental_list), 200
 
 
 
@@ -130,7 +137,7 @@ def get_all_videos():
 def create_new_video():
     request_body = request.get_json()
     try:
-        new_video = Video(video_title=request_body["title"], release_date=request_body["release_date"], total_inventory=request_body["total_inventory"], available_inventory=1)
+        new_video = Video(video_title=request_body["title"], release_date=request_body["release_date"], total_inventory=request_body["total_inventory"], available_inventory=request_body["total_inventory"])
 
     except KeyError:
         return make_response({"That didn't work.": "Invalid data or format."}, 400)
@@ -160,6 +167,7 @@ def update_single_video(video_id):
             video.release_date = request_body["release_date"]
             video.total_inventory= request_body["total_inventory"]
             
+            
         
         except KeyError:
             return make_response({"That didn't work.": "Invalid data or format."}, 400)
@@ -188,29 +196,64 @@ def delete_all_videos():
 
     return make_response("All of the videos in the database have been deleted.", 200)
 
+
+@video_bp.route("/<video_id>/rentals", methods=["GET"])
+def get_customers_rentals_by_video(video_id):
+
+    video_info = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
+            .join(Video, Video.video_id==Rental.video_id).filter(Video.video_id==video_id).all()
+    rental_list = []
+    for tuple_set in video_info:
+        customer = tuple_set[0]
+        rental = tuple_set[2]
+        rental_list.append({"name": customer.customer_name, 
+                            "phone": customer.customer_phone, 
+                            "postal_code": customer.customer_zip ,
+                            "due_date": rental.due_date})
+
+
+    return jsonify(rental_list), 200
+
+@rental_bp.route("", methods=["DELETE"])
+def delete_all_rentals():
+    all_rentals = Rental.query.all()
+    for rental in all_rentals:
+        db.session.delete(rental)
+    db.session.commit()
+
+    return make_response("All rental information has been deleted", 200)
+
 @rental_bp.route("/check-out", methods=["POST"])
 def check_out_video(): 
     request_body = request.get_json()
     customer_id = request_body["customer_id"]
     video_id = request_body["video_id"]
-
+    
     customer = Customer.query.get(customer_id)
     video = Video.query.get(video_id)
 
-    if customer is None or video is None:
-        return return_404()
+    # if customer is None:
+    #     return return_404()
+    
+    # if video is None:
+    #     return return_404()
 
+    print(video.available_inventory)
     if video.available_inventory == 0:
         return make_response({"Error":"We don't have any of that video in stock."}, 400)
     else:
-        new_rental = Rental(customer_id=customer_id, video_id=video_id)
+        new_rental = Rental(customer_id=customer.customer_id, video_id=video.video_id)
+
 
         customer.videos_checked_out_count += 1
         video.available_inventory -= 1
         new_rental.due_date = get_due_date()
+        print(video.available_inventory)
 
-    db.session.add(new_rental)
-    db.session.commit()
+        db.session.add(new_rental)
+        db.session.commit()
+
+    
     
     return make_response({"customer_id": customer.customer_id, 
                         "video_id": video.video_id, 
