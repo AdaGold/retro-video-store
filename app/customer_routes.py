@@ -5,6 +5,7 @@ from app.models.customer import Customer
 from app.models.rental import Rental
 from datetime import datetime
 
+
 load_dotenv()
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
@@ -65,5 +66,5 @@ def delete_customer(id):
 
 @customers_bp.route("/<id>/rentals", methods = ["GET"])
 def list_rentals(id):
-    customer = Customer.query.get_or_404(id)
-    return make_response(customer.get_videos(), 200)
+    rentals = Rental.query.get_or_404(id)
+    return make_response(rentals.get_rentals(), 200)

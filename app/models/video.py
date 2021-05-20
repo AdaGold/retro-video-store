@@ -1,5 +1,8 @@
+
 from flask import current_app
 from app import db
+from .customer import Customer
+
 
 
 class Video(db.Model):
@@ -8,7 +11,8 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime, nullable=True)
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
-      
+
+
 
     def build_dict(self):
         return {
@@ -18,7 +22,3 @@ class Video(db.Model):
             "total_inventory" : self.total_inventory, 
             "available_inventory" : self.available_inventory
         }
-
-    def get_customers(self):
-        join_results = db.session.query(Customer, Video, Rental).join(Customer, Customer.id==Rental.customer_id).join (Customer, Customer.id==Rental.customer_id).filter(Video.id == self.id).all()
-        return join_results
