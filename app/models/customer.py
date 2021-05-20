@@ -4,12 +4,16 @@ from sqlalchemy import DateTime
 
 
 class Customer(db.Model):
+    __tablename__ = 'left'
     customer_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String)
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime)
     videos_checked_out_count = db.Column(db.Integer, default=0)
+
+    videos = db.relationship(
+        "Video", secondary="rentals", back_populates="customer")
 
     # lowercase 'goal.id' looks at a table in your db
     # goal_id = db.Column(db.Integer, db.ForeignKey(
@@ -29,12 +33,3 @@ class Customer(db.Model):
             "postal_code": self.postal_code,
             "phone": self.phone,
             "videos_checked_out_count": self.videos_checked_out_count}
-
-    # def with_goal(self):
-    #     return {
-    #         "id": self.task_id,
-    #         "title": self.title,
-    #         "description": self.description,
-    #         "is_complete": self.is_complete(),
-    #         "goal_id": self.goal_id
-    #     }

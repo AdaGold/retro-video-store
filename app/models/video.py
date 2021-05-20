@@ -4,11 +4,14 @@ from sqlalchemy import DateTime
 
 
 class Video(db.Model):
+    __tablename__ = 'right'
     video_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime, nullable=True)
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
+
+    customers = db.relationship("Customer", secondary="rentals", back_populates="video")
 
     # # 'Task' looks at class in python and loads multiple of those (this is like a pseudo column)
     # tasks = db.relationship('Task', backref='goal', lazy=True)

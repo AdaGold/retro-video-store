@@ -100,8 +100,8 @@ def create_video():
         )
         db.session.add(new_video)
         db.session.commit()
-        video_response = {"id": new_video.video_id}
-        return jsonify(video_response), 201
+        # video_response = {"id": new_video.video_id}
+        return jsonify({"id": new_video.video_id}), 201
         # return jsonify(new_video.to_dict()), 201
     return make_response({"details": "Invalid data: you must include a title, release date, and total inventory"}, 400)
 
@@ -137,5 +137,5 @@ def delete_video(video_id):
     db.session.delete(video)
     db.session.commit()
     # return jsonify(video.to_dict()), 200
-    video_response = {"id": video.video_id}
-    return jsonify(video_response), 200
+    # video_response = {"id": video.video_id}
+    return jsonify({"id": video.video_id}), 200
