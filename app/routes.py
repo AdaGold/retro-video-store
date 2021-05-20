@@ -11,6 +11,7 @@ import random
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 
 #=====================================================#
@@ -18,23 +19,23 @@ videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 #=====================================================#
 
 
-@customers_bp.route("", methods=["GET"])
-def get_list_all_customers():
-    """
-    Get all Customers in asc, desc, or unsorted order
-    """
-    sort_query = request.args.get("sort")
+# @customers_bp.route("", methods=["GET"])
+# def get_list_all_customers():
+#     """
+#     Get all Customers in asc, desc, or unsorted order
+#     """
+#     sort_query = request.args.get("sort")
 
-    if sort_query == "asc":
-        customers = Customer.query.order_by(asc("name"))
-    elif sort_query == "desc":
-        customers = Customer.query.order_by(desc("name"))
-    else:
-        customers = Customer.query.all()
+#     if sort_query == "asc":
+#         customers = Customer.query.order_by(asc("name"))
+#     elif sort_query == "desc":
+#         customers = Customer.query.order_by(desc("name"))
+#     else:
+#         customers = Customer.query.all()
 
-    customers_response = [customer.to_json() for customer in customers]
+#     customers_response = [customer.to_json() for customer in customers]
 
-    return jsonify(customers_response)
+#     return jsonify(customers_response)
 
 
 @customers_bp.route("/<int:customer_id>", methods=["GET"])
@@ -232,3 +233,34 @@ def delete_video_by_id(video_id):
     return make_response({
         "id": video_id
     })
+
+
+#=====================================================#
+#                   RENTAL ROUTES                     #
+#=====================================================#
+
+
+# @customers_bp.route("", methods=["POST"])
+# def add_new_customer():
+#     """
+#     Create a new Customer
+#     """
+#     request_body = request.get_json()
+
+#     try:
+#         request_body["name"]
+#         request_body["postal_code"]
+#         request_body["phone"]
+#     except:
+#         return make_response(jsonify({
+#             "details": "Invalid data"
+#         }), 400)
+
+#     new_customer = Customer(name=request_body["name"],
+#                     postal_code=request_body["postal_code"],
+#                     phone=request_body["phone"])
+
+#     db.session.add(new_customer)
+#     db.session.commit()
+
+#     return make_response({"id": new_customer.customer_id}, 201)
