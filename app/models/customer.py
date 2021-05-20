@@ -6,7 +6,7 @@ class Customer(db.Model):
     __tablename__ = "customers"
     customer_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String)
-    postal_code = db.Column(db.Integer)
+    postal_code = db.Column(db.String)
     phone = db.Column(db.String)
     register_at = db.Column(db.DateTime)
     videos_checked_out_count = db.Column(db.Integer)
