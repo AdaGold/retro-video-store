@@ -6,7 +6,7 @@ class Video(db.Model):
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
     release_date = db.Column(db.DateTime)
-    # customers = db.relationship("Rental", back_populates="video", lazy=True)
+    rentals = db.relationship("Rental", back_populates="video", lazy=True)
 
     def video_to_json(self):
         to_json = {
