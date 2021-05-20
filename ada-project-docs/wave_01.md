@@ -84,7 +84,7 @@ Status: `200`
     "id": 1,
     "name": "Shelley Rocha",
     "registered_at": "Wed, 29 Apr 2015 07:54:14 -0700",
-    "postal_code": "24309",
+    "postal_code": 24309,
     "phone": "(322) 510-8695",
     "videos_checked_out_count": 0
   },
@@ -92,7 +92,7 @@ Status: `200`
     "id": 2,
     "name": "Curran Stout",
     "registered_at": "Wed, 16 Apr 2014 21:40:20 -0700",
-    "postal_code": "94267",
+    "postal_code": 94267,
     "phone": "(908) 949-6758",
     "videos_checked_out_count": 0
   }
@@ -123,7 +123,7 @@ Status: `200`
     "id": 2,
     "name": "Curran Stout",
     "registered_at": "Wed, 16 Apr 2014 21:40:20 -0700",
-    "postal_code": "94267",
+    "postal_code": 94267,
     "phone": "(908) 949-6758",
     "videos_checked_out_count": 0
 }
@@ -141,7 +141,7 @@ Creates a new video with the given params.
 Request Body Param | Type | Details
 --- | --- | ---
 `name` | string | The name of the customer
-`postal_code` | string | The postal code of the customer
+`postal_code` | int | The postal code of the customer
 `phone` | string | The phone of the customer
 
 #### Response
@@ -175,7 +175,7 @@ Arg | Type | Details
 Request Body Param | Type | Details
 --- | --- | ---
 `name` | string | The name of the customer
-`postal_code` | string | The postal code of the customer
+`postal_code` | int | The postal code of the customer
 `phone` | string | The phone of the customer
 
 #### Response
@@ -189,7 +189,7 @@ Status: `200`
     "id": 2,
     "name": "Curran Stout",
     "registered_at": "Wed, 16 Apr 2014 21:40:20 -0700",
-    "postal_code": "94267",
+    "postal_code": 94267,
     "phone": "(908) 949-6758",
     "videos_checked_out_count": 0
 }
@@ -366,7 +366,7 @@ Status: `200`
 
 - The API should return back detailed errors and a status `404: Not Found` if this video does not exist.
 - The API should return back a `400 Bad Request` response for missing or invalid fields in the request body.
-  - For example, if `total_inventory` or `available_inventory` are missing or not numbers
+  - For example, if `total_inventory` is missing or is not a number
 
 
 ### `DELETE /video/<id>`  details
