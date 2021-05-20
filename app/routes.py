@@ -2,8 +2,8 @@ from flask import Blueprint, request, jsonify
 from werkzeug.wrappers import PlainRequest
 from app import db
 from flask.helpers import make_response
-from models.customer import Customer
-from models.video import Video
+from app.models.customer import Customer
+from app.models.video import Video
 from datetime import datetime
 import os
 import requests

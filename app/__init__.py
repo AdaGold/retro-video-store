@@ -21,18 +21,18 @@ def create_app(test_config=None):
             'SQLALCHEMY_TEST_DATABASE_URI')
 
     #Import models for Alembic setup
-    from models.customer import Customer
-    from models.video import Video
+    from app.models.customer import Customer
+    from app.models.video import Video
 
     db.init_app(app)
     migrate.init_app(app, db)
     load_dotenv()
 
     # Register Blueprints
-    from .routes import customer_bp
-    app.register_blueprint(customer_bp)
+    from .routes import customers_bp
+    app.register_blueprint(customers_bp)
 
-    from .routes import video_bp
-    app.register_blueprint(video_bp)
+    from .routes import videos_bp
+    app.register_blueprint(videos_bp)
     
     return app
