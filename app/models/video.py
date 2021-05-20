@@ -15,7 +15,7 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime) # nullable = True
     total_inventory = db.Column(db.Integer, default=0, nullable = True)
     available_inventory = db.Column(db.Integer, default=0, nullable = True)
-    # customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=True)
+
 
     def to_dictionary(self):
         '''
@@ -25,9 +25,10 @@ class Video(db.Model):
             "id": self.id,
             "title": self.title,
             "release_date": self.release_date,
-            "total_inventory": self.total_inventory,
-            "available_inventory": self.available_inventory
+            "total_inventory": self.total_inventory
+            # "available_inventory": self.available_inventory
             } 
+
 
         # if self.customer_id:
         #     return {
@@ -35,8 +36,7 @@ class Video(db.Model):
         #         "title": self.title,
         #         "release_date": self.release_date,
         #         "total_inventory": self.total_inventory,
-        #         "available_inventory": self.available_inventory,
-        #         "customer_id": self.customer_id
+        #         "available_inventory": self.available_inventory
         #         } 
         # else: 
         #     return {

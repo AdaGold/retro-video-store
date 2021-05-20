@@ -17,7 +17,7 @@ class Customer(db.Model):
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
     videos_checked_out_count = db.Column(db.Integer, default=0, nullable = True)
-    # video_id = db.Column(db.Integer, db.ForeignKey('video.id'), nullable=True)
+
 
     def to_dictionary(self):
         '''

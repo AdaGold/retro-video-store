@@ -33,7 +33,6 @@ def get_customer(customer_id):
         return jsonify(errors={"customer_id": error_response2}), 400
 
     customer = Customer.query.get(customer_id)
-
     if customer:
         return jsonify(customer.to_dictionary()), 200
     else:
@@ -123,6 +122,111 @@ def delete_customer(customer_id):
 
 
 
+
+
+
+
+
+
+
 #################################### VIDEOS CRUD #########################################
 ####### Required endpoints: 
 ####### (1) GET /videos , (2) GET /videos/<id> , (3) POST /videos , (4) PUT /videos/<id> , (5) DELETE /videos/<id> ############
+
+#1############ GET ALL VIDEOS - CRUD - READ #######################
+@videos_bp.route("", methods=["GET"]) 
+def get_all_videos():
+    videos = Video.query.all()
+    videos_response = []
+    for v in videos: 
+        each_video = v.to_dictionary()
+        videos_response.append(each_video)
+    return jsonify(videos_response), 200
+
+#2############ GET ONE VIDEO by ID - CRUD - READ ###################
+@videos_bp.route("/<video_id>", methods=["GET"])
+def get_video(video_id):
+    if not video_id.isdigit():
+        error_response2 = "is not a number"
+        return jsonify(errors={"video_id": error_response2}), 404
+
+    video = Video.query.get(video_id)
+    if video:
+        return jsonify(video.to_dictionary()), 200
+    else:
+        error_response1 = "can't be blank"
+        return jsonify(errors={"video_id": error_response1}), 404
+
+#3###################### POST VIDEO CRUD - CREATE ###################
+@videos_bp.route("", methods=["POST"])
+def add_new_video():
+    request_body = request.get_json() 
+
+    input_errors = []
+    if 'title' not in request_body.keys(): 
+        blank_title = {"title": "can't be blank"}
+        input_errors.append(blank_title)
+    if 'release_date' not in request_body.keys():
+        blank_release_date = {"release_date": "can't be blank"}
+        input_errors.append(blank_release_date)
+    if 'total_inventory' not in request_body.keys():
+        blank_inventory = {"total_inventory": "can't be blank"}
+        input_errors.append(blank_inventory)
+    if input_errors:
+        return jsonify(errors=input_errors), 400
+    else:
+        new_video = Video(title=request_body["title"],
+                    release_date=request_body["release_date"])
+
+        db.session.add(new_video)
+        db.session.commit()
+
+        jsonable_new_video = new_video.to_dictionary()
+        return jsonify(jsonable_new_video), 201
+
+#4############ PUT VIDEO by ID - CRUD - UPDATE #######################
+@videos_bp.route("/<video_id>", methods=["PUT"])
+def update_video(video_id):
+    update_video = Video.query.get(video_id)
+    if update_video is None:
+        return jsonify(errors=["Not Found"]), 404
+
+    request_body = request.get_json() 
+    input_errors = []
+    if 'title' not in request_body.keys(): 
+        blank_title = {"title": "can't be blank"}
+        input_errors.append(blank_title)
+    if 'release_date' not in request_body.keys():
+        blank_release_date = {"release_date": "can't be blank"}
+        input_errors.append(blank_release_date)
+    if 'total_inventory' not in request_body.keys():
+        blank_inventory = {"total_inventory": "can't be blank"}
+        input_errors.append(blank_inventory)
+
+    if input_errors:
+        return jsonify(errors=input_errors), 400
+
+    else:
+        request_in_json = request.get_json()
+
+        update_video.title = request_in_json["title"]
+        update_video.release_date = request_in_json["release_date"]
+        update_video.total_inventory = request_in_json["total_inventory"]
+
+        db.session.commit()
+    
+        jsonable_update_video = update_video.to_dictionary()
+        print(jsonable_update_video)
+        return jsonify(jsonable_update_video), 200
+
+#5############ DELETE VIDEO by ID - CRUD - DELETE #######################
+@videos_bp.route("/<video_id>", methods=["DELETE"])
+def delete_video(video_id):
+    delete_video = Video.query.get(video_id)
+    if delete_video is None:
+        response = {"errors": ["Not Found"]}
+        return jsonify(response), 404
+    else:
+        db.session.delete(delete_video) # deletes the model from the database
+        db.session.commit() # Save Action
+        return jsonify(id=int(video_id)), 200

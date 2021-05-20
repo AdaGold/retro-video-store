@@ -26,14 +26,14 @@ def create_app(test_config=None):
     
     # Import models here for Alembic setup
     from app.models.customer import Customer
-    # from app.models.video import Video
+    from app.models.video import Video
     # ^^Make new_model_1 and new_model_2 visible to flask migration helper
     
     from app.routes import customers_bp
     app.register_blueprint(customers_bp)
 
-    # from .routes import videos_bp
-    # app.register_blueprint(videos_bp)
+    from .routes import videos_bp
+    app.register_blueprint(videos_bp)
     # ^^ Register Blueprints here
 
     return app
