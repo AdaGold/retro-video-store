@@ -1,11 +1,12 @@
 from flask import current_app
 from app import db
+from datetime import datetime
 
 class Customer(db.Model):
     customer_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
     registered_at = db.Column(db.DateTime, nullable=True)
-    postal_code = db.Column(db.String)
+    postal_code = db.Column(db.Integer)
     phone = db.Column(db.String)
     videos_checked_out_count = db.Column(db.Integer, default=0)
     
@@ -24,5 +25,6 @@ class Customer(db.Model):
     def make_a_customer(cls, json, id): 
         return cls(customer_id=id,
                     name=json["name"],
-                    postal_code=json["postal_code"], 
+                    postal_code=json["postal_code"],
+                    registered_at=datetime.utcnow(), 
                     phone=json["phone"])
