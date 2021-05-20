@@ -9,13 +9,12 @@ customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
-def check_if_none(item): # convert to decorator
+def valid_item(item): # convert to decorator?
     '''
-    Checks if item does not exist in the table
-    Returns 404 error
+    Checks if item exists in the table
     '''
-    if item is None:
-        return make_response("Customer or video not found", 400)
+    if item is not None:
+        return True
 
 @customers_bp.route("", methods=["GET"])
 def get_customers():
@@ -57,7 +56,7 @@ def get_customer(customer_id):
     Gets customer by customer_id
     '''
     customer = Customer.query.get(customer_id)
-    if customer is None:
+    if not valid_item(customer):
         return make_response("No customer found", 404)
 
     return customer.to_json()
@@ -68,7 +67,7 @@ def update_customer(customer_id):
     Updates specific customer information
     '''
     customer = Customer.query.get(customer_id)
-    if customer is None:
+    if not valid_item(customer):
         return make_response("No customer found", 404)
 
     form_data = request.get_json()
@@ -93,7 +92,7 @@ def delete_customer(customer_id):
     Deletes customer by customer_id
     '''
     customer = Customer.query.get(customer_id)
-    if customer is None:
+    if not valid_item(customer):
         return make_response("No customer found", 404)
 
     db.session.delete(customer)
@@ -145,7 +144,7 @@ def get_video(video_id):
     '''
     video = Video.query.get(video_id)
 
-    if video is None:
+    if not valid_item(video):
         return make_response("No video found", 404)
 
     return video.to_json()
@@ -156,7 +155,7 @@ def update_video(video_id):
     Updates specific video information
     '''
     video = Video.query.get(video_id)
-    if video is None:
+    if not valid_item(video):
         return make_response("No video found", 404)
 
     form_data = request.get_json()
@@ -181,7 +180,7 @@ def delete_video(video_id):
     Deletes video by video_id
     '''
     video = Video.query.get(video_id)
-    if video is None:
+    if not valid_item(video):
         return make_response("No video found", 404)
 
     db.session.delete(video)
@@ -214,10 +213,8 @@ def check_out():
     customer = Customer.query.get(customer_id)
     video = Video.query.get(video_id)
 
-    if customer is None:
-        return make_response("Customer not found", 404)
-    if video is None:
-        return make_response("Video not found", 404)
+    if not valid_item(customer) or not valid_item(video):
+        return make_response("Customer or video not found", 404)
 
     new_rental = Rental(customer_id=customer_id, video_id=video_id)
 
@@ -258,7 +255,7 @@ def check_in():
     customer = Customer.query.get(request_body["customer_id"])
     video = Video.query.get(request_body["video_id"])
 
-    if customer is None or video is None:
+    if not valid_item(customer) or not valid_item(video):
         return make_response("Customer or video not found", 400)
 
     if customer.videos_checked_out_count == 0:
@@ -312,7 +309,7 @@ def get_video_customers(video_id):
     Gets list of all customers who have checked out a video
     '''
     video = Video.query.get(video_id)
-    if video is None:
+    if not valid_item(video):
         return make_response("", 400)
 
     customer_list = [] # list of customers currently renting a video
