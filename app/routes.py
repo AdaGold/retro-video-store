@@ -27,7 +27,7 @@ def handle_get_customers():
         
         new_customer = Customer(name=request_body["name"],\
             postal_code=request_body["postal_code"], phone_number=request_body["phone"],\
-                register_at=datetime.utcnow())
+                register_at=datetime.now())
         
         db.session.add(new_customer)
         db.session.commit()
@@ -63,10 +63,7 @@ def handle_customer(id):
     elif request.method == "DELETE":
         db.session.delete(customer)
         db.session.commit()
-        return {
-            "details": \
-                (f"Customer {customer.id} \"{customer.name}\" successfully deleted")
-        }
+        return customer.return_id()
 
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 @videos_bp.route("", methods= ["GET", "POST"])
@@ -120,7 +117,5 @@ def handle_video(id):
     elif request.method == "DELETE":
         db.session.delete(video)
         db.session.commit()
-        return {
-            "details": \
-                (f"Video {video.id} \"{video.title}\" successfully deleted")
-        }
+
+        return video.return_id()
