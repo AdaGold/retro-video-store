@@ -34,7 +34,7 @@ def get_customers():
 # POST / CREATE NEW CUSTOMERS****************************************************************
     elif request.method == "POST":
         request_body = request.get_json()
-        if ("name"  or "postal_code" or "phone" not in request_body):
+        if ("name" not in request_body or  "postal_code" not in request_body or "phone" not in request_body):
             return make_response(jsonify({"details": "Invalid data"}), 400)
         
         else:
