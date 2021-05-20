@@ -5,6 +5,7 @@ https://docs.sqlalchemy.org/en/14/orm/basic_relationships.html
 Creating Many-To-Many Relationships in Flask-SQLAlchemy:
 https://www.youtube.com/watch?v=OvhoYbjtiKc
 
+
 Python doc: datetime — Basic date and time types
 Scroll to classmethod datetime.now(tz=None)
 https://docs.python.org/3/library/datetime.html
@@ -19,6 +20,6 @@ https://docs.python.org/3/library/datetime.html
     This function is preferred over today() and utcnow().
 
 
-Many to Many Relationships
-https://www.tutorialspoint.com/sqlalchemy/sqlalchemy_orm_many_to_many_relationships.htm
 
+Many to many relationships in SQLAlchemy models (Flask)
+https://www.michaelcho.me/article/many-to-many-relationships-in-sqlalchemy-models-flask

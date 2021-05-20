@@ -9,7 +9,7 @@
 - [X] postal code of the customer (STRING)
 - [X] phone number of the customer (STRING)
 - [X] registered_at datetime of when the customer was added to the system (DATETIME)
-- [ ] videos_checked_out_count
+- [X] videos_checked_out_count
 
 ## Create Video model with attributes
 
@@ -17,7 +17,7 @@
 - [X] title of the video (STRING)
 - [X] release date datetime of when the video was released (DATETIME)
 - [X] total inventory of how many copies are owned by the video store
-- [ ] available_inventory
+- [X] available_inventory
 
 
 
@@ -25,7 +25,7 @@
 ## GET /customers
 
 - [X] successful response has status 200  
-- [ ] successful response has this body: 
+- [X] successful response has this body: 
 
             [
         {
@@ -55,7 +55,7 @@
 
 - [X] route has 1 required argument: id 
 - [X] successful response has status 200  
-- [ ] successful response has this body: 
+- [X] successful response has this body: 
 
         {
             "id": 2,
@@ -67,7 +67,6 @@
         }
 
 - [ ] returns detailed errors and a status 404: Not Found if this customer does not exist.
-
 
 
 
@@ -109,7 +108,7 @@
         }
 
 - [X] successful response has status 200  
-- [ ] successful response has this body: 
+- [X] successful response has this body: 
 
         {
             "id": 2,
@@ -144,7 +143,7 @@
 ## GET /videos
 
 - [X] successful response has status 200  
-- [ ] successful response has this body: 
+- [X] successful response has this body: 
 
         [
         {
@@ -171,7 +170,7 @@
 
 - [X] route has 1 required argument: id 
 - [X] successful response has status 200  
-- [ ] successful response has this body: 
+- [X] successful response has this body: 
 
         {
         "id": 1,
@@ -220,7 +219,7 @@
         }
 
 - [X] successful response has status 200  
-- [ ] successful response has this body: 
+- [X] successful response has this body: 
 
         {
         "id": 1,

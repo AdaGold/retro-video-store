@@ -75,7 +75,7 @@ def add_new_customer():
     db.session.add(new_customer)
     db.session.commit()
 
-    return make_response({"id": new_customer.customer_id}, 201)
+    return make_response({"id": new_customer.cust_id}, 201)
 
 
 
@@ -117,7 +117,7 @@ def delete_customer(customer_id):
     db.session.delete(saved_customer)
     db.session.commit()
 
-    return make_response({"id": saved_customer.customer_id}, 200)
+    return make_response({"id": saved_customer.cust_id}, 200)
 
 
 
@@ -210,3 +210,7 @@ def delete_customer(video_id):
     db.session.commit()
 
     return make_response({"id": saved_video.video_id}, 200)
+
+
+# CUSTOM ENDPOINTS:
+#=============================================================================
