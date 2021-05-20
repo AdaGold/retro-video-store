@@ -1,19 +1,26 @@
 from app import db
 from flask import current_app
 from sqlalchemy import DateTime
+from app.models.customer import Customer
+from app.models.video import Video
+
+from sqlalchemy.orm import relationship, backref
 
 
 class Rental(db.Model):
-    __tablename__ = "Rental"
+    # __tablename__ = "Rental"
     rental_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     customer_id = db.Column(
-        db.Integer, db.ForeignKey("customer.customer.id"), primary_key=True)
+        db.Integer, db.ForeignKey("customer.customer_id"), primary_key=True)
     video_id = db.Column(
-        db.Integer, db.ForeignKey("video.video.id"), primary_key=True)
-    video = db.relationship("Video", back_populates="customers")
-    customer = db.relationship("Customer", back_populates="videos")
+        db.Integer, db.ForeignKey("video.video_id"), primary_key=True)
+    # video = db.relationship("Video", back_populates="customers")
+    # customer = db.relationship("Customer", back_populates="videos")
+    video = db.relationship(Video, backref=backref(
+        "rental", cascade="all, delete-orphan"))
+    customer = db.relationship(Customer, backref=backref(
+        "rental", cascade="all, delete-orphan"))
 
-    # DUE_DATE
-    due_date = db.Column(db.DateTime, default=)
-
+    due_date = db.Column(db.DateTime)
+    # , default=)
     # def helper():

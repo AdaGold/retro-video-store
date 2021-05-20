@@ -4,7 +4,7 @@ from sqlalchemy import DateTime
 
 
 class Customer(db.Model):
-    __tablename__ = 'left'
+    # __tablename__ = 'left'
     customer_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String)
     postal_code = db.Column(db.String)
@@ -13,7 +13,9 @@ class Customer(db.Model):
     videos_checked_out_count = db.Column(db.Integer, default=0)
 
     videos = db.relationship(
-        "Video", secondary="rentals", back_populates="customer")
+        "Video", secondary="rental")
+
+    # , back_populates="customer")
 
     # lowercase 'goal.id' looks at a table in your db
     # goal_id = db.Column(db.Integer, db.ForeignKey(
