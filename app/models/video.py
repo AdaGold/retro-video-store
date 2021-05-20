@@ -9,12 +9,40 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime, nullable=False)
     # default=datetime(0).strftime("%a, %d %b %Y %X %z")
     total_inventory = db.Column(db.Integer, nullable=False)
-    available_inventory = db.Column(db.Integer, nullable=False) # set it to false, ok?
+    available_inventory = db.Column(db.Integer, nullable=True) # set it to false, ok?
 
     # video has many rentals - like goal to task
     # Video has many Rentals, and a Rental belongs to a Video
     # Video to Rental is a one-to-many relationship
 
+    def video_to_json_response(self):
+        '''
+        Converts a Video instance into JSON format
+        Output: Returns a Python dictionary in the shape of JSON response 
+        that the API returns in the route that is called (GET route).
+        '''
+        #  Release date should be this format:  "1979-01-18",("%Y-%m-%d")
+        return  {"id": self.id,
+                "title": self.title,
+                "release_date": self.release_date.strftime("%Y-%m-%d"), 
+                "total_inventory": self.total_inventory,
+                "available_inventory": self.available_inventory}
+                
+    @staticmethod
+    def from_json_to_video(request_body):
+        '''
+        Converts JSON request body into a new instance of Customer
+        input: Takes in a dictionary in the shape of the JSON the API 
+        receives. 
+        '''
+        # could add an if to check that the request body is good -
+        # then create customer
+    
+        new_video = Video(title=request_body["title"],
+                release_date=request_body["release_date"],
+                total_inventory = request_body["total_inventory"])
+
+        return new_video
 
     ## TASK MODEL --------------------------------------
     # description = db.Column(db.String)

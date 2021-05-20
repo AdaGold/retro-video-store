@@ -1,4 +1,5 @@
-from flask import current_app 
+from flask import current_app
+from sqlalchemy.sql.expression import true 
 from app import db
 from datetime import datetime #added -  I need it for register_at
 # from sqlalchemy.orm import relationship # when should this be used?
@@ -19,6 +20,7 @@ class Customer(db.Model):
     videos_checked_out_count = db.Column(db.Integer, default=0) 
     # rentals = Customer has many Rentals, and a Rental belongs to a customer
     # backref
+    # rentals = db.relationship("Rental", backref="customer", lazy=true)
 
     # Establishing relationship 
     # videos = relationship("Video", secondary="rental", lazy=True) # how abbout lazy=true?

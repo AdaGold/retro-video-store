@@ -1,6 +1,8 @@
 from flask import current_app
 from app import db
 from datetime import datetime # do I need this?
+# from .models.customer import Customer 
+# from .models.video import Video
 
 # Establishing many-to-many relationships to between
 # Customer and Video Models
@@ -16,6 +18,7 @@ class Rental(db.Model):
     # Customer to Rental is a one to many relationship just like Goal to Task
     rental_date = db.Column(db.DateTime, default=datetime.utcnow(),  
         nullable=False) # maybe
+    # due_date = # current date + 7 use delta
 
     
 
@@ -67,7 +70,7 @@ def error_response():
                                                 "is not a number"]}}
 # // ...or...
 
-    return {"errors": ["Not Found"]}
+    # return {"errors": ["Not Found"]}
 
 #cuerpo de la respuesta una llave por cada error{}
 

@@ -11,6 +11,7 @@ import os
 
 # creating instance of the model, first arg is name of app's module
 customer_bp = Blueprint("customers", __name__, url_prefix="/customers") # details
+video_bp = Blueprint("videos", __name__, url_prefix="/videos") # details
 
 #create a customer with null completed at
 @customer_bp.route("", methods = ["POST"], strict_slashes = False)
@@ -25,15 +26,12 @@ def create_customer():
         return {"details": "Bad Request"}, 400
         # return "Bad Request", 400
 
-
 # Retrieve all /customers  
 @customer_bp.route("", methods = ["GET"], strict_slashes = False)
 def retrieve_customers_data():
     customers = Customer.query.all() 
     customers_response = []
-
     if customers != None:  
-        
         customers_response = [customer.customer_to_json_response() \
                 for customer in customers]
     return jsonify(customers_response), 200
@@ -42,50 +40,121 @@ def retrieve_customers_data():
 @customer_bp.route("/<customer_id>", methods=["GET"], strict_slashes = False)
 def retrieve_single_customer(customer_id):
     customer = Customer.query.get(customer_id)
-    if customer != None:
-        return customer.customer_to_json_response(), 200
+    if customer == None:
+        return make_response('Not Found', 404)
+    return customer.customer_to_json_response(), 200
         # response = customer.customer_to_json_response()
         # if customer.goal_id:
         #     response['task']['goal_id'] = customer.goal_id
         # return response, 200
-    return make_response('Not Found', 404)
 
 #Update a customer
 @customer_bp.route("/<customer_id>", methods=["PUT"], strict_slashes = False)  
 def update_customer(customer_id):
     customer = Customer.query.get(customer_id) #SQL ALCHEMY QUERY?
-    if customer: # if successful quering customer with given customer_id
-        form_data = request.get_json()
-        if not "name" in form_data or not "postal_code" in form_data \
-            or not "phone" in form_data:
-            return jsonify("Bad Request"), 400
-
-        # if "name" in form_data: 
-        customer.name = form_data["name"]
-        # if "postal_code" in form_data:
-        customer.postal_code = form_data["postal_code"]
-        # if "phone" in form_data:
-        customer.phone = form_data["phone"]
-        
-        db.session.commit() # commiting changes to db
-        return customer.customer_to_json_response(), 200
-
-    return jsonify("Not Found"), 404
+    # if quering customer with given customer_id not succesful send error
+    if not customer:
+        return jsonify("Not Found"), 404 # send error response
+    form_data = request.get_json() # I'm not checking if this is empty - 
+    # if quering customer doesn't contain all needed fields succesful send error
+    if not "name" in form_data or not "postal_code" in form_data \
+        or not "phone" in form_data:
+        return jsonify("Bad Request"), 400
+    # Otherwise, make the changes: 
+    customer.name = form_data["name"]
+    customer.postal_code = form_data["postal_code"]
+    customer.phone = form_data["phone"]
+    
+    db.session.commit() # commiting changes to db
+    return customer.customer_to_json_response(), 200 # send ok response
 
 # Delete a customer
 @customer_bp.route("/<customer_id>", methods=["DELETE"], strict_slashes = False)
-def customer_task(customer_id):  
+def delete_customer(customer_id):  
     customer = Customer.query.get(customer_id) 
-    if customer != None:
-        db.session.delete(customer)
-        db.session.commit()
-        details_str = f"Customer {customer_id} \"{customer.name}\" successfully deleted"
-        return jsonify(id = customer.id, detais = details_str), 200
-        # return jsonify(id = customer.id), 200
+    # if quering customer doesn't return a valid customer, send error
+    if customer == None:
+        return jsonify("Not Found"), 404
+    db.session.delete(customer)
+    db.session.commit()
+    details_str = f"Customer {customer_id} \"{customer.name}\" successfully deleted"
+    return jsonify(id = customer.id, details = details_str), 200
+    # return jsonify(id = customer.id), 200 ## also ok
 
-    return jsonify("Not Found"), 404
+## VIDEO ROUTES:
+
+#create a video 
+@video_bp.route("", methods = ["POST"], strict_slashes = False)
+def create_video():
+    try:
+        request_body = request.get_json()
+        new_video = Video.from_json_to_video(request_body)
+        db.session.add(new_video) # "adds model to the db"
+        db.session.commit() # commits the action above
+        details_str = f"Video \"{new_video.title}\" successfully created"
+
+        return jsonify(id = new_video.id, details = details_str), 201
+    except KeyError:
+        return {"details": "Bad Request"}, 400
+        # return "Bad Request", 400
 
 
+# Retrieve all /videos  
+@video_bp.route("", methods = ["GET"], strict_slashes = False)
+def retrieve_videos_data():
+    videos = Video.query.all() 
+    videos_response = []
+    if videos != None:  
+        videos_response = [video.video_to_json_response() \
+                for video in videos]
+    return jsonify(videos_response), 200
+
+# Retrieve one /videos/1     
+@video_bp.route("/<video_id>", methods=["GET"], strict_slashes = False)
+def retrieve_single_video(video_id):
+    video = Video.query.get(video_id)
+    if video == None:
+        return make_response('Not Found', 404)
+    return video.video_to_json_response(), 200
+        # response = customer.customer_to_json_response()
+        # if customer.goal_id:
+        #     response['task']['goal_id'] = customer.goal_id
+        # return response, 200
+
+#Update a video
+@video_bp.route("/<video_id>", methods=["PUT"], strict_slashes = False)  
+def update_video(video_id):
+    video = Video.query.get(video_id) #SQL ALCHEMY QUERY?
+    form_data = request.get_json()
+    # if quering video with given video_id not succesful send error
+    if not video:
+        return jsonify("Not Found"), 404 # send error response
+    # if quering video doesn't contain all needed fields succesful send error
+    if not form_data or not ("title" in form_data) or not ("release_date" in form_data) \
+        or not ("total_inventory" in form_data):
+        return jsonify("Bad Request"), 400
+
+    # Otherwise, make the changes: 
+    video.title = form_data["title"]
+    video.release_date = form_data["release_date"]
+    video.total_inventory = form_data["total_inventory"]
+    
+    db.session.commit() # commiting changes to db
+    return video.video_to_json_response(), 200 # send ok response
+
+
+# Delete a video
+@video_bp.route("/<video_id>", methods=["DELETE"], strict_slashes = False)
+def video_customer(video_id):  
+    video = Video.query.get(video_id) 
+    # if quering customer doesn't return a valid customer, send error
+    if video == None:
+        return jsonify("Not Found"), 404
+    db.session.delete(video)
+    db.session.commit()
+    details_str = f"Video {video_id} \"{video.title}\" successfully deleted"
+    return jsonify(id = video.id, details = details_str), 200
+    # return jsonify(id = customer.id), 200 ## also ok
 
 
 
