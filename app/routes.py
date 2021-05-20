@@ -1,15 +1,21 @@
 from flask import Blueprint, request, make_response, jsonify
-from flask_sqlalchemy.model import Model
 from app.models.customer import Customer
 from app.models.video import Video
 from app.models.rental import Rental
 from app import db
 from datetime import datetime, timedelta
-import os
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
+
+def check_if_none(item): # convert to decorator
+    '''
+    Checks if item does not exist in the table
+    Returns 404 error
+    '''
+    if item is None:
+        return make_response("Customer or video not found", 400)
 
 @customers_bp.route("", methods=["GET"])
 def get_customers():
@@ -37,7 +43,6 @@ def post_customer():
         }, 400)
     else:
         new_customer = Customer.from_json(Customer, request_body)
-        # new_customer.total_inventory = new_customer.available_inventory
 
         db.session.add(new_customer)
         db.session.commit()
@@ -125,7 +130,6 @@ def post_video():
         }, 400)
     else:
         new_video = Video.from_json(Video, request_body)
-        new_video.available_inventory = new_video.total_inventory
 
         db.session.add(new_video)
         db.session.commit()
@@ -140,6 +144,7 @@ def get_video(video_id):
     Gets video by video_id
     '''
     video = Video.query.get(video_id)
+
     if video is None:
         return make_response("No video found", 404)
 
@@ -189,14 +194,15 @@ def delete_video(video_id):
 @rentals_bp.route("/check-out", methods=["POST"])
 def check_out():
     '''
+    INPUT: JSON with customer_id and video_id
+    OUTPUT: JSON with new rental information pulled from customer,
+    video, and rental table
+
     Increases customer's videos_checked_out by 1
     Decreases video's available_inventory
     Creates due date 7 days from today
     '''
     request_body = request.get_json()
-    # request looks like:
-    # {"customer_id": 3,
-    # "video_id": 1}
 
     if type(request_body["customer_id"]) != int or\
         type(request_body["video_id"]) != int:
@@ -213,10 +219,7 @@ def check_out():
     if video is None:
         return make_response("Video not found", 404)
 
-    due_date = datetime.utcnow() + timedelta(days=7)
-
-    new_rental = Rental(customer_id=customer_id, video_id=video_id,
-    due_date=due_date)
+    new_rental = Rental(customer_id=customer_id, video_id=video_id)
 
     if video.available_inventory == 0:
         return {
@@ -240,6 +243,9 @@ def check_out():
 @rentals_bp.route("/check-in", methods=["POST"])
 def check_in():
     '''
+    INPUT: JSON with customer_id and video_id
+    OUTPUT: JSON with updated inventory information from customer and video
+
     Decreases customer's videos_checked_out by 1
     Increases video's available_inventory
     '''
@@ -249,11 +255,8 @@ def check_in():
         type(request_body["video_id"]) != int:
             return jsonify("IDs must be an integer"), 400
 
-    customer_id = request_body["customer_id"]
-    video_id = request_body["video_id"]
-
-    customer = Customer.query.get(customer_id)
-    video = Video.query.get(video_id)
+    customer = Customer.query.get(request_body["customer_id"])
+    video = Video.query.get(request_body["video_id"])
 
     if customer is None or video is None:
         return make_response("Customer or video not found", 400)
@@ -291,6 +294,7 @@ def get_customer_videos(customer_id):
         Video, Video.video_id==Rental.video_id).filter(
         Customer.customer_id==customer_id).all()
 
+    # loop that extracts appropriate data from list of tuples
     for tuple in rental_results:
         video = tuple[1]
         rental = tuple[2]
@@ -312,11 +316,13 @@ def get_video_customers(video_id):
         return make_response("", 400)
 
     customer_list = [] # list of customers currently renting a video
+
     rental_results = db.session.query(Customer, Video, Rental).join(
         Video, Video.video_id==Rental.video_id).join(
         Customer, Customer.customer_id==Rental.customer_id).filter(
         Video.video_id==video_id).all()
 
+    # loop that extracts appropriate data from list of tuples
     for tuple in rental_results:
         customer = tuple[0]
         rental = tuple[2]
