@@ -13,7 +13,7 @@ load_dotenv()
 
 def create_app(test_config=None):
     app = Flask(__name__)
-    app.config['JSON_SORT_KEYS']=False
+    
     
 
     if test_config is None:
@@ -24,7 +24,7 @@ def create_app(test_config=None):
         app.config["TESTING"] = True
         app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
             "SQLALCHEMY_TEST_DATABASE_URI")
-    
+    app.config['JSON_SORT_KEYS']=False
     
     
 
