@@ -9,6 +9,7 @@ import os
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 @customers_bp.route("", methods=["GET"])
 def get_customers():
