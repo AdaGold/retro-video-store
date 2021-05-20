@@ -19,40 +19,6 @@ def is_int(value):
         return False
 
 # Wave 1: CRUD (Create, Read, Update & Delete) for customer
-@customers_bp.route("", methods=["GET"], strict_slashes=False)
-def get_customer():
-    customer_name_from_url = request.args.get("name")
-    # get customer by name
-    if customer_name_from_url:
-        customers = Customer.query.filter.by(name=customer_name_from_url)
-    # get all customers
-    else:
-        customers = Customer.query.all()
-    
-    customers_response = []
-
-    for customer in customers:
-        customers_response.append(customer.to_json())
-    
-    return jsonify(customers_response)
-
-@customers_bp.route("/<customer_id>", methods=["GET"], strict_slashes=False)
-def get_one_customer(customer_id):
-    if not is_int(customer_id):
-        return {
-            "message": f"ID {customer_id} must be an integer",
-            "success": False
-        }, 400
-    
-    customer = Customer.query.get(customer_id)
-
-    if customer is None:
-        return make_response("Customer does not exist", 404)
-    else:
-        return {
-            "customer": customer.to_json()
-        }, 200
-
 @customers_bp.route("", methods=["POST"], strict_slashes=False)
 def create_customer():
     try:
@@ -71,6 +37,38 @@ def create_customer():
     
     except KeyError:
         return make_response({"details": "Invalid data"}, 400)
+        
+@customers_bp.route("", methods=["GET"], strict_slashes=False)
+def get_customer():
+    customer_name_from_url = request.args.get("name")
+    # get customer by name
+    if customer_name_from_url:
+        customers = Customer.query.filter.by(name=customer_name_from_url)
+    # get all customers
+    else:
+        customers = Customer.query.all()
+    
+    customers_response = []
+
+    for customer in customers:
+        customers_response.append(customer.to_json())
+    
+    return jsonify(customers_response), 200
+
+@customers_bp.route("/<customer_id>", methods=["GET"], strict_slashes=False)
+def get_one_customer(customer_id):
+    if not is_int(customer_id):
+        return {
+            "message": f"ID {customer_id} must be an integer",
+            "success": False
+        }, 400
+    
+    customer = Customer.query.get(customer_id)
+
+    if customer is None:
+        return make_response("Customer does not exist", 404)
+    else:
+        return customer.to_json(), 200
 
 @customers_bp.route("/<customer_id>", methods=["PUT"], strict_slashes=False)
 def update_customer(customer_id):
@@ -130,7 +128,7 @@ def get_video():
     # get video by title
     if video_title_from_url:
         videos = Video.query.filter.by(title=video_title_from_url)
-    # get all customers
+    # get all videos
     else:
         videos = Video.query.all()
     
@@ -139,7 +137,7 @@ def get_video():
     for video in videos:
         video_response.append(video.to_json())
     
-    return jsonify(video_response)
+    return jsonify(video_response), 200
 
 @videos_bp.route("/<video_id>", methods=["GET"], strict_slashes=False)
 def get_one_video(video_id):
@@ -154,9 +152,7 @@ def get_one_video(video_id):
     if video is None:
         return make_response("Video does not exist", 404)
     else:
-        return {
-            "video": video.to_json()
-        }, 200
+        return video.to_json(),200
 
 @videos_bp.route("/<video_id>", methods=["PUT"], strict_slashes=False)
 def update_video(video_id):
@@ -173,6 +169,8 @@ def update_video(video_id):
         db.session.commit()
 
         return jsonify(video.to_json()), 200
+    elif video is None:
+        return("", 404)
     else:
         return make_response({"error": "Bad Request"}, 400)
 
