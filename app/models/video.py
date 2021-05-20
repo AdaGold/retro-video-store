@@ -11,8 +11,14 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime, nullable=True)
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
+    customers_rented_to = db.Column(db.Integer, db.ForeignKey('customer.id'),nullable=True)
 
-
+    def calculate_inventory(self):
+        print(self.customers_rented_to)
+        if self.customers_rented_to:
+            return self.total_inventory - len([i for i in self.customers_rented_to])
+        else:
+            return self.total_inventory
 
     def build_dict(self):
         return {

@@ -12,7 +12,10 @@ class Customer(db.Model):
     phone = db.Column(db.String)
     postal_code = db.Column(db.String)
     registered_at = db.Column(db.DateTime)
-    videos_checked_out_count = db.Column(db.Integer, default=0)
+    rentals = db.relationship('Video', backref= 'customers', lazy=True)
+
+    def count_videos(self):
+        return len([vid for vid in self.rentals])
 
     def build_dict(self):
         customer_dict = {
@@ -21,7 +24,7 @@ class Customer(db.Model):
             "postal_code" : self.postal_code,
             "phone" : self.phone,
             "registered_at" : self.registered_at,
-            "videos_checked_out_count" : self.videos_checked_out_count
+            "videos_checked_out_count" : self.count_videos()
         } 
         return customer_dict
     

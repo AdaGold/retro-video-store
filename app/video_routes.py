@@ -3,6 +3,7 @@ from flask import request, Blueprint, make_response, jsonify
 from app import db
 from dotenv import load_dotenv
 from app.models.video import Video
+from app.models.rental import Rental
 
 load_dotenv()
 
@@ -66,4 +67,5 @@ def delete_video(id):
 @videos_bp.route("/<id>/rentals", methods = ["GET"])
 def get_customers_with_video(id):
     video = Video.query.get_or_404(id)
-    return make_response(video.get_customers(), 200)
+    # out_to = [customer.build_dict() for customer in video.customers_rented_to]
+    return make_response(jsonify(video.customers_rented_to, 200))
