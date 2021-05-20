@@ -1,4 +1,5 @@
 from flask import current_app
+from sqlalchemy.orm import backref
 from app import db
 from datetime import datetime
 
@@ -9,6 +10,7 @@ class Customer(db.Model):
     postal_code = db.Column(db.Integer)
     phone = db.Column(db.String)
     videos_checked_out_count = db.Column(db.Integer, default=0)
+    videos = db.relationship("Rental", backref="customer", lazy=True)
     
     def to_json(self): 
         to_json = {
