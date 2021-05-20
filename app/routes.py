@@ -36,7 +36,7 @@ def all_customers():
         return make_response({"id": new_customer.customer_id}), 201 
 
 
-@customer_bp.route("/<customer_id>", methods=["GET", "PUT", "DELETE"])
+@customer_bp.route("/<customer_id>", methods=["GET", "PUT", "DELETE"], strict_slashes=False)
 def get_one_customer(customer_id):
     customer = Customer.query.get(customer_id)
     
@@ -48,7 +48,7 @@ def get_one_customer(customer_id):
         if customer == None:
             return make_response("",404)
         else:
-            return make_response({customer.to_json()}), 200
+            return make_response(customer.to_json()), 200
 
     elif request.method == "PUT":
         request_body = request.get_json()
@@ -65,7 +65,7 @@ def get_one_customer(customer_id):
             customer.phone = form_data["phone"]
 
             db.session.commit()
-            return make_response({customer.to_json()}), 200
+            return make_response(customer.to_json()), 200
     
     elif request.method == "DELETE":
         if customer == None:
@@ -78,15 +78,61 @@ def get_one_customer(customer_id):
             return make_response ({"id": customer.customer_id}), 200
 
 @videos_bp.route("", methods=["GET", "POST"])
-def all_customers():
+def all_videos():
     if request.method == "GET":
         videos = Video.query.all()
         videos_response = []
         for one_video in videos:
-            videos_response.append(one_video.to_json())
+            videos_response.append(one_video.to_json_video())
         
         return jsonify(videos_response)
+    elif request.method == "POST":
+        request_body = request.get_json()
+        if "title" not in request_body or "release_date" not in request_body or "total_inventory" not in request_body:
+            return make_response ({"details": "Invalid data"}),400
+        else:
+            new_video= Video(title=request_body["title"],
+                    release_date=request_body["release_date"],
+                    total_inventory=request_body["total_inventory"])
+        db.session.add(new_video)
+        db.session.commit()
+
+# they want us to return the id only 
+        return make_response({"id": new_video.video_id}), 201 
 
 
 
-#@videos_bp.route("/<video_id>", methods=["GET", "PUT","DELETE"])
+@videos_bp.route("/<video_id>", methods=["GET", "PUT","DELETE"])
+def get_one_video(video_id):
+    video = Video.query.get(video_id)
+
+    if request.method == "GET":
+        if video == None:
+            return make_response("",404)
+        else:
+            return make_response(video.to_json_video()), 200
+
+    elif request.method == "PUT":
+        request_body = request.get_json()
+        if video == None:
+            return make_response("",404)
+        elif "title" not in request_body or "release_date" not in request_body or "total_inventory" not in request_body:
+            return make_response ({"details": "Invalid data"}),400    
+        # converting postman json to a dict table
+        else:
+            form_data = request.get_json()
+
+            video.title = form_data["title"]
+            video.release_date = form_data["release_date"]
+            video.total_inventory = form_data["total_inventory"]
+
+            db.session.commit()
+            return make_response(video.to_json_video()), 200
+    
+    elif request.method == "DELETE":
+        if video == None:
+            return make_response("",404)        
+        else:
+            db.session.delete(video)
+            db.session.commit()
+            return make_response ({"id": video.customer_id}), 200
