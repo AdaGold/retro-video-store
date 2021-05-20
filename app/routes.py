@@ -67,7 +67,7 @@ def handle_customer(customer_id):
 # PUT / UPDATE A SPECIFIC CUSTOMER **************************************************************
     elif request.method == "PUT":
         request_body = request.get_json()
-        if ("name"  or "postal_code" or "phone" not in request_body):
+        if ("name" not in request_body or "postal_code" not in request_body or "phone" not in request_body):
             return make_response(jsonify({"details": "Invalid data"}), 400)
 
         form_data = request.get_json()
@@ -107,7 +107,7 @@ def get_videos():
 # CREATE NEW VIDEOS*****************************************************************************
     elif request.method == "POST":
         request_body = request.get_json()
-        if ("title"  or "release_date" or "total_inventory" not in request_body):
+        if ("title"  not in request_body or "release_date" not in request_body or "total_inventory" not in request_body):
             return make_response(jsonify({"details": "Invalid data"}), 400)
         else:
             video = Video(title = request_body["title"],
