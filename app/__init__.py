@@ -21,10 +21,12 @@ def create_app(test_config=None):
     # Import models here for Alembic setup.  why exactly are they necessary?
     from app.models.customer import Customer
     from app.models.video import Video
-    from .routes import customers_bp, videos_bp
+    from app.models.rental import Rental
+    from .routes import customers_bp, videos_bp, rentals_bp
 
     app.register_blueprint(customers_bp)
     app.register_blueprint(videos_bp)
+    app.register_blueprint(rentals_bp)
 
     return app
 
