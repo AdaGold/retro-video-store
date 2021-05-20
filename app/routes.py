@@ -1,6 +1,7 @@
 from app import db
 from app.models.customer import Customer
 from app.models.video import Video
+from app.models.rental import Rental
 from flask import request, Blueprint, make_response, jsonify
 import datetime
 import requests
@@ -51,9 +52,9 @@ def handle_customers(id):
         db.session.commit()
         return make_response({"id": customer.id}, 200) 
 
-@customers_bp.route("/<id>/rentals", methods = ["GET"])
-def customer_rentals(id):
-    pass
+# @customers_bp.route("/<id>/rentals", methods = ["GET"])
+# def customer_rentals(id):
+#     pass
 
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 
@@ -100,6 +101,6 @@ def handle_videos(id):
         db.session.commit() 
         return make_response({"id": video.id}, 200)
 
-@videos_bp.route("/<id>", methods = ["GET"])
-def video_rentals(id): 
-    pass
+# @videos_bp.route("/<id>", methods = ["GET"])
+# def video_rentals(id): 
+#     pass
