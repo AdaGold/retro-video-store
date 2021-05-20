@@ -59,9 +59,10 @@ def add_customer():
     if not (
             "name" in request_body and
             "postal_code" in request_body and
-            "phone" in request_body and
-            is_number(request_body["postal_code"]) and
-            is_valid_phone(request_body["phone"])
+            "phone" in request_body
+            # and
+            # is_number(request_body["postal_code"]) and
+            # is_valid_phone(request_body["phone"])
     ):
         return make_response({
             "errors": [
@@ -99,11 +100,13 @@ def update_customer_by_id(customer_id):
     if not (
             "name" in request_body and
             "postal_code" in request_body and
-            "phone" in request_body and
-            is_valid_phone(request_body["phone"]) and
+            "phone" in request_body
+            # and
+            # is_valid_phone(request_body["phone"]) and
             # "registered_at" in request_body and
             # "videos_checked_out_count" in request_body and
-            is_number(request_body["postal_code"])):
+            # is_number(request_body["postal_code"])
+    ):
 
         return make_response({
             "errors": [
@@ -140,7 +143,7 @@ def delete_customer_by_id(customer_id):
     db.session.commit()
     # return ({"id": customer_id, "details": 'Task has been successfully
     # deleted'}, 200)
-    return ({"id": customer_id}, 200)
+    return ({"id": int(customer_id)}, 200)
 
 # -------------- CRUD for /videos ------------------------
 
@@ -176,8 +179,9 @@ def add_video():
     if not (
             "title" in request_body and
             "release_date" in request_body and
-            "total_inventory" in request_body and
-            is_number(request_body["total_inventory"])):
+            "total_inventory" in request_body
+            # and is_number(request_body["total_inventory"])
+    ):
         return make_response({
             "errors": [
                 "Bad Request",
@@ -251,22 +255,26 @@ def delete_video_by_id(video_id):
     db.session.commit()
     # return ({"id": video_id, "details": 'Video has been successfully
     # deleted'}, 200)
-    return ({"id": video_id}, 200)
+    return ({"id": int(video_id)}, 200)
 
 # -------------- Custom endpoints for /rentals ------------------------
 
 
 @rentals_bp.route("/check-out", methods=["POST"])
 def check_out_video_to_customer():
-    """Checks out a video to a customer, and updates the data in the database as such."""
+    """Checks out a video to a customer, and updates the data in the database as such.
+    /rentals/check-out
+    """
 
     request_body = request.get_json()
 
     if not (
             "customer_id" in request_body and
-            "video_id" in request_body and
-            is_number(request_body["customer_id"]) and
-            is_number(request_body["video_id"])):
+            "video_id" in request_body
+            # and
+            # is_number(request_body["customer_id"]) and
+            # is_number(request_body["video_id"])
+    ):
 
         return make_response({
             "errors": [
@@ -307,15 +315,6 @@ def check_out_video_to_customer():
     db.session.add_all([rental, video, customer])
     db.session.commit()
 
-    # print(rental)
-
-    # results = db.session.query(Customer, Video, Rental).join(
-    #     Customer, Customer.customer_id == Rental.customer_id).join(
-    #         Video, Video.video_id == Rental.video_id).filter(
-    #             Customer.customer_id == request_body["customer_id"]).all()
-
-    # print(results)
-
     return ({
         "customer_id": customer.customer_id,
         "video_id": video.video_id,
@@ -323,3 +322,64 @@ def check_out_video_to_customer():
         "videos_checked_out_count": customer.videos_checked_out_count,
         "available_inventory": video.available_inventory
     }, 200)
+
+
+@customers_bp.route("/<customer_id>/rentals", methods=["GET"])
+def get_videos_customer_checkedout(customer_id):
+    """ GET /customers/<id>/rentals
+    List the videos a customer currently has checked out """
+
+    customer = Customer.query.get(customer_id)
+
+    if customer is None:
+        return make_response({
+            "errors": [
+                "Not Found",
+                "Customer does not exist"
+            ]
+        }, 404)
+
+    rentals = Rental.query.filter_by(customer_id=customer_id)
+
+    result = []
+    for rental in rentals:
+        # question: query by batch
+        video = Video.query.get(rental.video_id)
+        video_json = {
+            "release_date": video.release_date,
+            "title": video.title,
+            "due_date": rental.due_date
+        }
+        result.append(video_json)
+    return jsonify(result), 200
+
+
+@videos_bp.route("/<video_id>/rentals", methods=["GET"])
+def get_customers_with_videoid_checkedout(video_id):
+    """GET /videos/<id>/rentals
+    List the customers who currently have the video checked out."""
+
+    video = Video.query.get(video_id)
+
+    if video is None:
+        return make_response({
+            "errors": [
+                "Not Found",
+                "Video does not exist"
+            ]
+        }, 404)
+
+    rentals = Rental.query.filter_by(video_id=video_id)
+
+    result = []
+    for rental in rentals:
+        # question: query by batch
+        customer = Customer.query.get(rental.customer_id)
+        customer_json = {
+            "due_date": rental.due_date,
+            "name": customer.name,
+            "phone": customer.phone,
+            "postal_code": str(customer.postal_code)
+        }
+        result.append(customer_json)
+    return jsonify(result), 200
