@@ -26,7 +26,7 @@ def handle_customers():
                 "registered_at": customer.register_at,
                 "postal_code": customer.postal_code,
                 "phone": customer.phone_num,
-                "videos_checked_out_count": 0 # logic
+                "videos_checked_out_count": customer.videos_checked_out_count # logic
             })
 
         return jsonify(customer_list)
@@ -154,7 +154,9 @@ def handle_videos():
         
         new_video = Video(title=request_body["title"],
                         release_date=request_body["release_date"], # datetime.datetime.now() this should probably be formatted differently
-                        total_inventory=request_body["total_inventory"])
+                        total_inventory=request_body["total_inventory"],
+                        available_inventory=request_body["total_inventory"]
+                        )
 
         db.session.add(new_video)
         db.session.commit()
@@ -264,7 +266,7 @@ def handle_rentals_checkout():
 
         if video == None:
             return "Video not found.", 404
-        elif video.available_inventory < 0:
+        elif video.available_inventory <= 0:
             return {
                 "details": "0 inventory."
             }, 400
@@ -288,6 +290,37 @@ def handle_rentals_checkout():
 def handle_rentals_checkin():
 
     if request.method == "POST":
+
+        # checkin_data = request.get_json()
+
+        # customer_checkin_id = checkin_data["customer_id"]
+        # video_checkin_id = checkin_data["video_id"]
+
+        # customer_data = db.session.query(Customer, Video, CustomerVideoRental).join(Customer, Customer.id==CustomerVideoRental.customer_id)\
+        # .join(Video, Video.id==CustomerVideoRental.video_id).filter(Customer.id == customer_checkin_id).all()
+
+        # customer_rental_list = []
+
+        # for tuple in customer_data:
+        #     customer = tuple[0]
+        #     video = tuple[1] # 1 is index in which Video instances are stored
+
+        #     if video.id == video_checkin_id:
+        #         customer.videos_checked_out_count -= 1
+        #         video.available_inventory += 1
+
+        #     db.session.commit()
+
+        #     customer_rental_list.append({
+        #     "customer_id": customer.id,
+        #     "video_id": video.id,
+        #     "videos_checked_out_count": customer.videos_checked_out_count,
+        #     "available_inventory": video.available_inventory
+        #     })
+
+
+        #     return jsonify(customer_rental_list)
+        
         
         checkin_data = request.get_json()
 

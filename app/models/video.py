@@ -8,8 +8,6 @@ class Video(db.Model):
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer, default=0)
 
-    # def update_inventory(self):
-
     def to_json(self):
 
         return {
