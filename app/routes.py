@@ -10,8 +10,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-#################### Routes for Customers ####################
+####################### Blueprints ########################
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
+videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
+
+#################### Routes for Customers ####################
 @customers_bp.route("", methods=["GET"], strict_slashes=False)
 def get_customer():
     customers = Customer.query.all()
@@ -31,8 +35,17 @@ def get_customer_rentals(customer_id):
     # results = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id).join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id == customer_id).all()
     # print(results[0][1].to_json())
     customer = Customer.query.get(customer_id)
-    print(customer.videos_rent[0].title)
-    return jsonify(None), 200
+    videos = customer.videos_rent
+    response = []
+    for video in videos:
+        related_rental = Rental.query.filter_by(customer_id=customer_id, video_id=video.video_id).first() 
+        detailed_info = {
+            "release_date": video.release_date,
+            "title": video.title,
+            "due_date": related_rental.due_date
+        }
+        response.append(detailed_info)
+    return jsonify(response), 200
 
 @customers_bp.route("/<customer_id>", methods=["PUT"], strict_slashes=False) 
 def update_customer(customer_id):
@@ -73,7 +86,6 @@ def delete_customer(customer_id):
         return jsonify(None), 404
       
 #################### Routes for Videos ####################
-videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 @videos_bp.route("", methods=["GET"], strict_slashes=False)
 def get_video():
     videos = Video.query.all()
@@ -87,7 +99,30 @@ def get_single_customer(video_id):
         return video.to_json(), 200
     else:
         return jsonify(None), 404
-
+      
+@videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False) 
+def get_video_renters(video_id):
+    video = Video.query.get(video_id)
+    if not video:
+        return {"details": "Video not found"}, 404
+    else:
+        customers = video.renters
+        if not customers:
+            return jsonify([])
+        else:
+            response = []
+            for customer in customers:
+                related_rental = Rental.query.filter_by(customer_id=customer.customer_id, video_id=video_id).first() 
+                customer_info = {
+                    "due_date": related_rental.due_date,
+                    "name": customer.name,
+                    "phone": customer.phone,
+                    "postal_code": customer.postal_code,
+                }
+                response.append(customer_info)
+                print(response)
+            return jsonify(response), 200
+              
 @videos_bp.route("", methods=["POST"], strict_slashes=False)
 def create_video():
     request_body = request.get_json()
@@ -127,26 +162,55 @@ def delete_video(video_id):
         return jsonify(None), 404
       
 #################### Routes for Rentals ####################
-rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
-
 @rentals_bp.route("/check-out", methods=["POST"], strict_slashes=False)
 def check_out():
     request_body = request.get_json()
     customer_id = request_body["customer_id"]
     video_id = request_body["video_id"]
-    new_rental = Rental.from_json(request_body)
-    db.session.add(new_rental)
+    if not is_int(customer_id) or not is_int(video_id):
+        return jsonify(None), 400
+    else:
+        customer = Customer.query.get(customer_id)
+        video = Video.query.get(video_id)
+        print("Hello")
+        if not customer or not video:
+            return jsonify(None), 404
+        if video.available_inventory == 0:
+            return jsonify(None), 400
+        else:
+            new_rental = Rental.from_json(request_body)
+            new_rental.due_date = datetime.utcnow() + timedelta(days=7)
+            db.session.add(new_rental)
+            customer.videos_checked_out_count += 1
+            video.available_inventory = video.total_inventory - 1
+            db.session.commit()
+            return new_rental.to_json(customer, video), 200
+def is_int(value):
+    try:
+        return int(value)
+    except ValueError:
+        return False
+      
+@rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
+def check_in():
+    request_body = request.get_json()
+    customer_id = request_body["customer_id"]
+    video_id = request_body["video_id"]
     customer = Customer.query.get(customer_id)
-    customer.videos_checked_out_count += 1
     video = Video.query.get(video_id)
-    video.available_inventory = video.total_inventory - 1
-    db.session.commit()
-    return {
-          "customer_id": new_rental.customer_id,
-          "video_id": new_rental.video_id,
-          "due_date": datetime.utcnow() + timedelta(days=7),
-          "videos_checked_out_count": customer.videos_checked_out_count,
-          "available_inventory": video.available_inventory
-    }, 200
-    
-
+    rental = Rental.query.filter_by(customer_id=customer_id, video_id=video_id).first()
+    if not customer or not video:
+        return jsonify(None), 404
+    if not rental:
+        return jsonify(None), 400
+    else:
+        db.session.delete(rental)
+        db.session.commit()
+        customer.videos_checked_out_count -= 1
+        video.available_inventory += 1
+        return {
+            "customer_id": customer_id,
+            "video_id": video_id,
+            "videos_checked_out_count": customer.videos_checked_out_count,
+            "available_inventory": video.available_inventory
+        }, 200
