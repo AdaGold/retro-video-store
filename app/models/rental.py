@@ -17,16 +17,15 @@ class Rental(db.Model):
     due_date = db.Column(db.DateTime)
 
    
-
-    @classmethod#built in python method that makes a method universal
+    @classmethod#built in python method that allows you to pass a class as an argument, rather than an instance
     def checkout(cls,customer_id,video_id): 
         """
-            Input: class name, customer_id,video_id
+            Input:  customer_id, video_id
             Output: new instance of Rental with customer_id, video_id, due_date
         """
         from .customer import Customer#gets access to Customer Class
         from .video import Video#gets access to Video Class
-        customer = Customer.query.get(customer_id)#querying Customer by customer_id
+        customer = Customer.query.get(customer_id)#querying Customer using customer_id
         video = Video.query.get(video_id)#querying Video for video_id
         due_date = datetime.datetime.now() + datetime.timedelta(days=7)
         new_rental = Rental(
@@ -36,20 +35,29 @@ class Rental(db.Model):
                     )
         db.session.add(new_rental)
         db.session.commit()
+        customer.increase_checkout_count()#calling Customer instance helper function on instance of Customer
+        video.decrease_inventory()#calling Video helper function on instance of Video
         return new_rental
     
-    
+   
     def to_python_dict(self):
         """
-            Input:
-
+            Input:  instance of Rental 
+            Ouput:  python dictionary of Rental instance with added keys customer.videos_checked_out_count and 
+                    video.available_inventory
         """
+        from .customer import Customer#gets access to Customer Class
+        from .video import Video#ge
+        
+        customer = Customer.query.get(self.customer_id)# taking from self
+        video = Video.query.get(self.video_id)
         
         return {
+                
                 "customer_id": self.customer_id,
                 "video_id": self.video_id,
-                "due_date": self.due_date.strftime(format)#
-                
-            
-
-        }
+                "due_date": str(self.due_date),
+                "videos_checked_out_count": customer.videos_checked_out_count,
+                "available_inventory": video.available_inventory
+            }
+    

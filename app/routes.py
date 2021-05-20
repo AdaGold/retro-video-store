@@ -1,3 +1,4 @@
+import re
 from app import db
 from flask import Blueprint, request, jsonify, make_response
 from .models.customer import Customer
@@ -74,9 +75,14 @@ def update_customer(id):
         return jsonify(message="customer id not found"), 404
     
     request_body = request.get_json()
-    customer.name = request_body['name']
-    customer.postal_code = request_body['postal_code']
-    customer.phone = request_body['phone']
+    if not request_body:
+        return jsonify(message="bad request"), 400
+    if "name" in request_body:
+        customer.name = request_body['name']
+    if "postal_code" in request_body:
+        customer.postal_code = request_body['postal_code']
+    if "phone" in request_body:
+        customer.phone = request_body['phone']
     
     db.session.commit()
     return jsonify(customer.to_python_dict()), 200
@@ -173,12 +179,17 @@ def delete_video(id):
     db.session.commit()
     return jsonify(id=int(id)), 200
 
-@rental_bp.route("", methods=["POST"],strict_slashes=False)  
+
+#database manipulation is handled by rthe Rental model
+@rental_bp.route("/check-out", methods=["POST"],strict_slashes=False)  
 def check_out():
     """
-        Input:  request with query parameter "check_out"
+        Input:  
         Output: 
 
     """
-    check_out_video = request.args.get('check_out')
-    pass
+    request_body = request.get_json()
+    customer_id = request_body["customer_id"]
+    video_id = request_body["video_id"]
+    new_rental = Rental.checkout(customer_id, video_id)
+    return jsonify(new_rental.to_python_dict()), 200

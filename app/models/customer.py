@@ -34,3 +34,8 @@ class Customer(db.Model):
             "videos_checked_out_count": self.videos_checked_out_count,
             "registered_at": self.registered_at
             }
+
+    def increase_checkout_count(self):
+        self.videos_checked_out_count = self.videos_checked_out_count + 1
+        db.session.commit()
+        
