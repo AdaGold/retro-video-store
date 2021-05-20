@@ -5,7 +5,7 @@ from app.models.rental import Rental
 from app.models.video import Video
 from flask import jsonify
 from flask import request, make_response
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import requests 
 
@@ -15,10 +15,10 @@ videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 
-def bad_request():
+def bad_request(): #add to error message
     return ({"errors":["details here"]}, 400)
 
-def no_customer_found(customer_id):
+def customer_not_found(customer_id):
     return ({"errors":["Not Found"]}, 404)
 
 
@@ -53,7 +53,7 @@ def get_one_customer(customer_id):
     customer = Customer.query.get(customer_id)
     if customer:
         return make_response(customer.to_json(), 200)
-    return no_customer_found(customer_id)
+    return customer_not_found(customer_id)
 
 
 @customers_bp.route("/<customer_id>", methods=["PUT"])
@@ -72,7 +72,7 @@ def update_customer(customer_id):
         customer.phone = updated_info["phone"]
         db.session.commit()
         return (customer.to_json(), 200)
-    return no_customer_found(customer_id)
+    return customer_not_found(customer_id)
 
 
 @customers_bp.route("/<customer_id>", methods=["DELETE"])
@@ -82,7 +82,7 @@ def delete_customer(customer_id):
         db.session.delete(customer)
         db.session.commit()
         return ({"id":int(customer_id)}, 200)
-    return no_customer_found(customer_id)
+    return customer_not_found(customer_id)
 
 
 
@@ -111,7 +111,8 @@ def create_videos():
         return bad_request()
     new_video = Video(title=request_body["title"],
         release_date=request_body["release_date"],
-    total_inventory=request_body["total_inventory"])
+    total_inventory=request_body["total_inventory"],
+    available_inventory=request_body["total_inventory"])
     db.session.add(new_video)
     db.session.commit()
     return ({"id":new_video.id}, 201) 
@@ -155,20 +156,102 @@ def delete_video(video_id):
 
 
 
+def is_int(value):
+    try:
+        return int(value)
+    except ValueError:
+        return False
 
 
 @rentals_bp.route("/check-out", methods=["POST"])
 def rental_checkout():
-    pass
+    request_body = request.get_json()
+    if not "customer_id" in request_body or not request_body.get("customer_id") or not is_int(request_body["customer_id"]):
+        return bad_request()
+    if not "video_id" in request_body or not request_body.get("video_id") or not is_int(request_body["video_id"]):
+        return bad_request()
+
+    customer_id = request_body["customer_id"]
+    customer = Customer.query.get(customer_id)
+    if not customer:
+        return customer_not_found(customer_id)
+    video_id = request_body["video_id"]
+    video = Video.query.get(video_id)
+    if not video:
+        return no_video_found(video_id)
+
+    if video.available_inventory == 0:
+        return bad_request() # add message for bad request
+    
+    customer.videos_checked_out_count += 1
+    video.available_inventory -= 1
+    
+    record = Rental(customer_id=customer_id,
+                    video_id=video_id,
+                    due_date=datetime.now() + timedelta(days=7))
+    db.session.add(record)
+    db.session.commit()
+    response = {
+        "customer_id": record.customer_id,
+        "video_id": record.video_id,
+        "due_date": record.due_date,
+        "videos_checked_out_count": customer.videos_checked_out_count,
+        "available_inventory": video.available_inventory
+        }
+    return make_response(response, 200)
+    
 
 @rentals_bp.route("/check-in", methods=["POST"])
 def rental_checkin():
-    pass
+    request_body = request.get_json()
+    if not "customer_id" in request_body or not request_body.get("customer_id"):
+        return bad_request()
+    if not "video_id" in request_body or not request_body.get("video_id"):
+        return bad_request()
+    
+    customer_id = request_body["customer_id"]
+    customer = Customer.query.get(customer_id)
+    if not customer:
+        return customer_not_found(customer_id)
+    video_id = request_body["video_id"]
+    video = Video.query.get(video_id)
+    if not video:
+        return no_video_found(video_id)
+    #check for rental attribute 
+
+    customer.videos_checked_out_count -= 1
+    video.available_inventory += 1
+    db.session.commit()
+    response = {
+        "customer_id": customer_id,
+        "video_id": video_id,
+        "videos_checked_out_count": customer.videos_checked_out_count,
+        "available_inventory": video.available_inventory
+    }
+    return make_response(response, 200)
+
+
 
 @customers_bp.route("/<customer_id>/rentals", methods=["GET"])
 def customer_log(customer_id):
-    pass
+    renter = Customer.query.get(customer_id)
+    if renter:
+        rental_data = renter.rentals
+        videos_log = []
+        for rental in rental_data:
+            videos_log.append(rental.to_json_customer())  
+        return jsonify(videos_log), 200
+    return customer_not_found(customer_id)
+
 
 @videos_bp.route("/<video_id>/rentals", methods=["GET"])
 def video_log(video_id):
-    pass
+    film = Video.query.get(video_id)
+    if film: 
+        rental_data = film.rentals 
+        customer_roster = []
+        for rental in rental_data: 
+            customer_roster.append(rental.to_json_video())
+        return jsonify(customer_roster), 200 
+    return no_video_found(video_id)
+
