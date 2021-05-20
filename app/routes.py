@@ -12,6 +12,7 @@ import os
 # creating instance of the model, first arg is name of app's module
 customer_bp = Blueprint("customers", __name__, url_prefix="/customers") # details
 video_bp = Blueprint("videos", __name__, url_prefix="/videos") # details
+rental_bp = Blueprint("rentals", __name__, url_prefix="/rentals") # details
 
 #create a customer with null completed at
 @customer_bp.route("", methods = ["POST"], strict_slashes = False)
@@ -92,7 +93,6 @@ def create_video():
         db.session.add(new_video) # "adds model to the db"
         db.session.commit() # commits the action above
         details_str = f"Video \"{new_video.title}\" successfully created"
-
         return jsonify(id = new_video.id, details = details_str), 201
     except KeyError:
         return {"details": "Bad Request"}, 400
@@ -155,6 +155,42 @@ def video_customer(video_id):
     details_str = f"Video {video_id} \"{video.title}\" successfully deleted"
     return jsonify(id = video.id, details = details_str), 200
     # return jsonify(id = customer.id), 200 ## also ok
+
+## RENTAL ROUTES:
+#checks out a video 
+@rental_bp.route("/check-out", methods = ["POST"], strict_slashes = False)
+def check_out_video():
+
+    try:
+        request_body = request.get_json()
+        video = Video.query.get(request_body["video_id"])
+        customer = Customer.query.get(request_body["customer_id"])
+
+        if not video or not customer: 
+            return {"details": "Not Found"}, 404
+        elif not video.available_inventory: # need to check if inv is lower than
+            return {"details": "Bad Request"}, 400
+
+        else:
+        # once all fields valid, will create rental and update due date
+            new_rental = Rental.from_json_to_check_out(request_body)
+            customer.videos_checked_out_count += 1
+            video.available_inventory -= 1
+
+            db.session.add(new_rental) # "adds model to the db"
+            db.session.commit() # commits the action above
+
+            return {"customer_id": customer.id,
+                    "video_id": video.id,
+                    "due_date": new_rental.due_date,
+                    "videos_checked_out_count": customer.videos_checked_out_count,
+                    "available_inventory": video.available_inventory}, 200
+    except:
+        return {"details": "Bad Request"}, 400
+
+        # return "Bad Request", 400
+
+
 
 
 

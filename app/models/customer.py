@@ -13,17 +13,14 @@ class Customer(db.Model):
     # date/time when video was released - now?
     registered_at = db.Column(db.DateTime, \
         default=datetime.now(),
-        # default=(datetime.now()).strftime("%a, %d %b %Y %X %z"),  
         nullable=False) 
-    # what is the difference btw the lines below and line 13?
-    # register_at = db.Column(db.DateTime, server_default=db.func.current_timestamp()) 
     videos_checked_out_count = db.Column(db.Integer, default=0) 
     # rentals = Customer has many Rentals, and a Rental belongs to a customer
-    # backref
-    # rentals = db.relationship("Rental", backref="customer", lazy=true)
+    # this is the fake field     # Establishing relationship 
+    rentals = db.relationship("Rental", backref="customer")
 
-    # Establishing relationship 
-    # videos = relationship("Video", secondary="rental", lazy=True) # how abbout lazy=true?
+    # what is the difference btw the lines below and line 13?
+    # register_at = db.Column(db.DateTime, server_default=db.func.current_timestamp()) 
 
     def customer_to_json_response(self):
         '''

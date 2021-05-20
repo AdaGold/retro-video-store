@@ -1,6 +1,7 @@
 from flask import current_app
 from app import db
-from datetime import datetime # do I need this?
+from datetime import datetime
+from datetime import timedelta
 # from .models.customer import Customer 
 # from .models.video import Video
 
@@ -9,21 +10,30 @@ from datetime import datetime # do I need this?
 # CustomerVideojoin Model/Table
 class Rental(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True) ##??
-    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), \
-        primary_key=True) # how about nullable= True or False?
-    video_id = db.Column(db.Integer, db.ForeignKey('video.id'), \
-        primary_key=True)# how about nullable= True or False?, do I add lazy?
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False) # how about nullable= True or False?
+    video_id = db.Column(db.Integer, db.ForeignKey('video.id'), nullable=False)# how about nullable= True or False?, do I add lazy?
     # fake columns
-    
     # Customer to Rental is a one to many relationship just like Goal to Task
     rental_date = db.Column(db.DateTime, default=datetime.utcnow(),  
         nullable=False) # maybe
     # due_date = # current date + 7 use delta
+    due_date = db.Column(db.DateTime,  default = datetime.utcnow() + timedelta(days=7),
+        nullable=False) #nullable = false?
 
-    
+    @staticmethod
+    def from_json_to_check_out(request_body):
+        '''
+        Converts JSON request body into a new instance of Rental
+        input: Takes in a dictionary in the shape of the JSON the API 
+        receives. 
+        output: instance of rental
+        '''
+        # could add an if to check that the request body is good -
+        # then create customer
+        new_rental = Rental(customer_id=request_body["customer_id"],
+                video_id=request_body["video_id"])
+        return new_rental
 
-    # user = relationship(User, backref=backref("orders", cascade="all, delete-orphan"))
-    # product = relationship(Product, backref=backref("orders", cascade="all, delete-orphan"))
 
 # errors, could the errors go here with something like this?
 def get_movie(movie_id, customer_id):
@@ -59,7 +69,7 @@ def get_movie(movie_id, customer_id):
     #  }
     # }
 
-# // ...or...
+    # // ...or...
 
     return {"errors": ["Not Found"]}
 

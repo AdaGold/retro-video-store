@@ -9,11 +9,9 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime, nullable=False)
     # default=datetime(0).strftime("%a, %d %b %Y %X %z")
     total_inventory = db.Column(db.Integer, nullable=False)
-    available_inventory = db.Column(db.Integer, nullable=True) # set it to false, ok?
-
-    # video has many rentals - like goal to task
+    available_inventory = db.Column(db.Integer, nullable=False) # set it to false, ok?
     # Video has many Rentals, and a Rental belongs to a Video
-    # Video to Rental is a one-to-many relationship
+    rentals = db.relationship("Rental", backref="video")
 
     def video_to_json_response(self):
         '''
@@ -40,6 +38,7 @@ class Video(db.Model):
     
         new_video = Video(title=request_body["title"],
                 release_date=request_body["release_date"],
+                available_inventory = request_body["total_inventory"],
                 total_inventory = request_body["total_inventory"])
 
         return new_video
