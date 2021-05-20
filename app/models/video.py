@@ -1,7 +1,6 @@
 from flask import current_app
 from app import db
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
 
 class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -9,6 +8,8 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime)
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
+    customers = db.relationship("Rental", back_populates="video")
+    __tablename__ = "videos"
 
     def to_json(self):
         return {

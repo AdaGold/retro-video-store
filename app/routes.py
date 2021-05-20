@@ -1,13 +1,18 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, make_response
 from app import db
 from .models.customer import Customer
 from .models.video import Video
-from datetime import datetime
+from .models.rentals import Rental
+from datetime import datetime, timedelta
 import requests
 import os
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
+
+def invalid_input():
+    return jsonify({"details":"Invalid data"}), 400
 
 def customer_not_found(func):
     def inner(customer_id):
@@ -44,7 +49,7 @@ def single_customer(customer_id):
 def create_customer():
     request_body = request.get_json()
     if "name" not in request_body or "postal_code" not in request_body or "phone" not in request_body:
-            return jsonify({"details": "Invalid Data"}), 400
+            return invalid_input()
     new_customer = Customer(name = request_body["name"],
                     postal_code = str(request_body["postal_code"]),
                     phone = str(request_body["phone"]),
@@ -61,7 +66,7 @@ def update_customer(customer_id):
     customer = Customer.query.get(customer_id)
     response_body = request.get_json()
     if "name" not in response_body or "postal_code" not in response_body or "phone" not in response_body:
-            return jsonify({"details": "Invalid Data"}), 400
+            return invalid_input()
     customer.name = response_body["name"]
     customer.postal_code = response_body["postal_code"]
     customer.phone = response_body["phone"]
@@ -99,7 +104,7 @@ def single_video(video_id):
 def create_video():
     request_body = request.get_json()
     if "title" not in request_body or "release_date" not in request_body or "total_inventory" not in request_body:
-            return jsonify({"details": "Invalid Data"}), 400
+            return invalid_input()
     new_video = Video(title = request_body["title"],
                     release_date = request_body["release_date"],
                     total_inventory = request_body["total_inventory"],
@@ -115,7 +120,7 @@ def update_video(video_id):
     video = Video.query.get(video_id)
     response_body = request.get_json()
     if "title" not in response_body or "release_date" not in response_body or "total_inventory" not in response_body:
-            return jsonify({"details": "Invalid Data"}), 400
+            return invalid_input()
     video.title = response_body["title"]
     video.release_date = response_body["release_date"]
     video.total_inventory = response_body["total_inventory"]

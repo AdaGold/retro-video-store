@@ -1,7 +1,6 @@
 from flask import current_app
 from app import db
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
 
 class Customer(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -10,6 +9,8 @@ class Customer(db.Model):
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime)
     videos_checked_out_count = db.Column(db.Integer)
+    videos = db.relationship("Rental", back_populates="customer")
+    __tablename__ = "customers"
 
     def to_json(self):
         return {
