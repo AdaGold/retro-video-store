@@ -217,10 +217,16 @@ def rental_checkin():
     video = Video.query.get(video_id)
     if not video:
         return no_video_found(video_id)
-    #check for rental attribute 
+    #check for rental attribute 'checked_in' if there
+    rental = Rental.query.filter(Rental.check_in_date == None,
+                                    Rental.video_id == video_id,
+                                    Rental.customer_id == customer_id).one_or_none()
+    if not rental:
+        return bad_request()
 
     customer.videos_checked_out_count -= 1
     video.available_inventory += 1
+    rental.check_in_date = datetime.now()
     db.session.commit()
     response = {
         "customer_id": customer_id,
