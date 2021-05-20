@@ -66,7 +66,7 @@ def create_customer():
         db.session.commit()
 
         return jsonify({
-            "id": new_customer.customer_id
+            "id": new_customer.id
         }), 201
     
     except KeyError:
