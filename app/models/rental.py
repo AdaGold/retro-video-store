@@ -17,11 +17,6 @@ class Rental(db.Model):
     # video = db.relationship('Video', back_populates='customers')
     # customer = db.relationship('Customer', back_populates='videos')
 
-    # video = db.relationship(Video, backref=backref(
-    #     "rental", cascade="all, delete-orphan"))
-    # customer = db.relationship(Customer, backref=backref(
-    #     "rental", cascade="all, delete-orphan"))
-
     due_date = db.Column(db.DateTime)
     # , default=)
     # def helper():
