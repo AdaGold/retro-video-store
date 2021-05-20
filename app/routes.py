@@ -37,6 +37,7 @@ def post_customer():
         }, 400)
     else:
         new_customer = Customer.from_json(Customer, request_body)
+        # new_customer.total_inventory = new_customer.available_inventory
 
         db.session.add(new_customer)
         db.session.commit()
@@ -124,6 +125,7 @@ def post_video():
         }, 400)
     else:
         new_video = Video.from_json(Video, request_body)
+        new_video.available_inventory = new_video.total_inventory
 
         db.session.add(new_video)
         db.session.commit()
@@ -196,31 +198,33 @@ def check_out():
     # {"customer_id": 3,
     # "video_id": 1}
 
+    if type(request_body["customer_id"]) != int or\
+        type(request_body["video_id"]) != int:
+            return jsonify("IDs must be an integer"), 400
+
     customer_id = request_body["customer_id"]
     video_id = request_body["video_id"]
 
     customer = Customer.query.get(customer_id)
     video = Video.query.get(video_id)
 
-    if type(customer_id) != int or type(video_id) != int:
-        return make_response("IDs must be an integer")
-
-    if customer is None or video is None:
-        return {
-            "errors": ["Customer or video not found"]
-        }, 404
+    if customer is None:
+        return make_response("Customer not found", 404)
+    if video is None:
+        return make_response("Video not found", 404)
 
     due_date = datetime.utcnow() + timedelta(days=7)
 
-    # if video.available_inventory <= 0:
-    #     return {
-    #         "errors": ["There are no videos available!"]
-    #     }
     new_rental = Rental(customer_id=customer_id, video_id=video_id,
     due_date=due_date)
 
-    customer.videos_checked_out_count += 1
-    video.available_inventory -= 1
+    if video.available_inventory == 0:
+        return {
+            "errors": ["No videos available"]
+        }, 400
+    else:
+        customer.videos_checked_out_count += 1
+        video.available_inventory -= 1
 
     db.session.add(new_rental)
     db.session.commit()
@@ -240,40 +244,26 @@ def check_in():
     Increases video's available_inventory
     '''
     request_body = request.get_json()
-    # request looks like:
-    # {"customer_id": 3,
-    # "video_id": 1}
+
+    if type(request_body["customer_id"]) != int or\
+        type(request_body["video_id"]) != int:
+            return jsonify("IDs must be an integer"), 400
 
     customer_id = request_body["customer_id"]
     video_id = request_body["video_id"]
-
-    if type(customer_id) != int or type(video_id) != int:
-        return make_response("IDs must be an integer", 400)
 
     customer = Customer.query.get(customer_id)
     video = Video.query.get(video_id)
 
     if customer is None or video is None:
-        return {
-            "errors": ["Customer or video not found"]
-        }, 404
-    # if video.available_inventory >= video.total_inventory:
-    #     return {
-    #         "errors": ["Did you return this to the wrong store?"]
-    #     }, 400
-    # if customer.videos_checked_out_count <= 0:
-    #     return {
-    #         "errors": ["You don't have anything to return!"]
-    #     }, 400
+        return make_response("Customer or video not found", 400)
 
-    if customer.videos_checked_out_count <= 0:
-        return make_response("", 404)
+    if customer.videos_checked_out_count == 0:
+        return jsonify("You don't have anything to return!"), 400
+    elif video.available_inventory >= video.total_inventory:
+        return jsonify("Did you return this to the wrong store?"), 400
     else:
         customer.videos_checked_out_count -= 1
-
-    if video.available_inventory <= 0:
-        return make_response("", 404)
-    else:
         video.available_inventory += 1
 
     db.session.commit()
@@ -292,20 +282,21 @@ def get_customer_videos(customer_id):
     '''
     customer = Customer.query.get(customer_id)
     if customer is None:
-        return make_response("", 404)
+        return make_response("", 400)
 
     video_list = [] # list of videos currently rented by customer
 
     rental_results = db.session.query(Customer, Video, Rental).join(
         Customer, Customer.customer_id==Rental.customer_id).join(
-        Video, Video.video_id).filter(Customer.customer_id==customer_id).all()
+        Video, Video.video_id==Rental.video_id).filter(
+        Customer.customer_id==customer_id).all()
 
     for tuple in rental_results:
         video = tuple[1]
         rental = tuple[2]
         video_list.append({
             "release_date": video.release_date,
-            "title": video.video_title,
+            "title": video.title,
             "due_date": rental.due_date
         })
 
@@ -318,36 +309,22 @@ def get_video_customers(video_id):
     '''
     video = Video.query.get(video_id)
     if video is None:
-        return make_response("", 404)
+        return make_response("", 400)
 
     customer_list = [] # list of customers currently renting a video
     rental_results = db.session.query(Customer, Video, Rental).join(
-        Video, Video.customer_id==Rental.customer_id).join(
-        Customer, Customer.customer_id).filter(Customer.video_id==video_id).all()
+        Video, Video.video_id==Rental.video_id).join(
+        Customer, Customer.customer_id==Rental.customer_id).filter(
+        Video.video_id==video_id).all()
 
     for tuple in rental_results:
-        video = tuple[1]
+        customer = tuple[0]
         rental = tuple[2]
         customer_list.append({
-            "release_date": video.release_date,
-            "title": video.video_title,
+            "name": customer.name,
+            "phone": customer.phone,
+            "postal_code": customer.postal_code,
             "due_date": rental.due_date
         })
 
     return jsonify(customer_list), 200
-
-    # results = db.session.query(Customer, Rental).join(
-    #     Customer, customer.customer_id==Rental.customer_id).filter(
-    #     Customer.customer_id==request_body["customer_id"]).all()
-
-
-# TRASH?
-
-    # results = db.session.query(Customer, Video, Rental).join(
-    #     Customer, customer.customer_id==Rental.customer_id).join(
-    #     Video, video.video_id==Rental.video_id).filter(
-    #     Customer.customer_id==request_body["customer_id"]).all()
-    # results = list of tuples
-    # look up how to extract tuples
-
-    # Rental.query.get(customer_id)
