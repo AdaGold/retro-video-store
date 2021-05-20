@@ -91,6 +91,34 @@ def handle_customer(customer_id):
             "details": f'Customer {customer.id}, {customer.name}, successfully deleted.'
         })
 
+# videos customer currently has checked out **********
+@customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
+def handle_customer_rentals(customer_id):
+
+    if request.method == "GET":
+
+        customer_data = db.session.query(Customer, Video, CustomerVideoRental).join(Customer, Customer.id==CustomerVideoRental.customer_id)\
+            .join(Video, Video.id==CustomerVideoRental.video_id).filter(Customer.id == customer_id).all()
+
+        if customer_data is None: # doublecheck this 
+            return "No rentals were found for this customer.", 404
+
+        customer_rental_list = []
+
+        for tuple in customer_data:
+            video = tuple[1] # 1 is index in which Video instances are stored
+            rental = tuple[2] # index 2 stores CustomerVideoRental objects
+
+            customer_rental_list.append({
+                "release_date": video.release_date,
+                "title": video.title,
+                "due_date": rental.due_date
+            })
+        
+        return jsonify(customer_rental_list)
+        
+
+
 # class Video routes
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 
@@ -125,7 +153,7 @@ def handle_videos():
             }, 400
         
         new_video = Video(title=request_body["title"],
-                        release_date=datetime.datetime.now(), # this should probably be formatted differently
+                        release_date=request_body["release_date"], # datetime.datetime.now() this should probably be formatted differently
                         total_inventory=request_body["total_inventory"])
 
         db.session.add(new_video)
@@ -169,6 +197,32 @@ def handle_video(video_id):
             "available_inventory": video.available_inventory
         }
 
+# who has the video??? **********
+@videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
+def handle_video_rentals(video_id):
+
+    if request.method == "GET":
+
+        video_data = db.session.query(Customer, Video, CustomerVideoRental).join(Customer, Customer.id==CustomerVideoRental.customer_id)\
+            .join(Video, Video.id==CustomerVideoRental.video_id).filter(Video.id == video_id).all()
+
+        # if customer_data is None: # doublecheck this 
+        #     return "No rentals were found for this customer.", 404
+
+        video_rental_list = []
+
+        for tuple in video_data:
+            customer = tuple[0] # 1 is index in which Video instances are stored
+            rental = tuple[2] # index 2 stores CustomerVideoRental objects
+
+            video_rental_list.append({
+                "name": customer.name,
+                "phone": customer.phone_num,
+                "postal_code": customer.postal_code,
+                "due_date": rental.due_date
+            })
+        
+        return jsonify(video_rental_list)
 
 
 # class CustomerVideoRentalroutes
@@ -176,56 +230,88 @@ rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 
 @rentals_bp.route("/check-out", methods=["POST"], strict_slashes=False)
-def handle_rentals():
+def handle_rentals_checkout():
 
     if request.method == "POST":
 
         rental_data = request.get_json()
 
-        if "customer_id" not in rental_data or "video_id" not in rental_data:
-            return jsonify({
-                "details": "Invalid data."
-            }), 400
+        # if "customer_id" not in rental_data or "video_id" not in rental_data:
+        #     return jsonify({
+        #         "details": "Invalid data."
+        #     }), 400
+
+        # explain use of this later Michelle
+        # if type(rental_data["customer_id"]) != int or type(rental_data["video_id"]) != int:
+        if not isinstance(rental_data["customer_id"], int) or not isinstance(rental_data["video_id"], int):
+            return {
+                "details": "Invalid ID data type."
+            }, 400
 
         # create a new record/Instance of CustomerVideoRental
         new_rental = CustomerVideoRental(customer_id=rental_data["customer_id"],
                                         video_id=rental_data["video_id"],
                                         due_date=datetime.datetime.now()+datetime.timedelta(days=7))
 
+        # db.session.add(new_rental)
+        # db.session.commit()
+
         customer = Customer.query.get(new_rental.customer_id)
+        video = Video.query.get(new_rental.video_id)
+
         if customer == None:
             return "Customer not found.", 404
 
-        customer.videos_checked_out_count += 1
-
-        video = Video.query.get(new_rental.video_id)
         if video == None:
             return "Video not found.", 404
-        elif video.available_inventory == 0:
-            return "0 inventory.", 400
-        else:
-            video.available_inventory -= 1
+        elif video.available_inventory < 0:
+            return {
+                "details": "0 inventory."
+            }, 400
+
+        customer.videos_checked_out_count += 1
+        video.available_inventory -= 1
 
         db.session.add(new_rental)
         db.session.commit()
+
         return {
-            "customer_id": customer.id,
-            "video_id": video.id,
+            "customer_id": new_rental.customer_id,
+            "video_id": new_rental.video_id,
             "due_date": new_rental.due_date,
             "videos_checked_out_count": customer.videos_checked_out_count,
             "available_inventory": video.available_inventory
             }
 
 
-  
-        # results = db.session.query(Customer, Video, CustomerVideoRental).join(Customer, Customer.id==CustomerVideoRental.customer_id)\
-        # .join(Video, Video.id==CustomerVideoRental.video_id).filter(Customer.id == X).all()
+@rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
+def handle_rentals_checkin():
 
+    if request.method == "POST":
+        
+        checkin_data = request.get_json()
 
-#         # return {
-#         #     "customer_id": new_rental.customer_id,
-#         #     "video_id": new_rental.video_id,
-#         #     "due_date": new_rental.due_date,
-#         #     "videos_checked_out_count": customer.videos_checked_out_count,
-#         #     "available_inventory": video.available_inventory
-#         #     }, 201
+        customer_checkin_id = checkin_data["customer_id"]
+        video_checkin_id = checkin_data["video_id"]
+
+        customer = Customer.query.get(customer_checkin_id)
+        video = Video.query.get(video_checkin_id)
+
+        if customer == None:
+            return "Customer not found.", 404
+
+        if video == None:
+            return "Video not found.", 404
+
+        customer.videos_checked_out_count -= 1
+        video.available_inventory += 1
+
+        db.session.commit()
+
+        return {
+        "customer_id": customer.id,
+        "video_id": video.id,
+        "videos_checked_out_count": customer.videos_checked_out_count,
+        "available_inventory": video.available_inventory
+        }
+
