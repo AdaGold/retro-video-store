@@ -16,11 +16,11 @@ class Video(db.Model):
 
 
 #helper function 
-def to_json_video(self):
-    return {
-    "id": self.id,
-    "title": self.title,
-    "release_date": self.release_date,
-    "total_inventory": self.total_inventory,
-    "available_inventory": self.available_inventory
-    }
+    def to_json_video(self):
+        return {
+        "id": self.id,
+        "title": self.title,
+        "release_date": self.release_date,
+        "total_inventory": self.total_inventory,
+        "available_inventory": self.available_inventory
+        }

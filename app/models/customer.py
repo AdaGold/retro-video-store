@@ -10,13 +10,13 @@ from flask import current_app
 from app import db
 
 class Customer(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String)
-    postal_code = db.Column(db.Integer)
-    phone = db.Column(db.Integer)
+    postal_code = db.Column(db.String)
+    phone = db.Column(db.String)
     register_at = db.Column(db.DateTime, nullable = True)
     checkout_count = db.Column(db.Integer, default =0) #why do I need this here?
-
+    
 
     def registered_customer(self):
         if self.register_at == None:
