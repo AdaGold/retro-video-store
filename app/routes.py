@@ -85,6 +85,20 @@ def delete_customer(customer_id):
                     "id": customer.id,
                     "name": customer.name}), 200
 
+@customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
+@customer_not_found
+def get_rentals(customer_id):
+    customer = Customer.query.get(customer_id)
+    rentals = []
+    for rental in customer.videos:
+        video = Video.query.get(rental.video_id)
+        dict = {
+            "title": video.title,
+            "release_date": video.release_date,
+            "due_date": rental.due_date}
+        rentals.append(dict)
+    return jsonify(rentals), 200
+
 
 #---------------------# VIDEO ENDPOINTS #---------------------#
 
