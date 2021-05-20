@@ -2,12 +2,14 @@ from flask import Blueprint
 from app import db
 from app.models.customer import Customer
 from app.models.video import Video
+from app.models.rental import Rental
 from flask import request, Blueprint, make_response, jsonify
 import datetime
-
+# from datetime import datetime, timedelta
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 def is_valid_data(request_body):
     if len(request_body) != 3:
@@ -15,7 +17,7 @@ def is_valid_data(request_body):
     return True
 
 '''
-CUSTOMER ROUTES
+========CUSTOMER ROUTES========
 '''
 ### Lists all existing customers and details about each customer ###
 @customers_bp.route("", methods=["GET"])
@@ -45,11 +47,11 @@ def get_customers():
 @customers_bp.route("/<customer_id>", methods=["GET"], strict_slashes=False)
 
 def get_one_customer(customer_id):
-    # Find the task with the given id
+    # Find the customer with the given id
     customer = Customer.query.get(customer_id)
 
     if customer is None:
-        return make_response("", 404)
+        return make_response("Customer does not exist", 404)
 
     return customer.to_dict()
 
@@ -59,7 +61,7 @@ def get_one_customer(customer_id):
 def create_customer():
     request_body = request.get_json()
         
-    # Invalid task if missing title, description, or completed_at     
+    # 400: Bad Request if missing title, description, or completed_at     
     if "name" not in request_body or "postal_code" not in request_body or "phone" not in request_body:
         return jsonify({"details": "Invalid data"}), 400        
     else:
@@ -69,8 +71,7 @@ def create_customer():
             phone = request_body["phone"]
            )
         
-        if new_customer.registered_at == None:
-            new_customer.registered_at = datetime.datetime.now()
+        new_customer.registered_at = datetime.datetime.now()
         
         # add this model to the database and commit the changes
         db.session.add(new_customer)
@@ -86,7 +87,7 @@ def update_customer(customer_id):
     customer = Customer.query.get(customer_id)
 
     if customer is None:
-        return make_response("", 404)
+        return make_response("Customer does not exist", 404)
 
     new_data = request.get_json()
 
@@ -109,7 +110,7 @@ def delete_customer(customer_id):
     customer = Customer.query.get(customer_id)
 
     if customer is None:
-        return make_response("", 404)
+        return make_response("Customer does not exist", 404)
 
     db.session.delete(customer)
     db.session.commit()
@@ -117,7 +118,7 @@ def delete_customer(customer_id):
     return jsonify({"id": customer.customer_id}), 200
 
 '''
-VIDEO ROUTES
+========VIDEO ROUTES========
 '''
 ### Lists all existing videos and details about each video ###
 
@@ -143,11 +144,11 @@ def get_videos():
 @videos_bp.route("/<video_id>", methods=["GET"], strict_slashes=False)
 
 def get_one_video(video_id):
-    # Find the task with the given id
+    # Find the video with the given id
     video = Video.query.get(video_id)
 
     if video is None:
-        return make_response("", 404)
+        return make_response("Video does not exist", 404)
 
     return video.to_dict(), 200
 
@@ -158,7 +159,7 @@ def get_one_video(video_id):
 def create_video():
     request_body = request.get_json()
         
-    # Invalid task if missing title, description, or completed_at     
+    # 400: Bad Request if missing title, release date, or total inventory    
     if "title" not in request_body or "release_date" not in request_body or "total_inventory" not in request_body:
         return jsonify({"details": "Invalid data"}), 400        
     else:
@@ -167,9 +168,6 @@ def create_video():
             release_date = request_body["release_date"],
             total_inventory = request_body["total_inventory"]
            )
-        
-        if new_video.release_date == None:
-            new_video.release_date = datetime.datetime.now()
         
         # add this model to the database and commit the changes
         db.session.add(new_video)
@@ -185,12 +183,12 @@ def update_video(video_id):
     video = Video.query.get(video_id)
 
     if video is None:
-        return make_response("", 404)
+        return make_response("Video does not exist", 404)
 
     new_data = request.get_json()
 
     if not is_valid_data(new_data):
-        return make_response("", 400)
+        return make_response("Invalid data", 400)
 
     video.title = new_data["title"],
     video.release_date = new_data["release_date"],
@@ -207,9 +205,135 @@ def delete_video(video_id):
     video = Video.query.get(video_id)
 
     if video is None:
-        return make_response("", 404)
+        return make_response("Video does not exist", 404)
 
     db.session.delete(video)
     db.session.commit()
 
     return jsonify({"id": video.video_id}), 200
+
+'''
+========RENTALS ROUTES========
+'''
+### Checkout a video to a customer and update the database ###
+@rentals_bp.route("/check-out", methods=["POST"])
+
+def checkout_video():
+    request_body = request.get_json()
+
+    customer = Customer.query.get(request_body["customer_id"])
+    checked_out_video = Video.query.get(request_body["video_id"])
+        
+    # 404: Not Found if missing customer, video, or no available inventory    
+    if "customer_id" not in request_body or "video_id" not in request_body:
+        return jsonify({"details": "Invalid data"}), 404
+
+    if checked_out_video.available_inventory < 1:
+        return jsonify({"details" : "inventory out of stock"}, 400)         
+   
+    # increase the customer's videos_checked_out_count by one
+    customer.videos_checked_out_count += 1
+    # decrease the video's available_inventory by one
+    checked_out_video.available_inventory -= 1
+
+    new_rental = Rental(
+        customer_id = request_body["customer_id"],
+        video_id = request_body["video_id"],
+        # due_date = datetime.date.today() + timedelta(days=7))
+        due_date = datetime.datetime.now() + datetime.timedelta(days=7))
+    
+    db.session.add(new_rental)
+    db.session.commit()
+
+    rental_result = dict(
+        customer_id = new_rental.customer_id,
+        video_id = new_rental.video_id,
+        due_date = new_rental.due_date,
+        videos_checked_out_count = len(customer.videos_checked_out_count),
+        available_inventory = checked_out_video.available_inventory
+        )
+
+    return rental_result, 200
+
+### Checks in a video to a customer and update the database ###
+@rentals_bp.route("/check-in", methods=["POST"])
+
+def checkin_video():
+    request_body = request.get_json()
+
+    customer = Customer.query.get(request_body["customer_id"])
+    checked_in_video = Video.query.get(request_body["video_id"])
+        
+    # 404: Not Found if missing customer, video   
+    if "customer_id" not in request_body or "video_id" not in request_body:
+        return jsonify({"details": "Invalid data"}), 404
+    
+    # 400: Bad Request if the video and customer do not match a current rental
+    rental = Rental.query.filter_by(
+            customer_id=request_body["customer_id"], 
+            video_id=request_body["video_id"]
+            ).first()
+    print("====Testing====")
+    print(request_body)
+    print(rental)
+    if not rental:
+        return jsonify({"details": "Invalid data"}), 400         
+   
+    # decrease the customer's videos_checked_out_count by one
+    customer.videos_checked_out_count -= 1
+    # increase the video's available_inventory by one
+    checked_out_video.available_inventory += 1
+
+    db.session.delete(rental)
+    db.session.commit()
+
+    rental_result = dict(
+        customer_id = request_body["customer_id"],
+        video_id = request_body["video_id"],
+        videos_checked_out_count = len(customer.videos_checked_out_count),
+        available_inventory = checked_out_video.available_inventory
+        # available_inventory = checked_out_video.total_inventory - len(checked_out_video.video_rentals)
+        )
+
+    return rental_result, 200
+
+### List the videos a customer currently has checked out ###
+
+@customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
+
+def get_customer_rental(customer_id):
+    # Find the customer with the given id
+    customer = Customer.query.get(customer_id)
+
+    if customer is None:
+        return make_response("", 404)
+
+    if customer.videos_checked_out_count == 0:
+        return []
+
+    return customer.to_dict()
+
+### List the customers who currently have the video checked out ###
+
+@videos_bp.route("/<video_id>/rental", methods=["GET"], strict_slashes=False)
+
+def list_customers(video_id):
+    # Find the video with the given id
+    video = Video.query.get(video_id)
+
+    if video is None:
+        return make_response("Video does not exist", 404)
+    
+    # when the video is not checked out to any customers
+    if video.total_inventory == available_inventory:
+        return []
+    
+        # results = db.session.query(Foo, Bar, FooBarJoin).join(Foo, Foo.id==FooBarJoin.foo_id)\
+        #     .join(Bar, Bar.id==FooBarJoin.bar_id).filter(Foo.id == X).all()
+
+        # rentals = db.session.query(Rental)\
+        # .join(Video, Video.video_id==Rental.video_id)\
+        # .join(Customer, Customer.customer_id==Rental.customer_id)\
+        # .filter(Video.video_id==video_id).all()
+
+    return video.to_dict(), 200
