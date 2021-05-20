@@ -7,12 +7,14 @@ class Video(db.Model):
     video_title = db.Column(db.String)
     release_date = db.Column(db.DateTime)
     inventory = db.Column(db.Integer)
+    available_inventory = db.Column(db.Integer)
 
     def video_response(self):
         video_dictionary={
             "id": self.video_id,
             "title": self.video_title,
             "release_date": self.release_date,
-            "total_inventory": self.inventory
+            "total_inventory": self.inventory,
+            "available_inventory": self.available_inventory
         }
         return video_dictionary

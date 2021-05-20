@@ -29,7 +29,7 @@ def customer_functions():
 
 @customer_bp.route("/<customer_id>", methods=["GET", "PUT", "DELETE"])
 def customer_id_functions(customer_id):
-    a_customer = Customer.query.get(customer_id)
+    a_customer = Customer.query.get_or_404(customer_id)
 
     if not a_customer:
         return make_response({
@@ -82,12 +82,12 @@ def video_functions():
 
 @video_bp.route("/<video_id>", methods=["GET", "PUT", "DELETE"])
 def video_id_functions(video_id):
-    a_video = Video.query.get(video_id)
+    a_video = Video.query.get_or_404(video_id)
 
     if not a_video:
         return make_response({
             "Make sure you have entered the data about this person correctly. Double check that their zip code is an integer and that their phone number is a string."
-        }, 200)
+        }, 404)
 
     if request.method == "GET":
         return {

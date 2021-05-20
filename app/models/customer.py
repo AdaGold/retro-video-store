@@ -9,6 +9,7 @@ class Customer(db.Model):
     postal_code = db.Column(db.Integer)
     phone_number = db.Column(db.String)
     register_at = db.Column(db.DateTime)
+    videos_checked_out_count = db.Column(db.Integer)
 
     def customer_response(self):
         customer_dictionary={
@@ -16,6 +17,7 @@ class Customer(db.Model):
             "name": self.customer_name,
             "registered_at": self.register_at,
             "postal__code": self.postal_code,
-            "phone": self.phone_number
+            "phone": self.phone_number,
+            "videos_checked_out_count": self.videos_checked_out_count
         }
         return customer_dictionary
