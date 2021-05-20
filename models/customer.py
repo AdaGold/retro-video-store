@@ -9,7 +9,7 @@ class Customer(db.Model):
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime, nullable=True)
-    video_checked_out_count = db.Column(db.Integer, 0)
+    video_checked_out_count = db.Column(db.Integer, default=0)
 
     def to_json(self):
         return {

@@ -23,5 +23,10 @@ def create_app(test_config=None):
     db.init_app(app)
     migrate.init_app(app, db)
     load_dotenv()
+
+    from .routes import customers_bp
+    app.register_blueprint(customers_bp)
+    from .routes import videos_bp
+    app.register_blueprint(videos_bp)
     
     return app
