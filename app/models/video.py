@@ -1,4 +1,4 @@
-from flask import current_app # faded font color suggests unnecessary
+from flask import current_app
 from app import db
 from datetime import datetime 
 
@@ -8,7 +8,9 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime) 
     total_inventory = db.Column(db.Integer) 
     available_inventory = db.Column(db.Integer)
-
+    # Becca: same as Customer file
+    #rental = db.relationship('Rental', backref='rental', lazy=True) # import the rental model up top?
+    
     def to_json(self):
         return {
             "id": self.video_id,

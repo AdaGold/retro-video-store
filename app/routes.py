@@ -1,5 +1,6 @@
 from app import db
 from app.models.customer import Customer
+#from app.models.rentals import Rental
 from app.models.video import Video
 from flask import json, request, Blueprint, make_response, jsonify, Flask
 from datetime import datetime
@@ -13,6 +14,7 @@ load_dotenv()
 
 customer_bp = Blueprint("customers", __name__, url_prefix="/customers")
 video_bp = Blueprint("videos", __name__, url_prefix="/videos")
+#rental_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 # CRUD CUSTOMERS
 @customer_bp.route("", methods=["GET"])
@@ -30,9 +32,6 @@ def list_customers():
         print('list of customers: ', list_of_customers) # list of dicts
     return jsonify(list_of_customers) # jsonified list of dicts;;;;; LJ -- double formatting???
 
-
-
-
 @customer_bp.route("/<customer_id>", methods=["GET"])
 def list_single_customer(customer_id):
     """Retrieves data of specific customer"""
@@ -46,10 +45,6 @@ def list_single_customer(customer_id):
     print('after: ', type(single_customer.postal_code))
 
     return jsonify(single_customer.to_json())
-
-
-
-
 
 @customer_bp.route("", methods=["POST"])
 def create_customer():
@@ -69,7 +64,6 @@ def create_customer():
     db.session.add(new_customer)
     db.session.commit()
     return make_response({"id": new_customer.customer_id}, 201)
-
 
 @customer_bp.route("/<customer_id>", methods=["PUT"])
 def update_single_customer(customer_id):
@@ -94,7 +88,6 @@ def update_single_customer(customer_id):
 
     db.session.commit()
     return jsonify(single_customer.to_json())
-
 
 @customer_bp.route("/<customer_id>", methods=["DELETE"])
 def delete_single_customer(customer_id):
@@ -135,15 +128,12 @@ def create_video():
     """Create a video for the database"""
     request_body = request.get_json() # form data submitted by user
 
-    # check keys or values?
-    #if (not request_body["title"]) or (not request_body["release_date"]) or (not request_body["total_inventory"]): # checks value (or 'field'); this way prevents account unless you give truthy video info
     if "title" not in request_body or "release_date" not in request_body or "total_inventory" not in request_body: # checks key; this way only prevents if the key is missing from the user's info (lets you click continue even if you gave an empty str as your phone number)
-        #return make_response({"details": "Invalid data"}, 400)  >> backup in case following line doesnt work
         return make_response({"details": "Video title, release date and total in inventory must all be provided, and they must be string, datetime and integer values, respectively."}, 400)
 
     new_video = Video(title=request_body["title"],
                     release_date=request_body["release_date"], # offer this format when creating a video: "1981-08-12" and it'll turn it to datetime obj in response
-                    total_inventory=request_body["total_inventory"]) #,
+                    total_inventory=request_body["total_inventory"]) #,   # set this to 0??? to address 'null should be 0' in postman test? 
                     # commented next line out for tests
                     #available_inventory=request_body["available_inventory"])
 
@@ -192,3 +182,16 @@ def delete_single_video(video_id):
     db.session.delete(single_video)
     db.session.commit()
     return make_response({"id": single_video.video_id}, 200) 
+
+# # CRUD RENTALS ???
+# @rental_bp.route("/check-out", methods=["POST"])
+# def create_rental():
+#     """Check out a video to a customer, re-creating it as a rental in the process"""
+#     request_body = request.get_json() # employee scanning the movie the customer wants to take home
+
+#     video_turned_rental = Rental(customer_id=request_body["customer_id"],
+#                                 video_id=request_body["video_id"],
+#                                 check_out_date=datetime.now()) #
+#     return jsonify(video_turned_rental.to_json())
+
+

@@ -23,10 +23,13 @@ def create_app(test_config=None):
             "SQLALCHEMY_TEST_DATABASE_URI")
 
     # Import models here for Alembic setup
-    from app.models.customer import Customer
-    from app.models.video import Video
+    from app.models.customer import Customer# why are these faded?
+    from app.models.video import Video # "" ""
+    #from app.models.rentals import Rental # "" ""
+
     from .routes import customer_bp
     from .routes import video_bp
+    #from .routes import rental_bp
 
     db.init_app(app)
     migrate.init_app(app, db)
@@ -34,6 +37,7 @@ def create_app(test_config=None):
     # Register Blueprints here
     app.register_blueprint(customer_bp)
     app.register_blueprint(video_bp)
+    #app.register_blueprint(rental_bp)
 
     return app
 
