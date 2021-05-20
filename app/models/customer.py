@@ -1,14 +1,17 @@
 from flask import current_app
 from app import db
 
+
 class Customer(db.Model):
+    __tablename__ = "customer"
     customer_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
-    postal_code = db.Column(db.Integer)
+    postal_code = db.Column(db.String)
     phone_number = db.Column(db.String)
     registered_at = db.Column(db.DateTime)
-
     videos_checked_out = db.Column(db.Integer)
+
+    videos = db.relationship("Video", secondary="rental", backref="customer", lazy=True)
 
     def videos_default(self):
         if self.videos_checked_out is None:
