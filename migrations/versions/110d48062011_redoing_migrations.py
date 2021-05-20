@@ -1,8 +1,8 @@
-"""adds Customer and Video models
+"""redoing migrations
 
-Revision ID: 93753f9e14b2
+Revision ID: 110d48062011
 Revises: 
-Create Date: 2021-05-18 14:06:39.826253
+Create Date: 2021-05-19 16:57:23.556902
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '93753f9e14b2'
+revision = '110d48062011'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,16 +21,16 @@ def upgrade():
     op.create_table('customer',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(), nullable=True),
-    sa.Column('postal_code', sa.Integer(), nullable=True),
-    sa.Column('phone', sa.Integer(), nullable=True),
+    sa.Column('postal_code', sa.String(), nullable=True),
+    sa.Column('phone', sa.String(), nullable=True),
     sa.Column('registered_at', sa.DateTime(), nullable=True),
-    sa.Column('videos_out_count', sa.Integer(), nullable=True),
+    sa.Column('videos_checked_out_count', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('video',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('title', sa.String(), nullable=True),
-    sa.Column('release_date', sa.Integer(), nullable=True),
+    sa.Column('release_date', sa.DateTime(), nullable=True),
     sa.Column('total_inventory', sa.Integer(), nullable=True),
     sa.Column('available_inventory', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('id')
