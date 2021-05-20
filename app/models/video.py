@@ -6,6 +6,7 @@ class Video(db.Model):
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime, nullable=True, default=None)
     total_inventory = db.Column(db.Integer)
+    available_inventory = db.Column(db.Integer)
     check_outs = db.relationship('Customer', backref='videos', lazy=True)
 
 
@@ -14,5 +15,5 @@ class Video(db.Model):
             "id":self.id,
             "title": self.title,
             "release_date": self.release_date,
-            "total_inventory": int(self.total_inventory)}
-            # "available_inventory":0 
+            "total_inventory": int(self.total_inventory),
+            "available_inventory": self.available_inventory}

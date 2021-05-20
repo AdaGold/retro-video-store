@@ -2,7 +2,7 @@ from app.models.customer import Customer
 from app.models.video import Video
 
 from app import db
-from flask import json, request, Blueprint, make_response, jsonify
+from flask import request, Blueprint, make_response, jsonify
 import os
 import requests
 
@@ -170,19 +170,12 @@ def check_out_rental():
     if rental_id == None:
         return {"error":"Please provide a video ID"}
 
-    customer = Customer.query.get(user_id)
-    video = Video.query.get(rental_id)
+    customer = Customer.query.get_or_404(user_id)
+    video = Video.query.get_or_404(rental_id)
 
-    if customer == None:
-        return {"error":"Please provide a customer ID"}
-    if rental_id == None:
-        return {"error":"Please provide a video ID"}
-        
-    '''
-    increase the customer's videos_checked_out_count by one
-    decrease the video's available_inventory by one
-    create a due date. The rental's due date is the seven days from the current date.
-    '''
+    customer.videos_checked_out_count += 1
+    video.available_inventory -= 1
+
 
 @rentals_bp.route("", methods=["POST"])
 def check_in_rental():

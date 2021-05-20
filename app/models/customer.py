@@ -2,7 +2,6 @@ from flask import current_app
 from app import db
 from datetime import datetime
 
-
 class Customer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
@@ -11,7 +10,6 @@ class Customer(db.Model):
     registered_at = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
     videos_checked_out_count = db.Column(db.Integer, default=0)
     rentals = db.relationship('Rental', backref='customers', lazy=True)
-
 
     def get_response(self):
         return {
