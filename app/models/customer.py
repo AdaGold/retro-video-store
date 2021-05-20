@@ -15,6 +15,7 @@ class Customer(db.Model):
     postal_code = db.Column(db.Integer)
     phone = db.Column(db.Integer)
     register_at = db.Column(db.DateTime, nullable = True)
+    checkout_count = db.Column(db.Integer, default =0) #why do I need this here?
 
 
     def registered_customer(self):
@@ -29,10 +30,6 @@ class Customer(db.Model):
         "id": self.id,
         "name": self.name,
         "postal_code": self.postal_code,
-        "register_at": self.register_at # or self.registered_customer()
+        "register_at": self.register_at, # or self.registered_customer()
+        "checkout_count": self.checkout_count
         }
-
-
-# class FooBarJoin(db.Model):
-#     foo_id = db.Column(db.Integer, db.ForeignKey('foo.id'), primary_key=True)
-#     bar_id = db.Column(db.Integer, db.ForeignKey('bar.id'), primary_key=True)
