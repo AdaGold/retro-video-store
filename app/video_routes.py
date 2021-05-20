@@ -64,37 +64,30 @@ def delete_video(video_id):
         db.session.delete(video)
         db.session.commit()
 
-        response = {"details": f"Video {video_id} successfully deleted"}
-
-        return jsonify(response), 200
+        return {"id": video.video_id}, 200
     
     else:
-        return make_response(f"Video does not exist", 404)
+        return make_response(f"Video {video_id} does not exist", 404)
 
 @videos_bp.route("/<video_id>", methods=["PUT"], strict_slashes=False)
 def update_video(video_id):
 
     video = Video.query.get(video_id)
+    form_data = request.get_json()
 
     if video: 
 
-        form_data = request.get_json()
-
-        if "title" in form_data.keys():
-            video.name = form_data["title"]
-            db.session.commit()
-
-        if "release_date" in form_data.keys():
+        if "title" in form_data.keys() or "release_date" in form_data.keys() or "total_inventory" in form_data.keys():
+            
+            video.title = form_data["title"]
             video.release_date = form_data["release_date"]
-            db.session.commit()
-
-        if "total_inventory" in form_data.keys():
             video.total_inventory = form_data["total_inventory"]
+
             db.session.commit()
     
-        updated_video = video.to_json_video()
-        
-        return jsonify(updated_video), 200
+            updated_video = video.to_json_video()
+            
+            return jsonify(updated_video), 200
 
     else: 
-        return make_response("", 404) 
+        return make_response(f"Video {video_id} not relevant", 404) 

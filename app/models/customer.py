@@ -8,9 +8,14 @@ class Customer(db.Model):
     phone_number = db.Column(db.String)
     registered_at = db.Column(db.DateTime)
 
-    # __tablename__ = "customer_id"
     videos_checked_out = db.Column(db.Integer)
-     
+
+    def videos_default(self):
+        if self.videos_checked_out is None:
+            return 0
+        else:
+            return self.videos_checked_out
+
 
     def to_json_customer(self):
         return {
@@ -19,15 +24,9 @@ class Customer(db.Model):
             "postal_code": self.postal_code,
             "phone": self.phone_number,
             "registered_at": self.registered_at,
-            "videos_checked_out_count": self.videos_checked_out
+            "videos_checked_out_count": self.videos_default()
         }
 
-    # def to_json_customer(self):
-    #     return {
-    #         "id": self.customer_id,
-    #         "name": self.name,
-    #         "registered_at": self.registered_at,
-    #         "postal_code": self.postal_code,
-    #         "phone": self.phone_number,
-    #         "videos_checked_out_count": self.videos_checked_out            
-    #     }
+    def error_msg(self):
+        return {"errors": "error message"}
+

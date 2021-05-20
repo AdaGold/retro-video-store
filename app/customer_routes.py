@@ -66,38 +66,35 @@ def delete_customer(customer_id):
         db.session.delete(customer)
         db.session.commit()
 
-        response = {"details": "Customer successfully deleted"}
-
-        return jsonify(response), 200
+        return {"id": customer.customer_id}, 200
     
     else:
-        return make_response(f"Customer does not exist", 404)
+        return make_response(f"Customer {customer_id} does not exist", 404)
 
 @customers_bp.route("/<customer_id>", methods=["PUT"], strict_slashes=False)
 def update_customer(customer_id):
 
     customer = Customer.query.get(customer_id)
+    form_data = request.get_json()
 
-    if customer is None:
-        return jsonify({"error": "Customer does not exist"}), 400
+    if customer:
     
-    if customer: 
-
-        form_data = request.get_json()
-
-        if "name" in form_data.keys():
-            customer.name = form_data["name"]
-            db.session.commit()
-
-        if "phone" in form_data.keys():
-            customer.phone_number = form_data["phone"]
-            db.session.commit()
+        if "name" in form_data.keys() or "phone" in form_data.keys() or "postal_code" in form_data.keys():
             
-        if "postal_code" in form_data.keys():
+            customer.name = form_data["name"]
+            customer.phone_number = form_data["phone"]
             customer.postal_code = form_data["postal_code"]
+            
             db.session.commit()
         
-        updated_customer = customer.to_json_customer()
+            updated_customer = customer.to_json_customer()
 
-        return jsonify(updated_customer), 200
+            return jsonify(updated_customer), 200
+        
+        else:
+            return jsonify({"error": f"Customer {customer_id} not relevant"}), 400
+    
+    else:
+
+        return make_response("Customer does not exist", 404)
 
