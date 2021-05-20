@@ -117,7 +117,7 @@ def put_video(id):
         video.release_date = form_data["release_date"]
         video.total_inventory = form_data["total_inventory"]
         db.session.commit()     
-        return jsonify({"video": video.api_response()}), 200 
+        return jsonify(video.api_response()), 200 
     return make_response(
             {"details": "Invalid data"
             }

@@ -12,6 +12,9 @@ class Customer(db.Model):
     # __tablename__ = "Customer"
     # video_id = db.Column(db.Integer, db.ForeignKey('video.id'), nullable=True) 
 
+    # def calc_videos_checked_out():
+    #     pass
+
     def api_response(self): 
         response_body = {
                         "id": self.id,
@@ -22,6 +25,7 @@ class Customer(db.Model):
                         "phone": self.phone,
                         #below needs to change
                         "videos_checked_out_count": 0
+                        # "videos_checked_out_count": calc_videos_checked_out()
                         }
 
         return response_body
