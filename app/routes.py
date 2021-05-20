@@ -34,10 +34,9 @@ def create_customer():
         return jsonify({
             "id": new_customer.customer_id
         }), 201
-    
     except KeyError:
         return make_response({"details": "Invalid data"}, 400)
-        
+
 @customers_bp.route("", methods=["GET"], strict_slashes=False)
 def get_customer():
     customer_name_from_url = request.args.get("name")
@@ -72,21 +71,28 @@ def get_one_customer(customer_id):
 
 @customers_bp.route("/<customer_id>", methods=["PUT"], strict_slashes=False)
 def update_customer(customer_id):
-
     customer = Customer.query.get(customer_id)
+    customer_data = request.get_json()
 
-    if customer:
-        customer_data = request.get_json()
+    if customer is None:
+        return make_response("Customer does not exist", 404)
+
+    elif ("name" not in customer_data.keys() or
+        "postal_code" not in customer_data.keys() or
+        "phone" not in customer_data.keys()):
+            return make_response({"error": "Bad Request"}, 400)
+            
+    elif customer:
 
         customer.name = customer_data["name"]
         customer.postal_code = customer_data["postal_code"]
         customer.phone = customer_data["phone"]
         
+        db.session.add(customer)
         db.session.commit()
 
         return jsonify(customer.to_json()), 200
-    else:
-        return make_response({"error": "Bad Request"}, 400)
+
 
 @customers_bp.route("/<customer_id>", methods=["DELETE"], strict_slashes=False)
 def delete_customer(customer_id):
@@ -104,7 +110,7 @@ def delete_customer(customer_id):
         }), 200
 
 # Wave 1: CRUD (Create, Read, Update & Delete) for video
-@videos_bp.route("/<video_id>", methods=["POST"], strict_slashes=False)
+@videos_bp.route("", methods=["POST"], strict_slashes=False)
 def create_video():
     try:
         request_body = request.get_json()
@@ -122,7 +128,7 @@ def create_video():
     except KeyError:
         return make_response({"details": "Invalid data"}, 400)
 
-@videos_bp.route("/<video_id>", methods=["GET"], strict_slashes=False)
+@videos_bp.route("", methods=["GET"], strict_slashes=False)
 def get_video():
     video_title_from_url = request.args.get("title")
     # get video by title
@@ -158,19 +164,19 @@ def get_one_video(video_id):
 def update_video(video_id):
 
     video = Video.query.get(video_id)
-
-    if video:
+    if video is None:
+        return("", 404)
+    elif video:
         video_data = request.get_json()
 
         video.title = video_data["title"]
         video.release_date = video_data["release_date"]
         video.total_inventory = video_data["total_inventory"]
         
+        db.session.add(video)
         db.session.commit()
 
         return jsonify(video.to_json()), 200
-    elif video is None:
-        return("", 404)
     else:
         return make_response({"error": "Bad Request"}, 400)
 
@@ -188,3 +194,4 @@ def delete_video(video_id):
         return jsonify({
             "id": video.video_id
         }), 200
+
