@@ -11,6 +11,7 @@ customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
+#maybe add a function to take in strings to check for (or a list of strings and check if they're in the request??)
 def invalid_input():
     return jsonify({"details":"Invalid data"}), 400
 
@@ -87,7 +88,7 @@ def delete_customer(customer_id):
 
 @customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
 @customer_not_found
-def get_rentals(customer_id):
+def get_customer_rentals(customer_id):
     customer = Customer.query.get(customer_id)
     rentals = []
     for rental in customer.videos:
@@ -150,6 +151,22 @@ def delete_video(video_id):
     return jsonify({"details":"video successfully deleted",
                     "id": video.id,
                     "title": video.title}), 200
+
+@videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
+@video_not_found
+def get_video_rentals(video_id):
+    video = Video.query.get(video_id)
+    rentals = []
+    for rental in video.customers:
+        customer = Customer.query.get(rental.customer_id)
+        dict = {
+            "name": customer.name,
+            "phone": customer.phone,
+            "postal_code": customer.postal_code,
+            "due_date": rental.due_date}
+        rentals.append(dict)
+    return jsonify(rentals), 200
+
 
 #---------------------# RENTALS ENDPOINTS #---------------------#
 
