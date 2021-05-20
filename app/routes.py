@@ -1,3 +1,4 @@
+import re
 from flask import request, Blueprint
 from app import db
 from flask import jsonify
@@ -81,7 +82,9 @@ def add_video():
         }), 400
     new_video = Video(title=request_body["title"],
                     release_date=request_body["release_date"],
-                    total_inventory=request_body["total_inventory"])
+                    total_inventory=request_body["total_inventory"],
+                    available_inventory= request_body["total_inventory"]
+                    )
     
     db.session.add(new_video)
     db.session.commit()
@@ -133,17 +136,47 @@ def delete_video(video_id):
         }), 200
     return "", 404
 
-@customer_bp.route("", methods=["POST"], strict_slashes=False)
-def add_customer():
+@rental_bp.route("/check-out", methods=["POST"], strict_slashes=False)
+def add_rental():
     request_body = request.get_json()
-    if "name" not in request_body or "postal_code" not in request_body or "phone" not in request_body:
+
+    if "customer_id" not in request_body or "video_id" not in request_body:
         return jsonify({
         "details": "Invalid data"
         }), 400
-    new_customer = Customer(name=request_body["name"],
-                            postal_code=request_body["postal_code"],
-                            phone=request_body["phone"])
+
+    customer_id = request_body["customer_id"]
+    video_id = request_body["video_id"]
+
+    customer = Customer.query.get(customer_id)
+    if not customer:
+        return jsonify({
+        "details": "no such customer exists"
+        }), 400
+    video = Video.query.get(video_id)
+    if not video:
+        return jsonify({
+        "details": "no such video exists"
+        }), 400
+
+    # increase the customer's videos_checked_out_count by one
+    customer.videos_checked_out_count += 1
+    #decrease the video's available_inventory by one
+    if video.available_inventory < 1:
+        return jsonify({
+        "details": "not enough inventory available. hehe"
+        }), 400
+    video.available_inventory -= 1
+
+    new_rental = Rental(customer_id=request_body["customer_id"],
+                            video_id=request_body["video_id"])
     
-    db.session.add(new_customer)
+    db.session.add(new_rental)
     db.session.commit()
-    return new_customer.to_json(), 201
+    return jsonify({
+        "customer_id": new_rental.customer_id,
+        "video_id" : new_rental.video_id,
+        "due_date" : new_rental.due_date,
+        "videos_checked_out_count": customer.videos_checked_out_count,
+        "available_inventory": video.available_inventory
+        }), 200
