@@ -176,8 +176,8 @@ def check_out_video():
     #could check for customer and video id in request body
     customer_id = request_body["customer_id"]
     video_id = request_body["video_id"]
-    # if not isinstance(video_id, int) or not isinstance(customer_id, int):
-    #     return invalid_input()
+    if not isinstance(video_id, int) or not isinstance(customer_id, int):
+        return invalid_input()
     customer = Customer.query.get(customer_id)
     video = Video.query.get(video_id)
 
