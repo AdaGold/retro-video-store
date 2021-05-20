@@ -193,3 +193,25 @@ def check_out_video():
     db.session.add(new_rental)
     db.session.commit()
     return jsonify(new_rental.to_json()), 200
+
+@rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
+def check_in_video():
+    rentals = Rental.query.all()
+    request_body = request.get_json()
+    customer_id = request_body["customer_id"]
+    video_id = request_body["video_id"]
+    customer = Customer.query.get(customer_id)
+    video = Video.query.get(video_id)
+    for rental in customer.videos:
+        if rental.video_id == int(video_id):
+            customer.videos_checked_out_count -= 1
+            video.available_inventory += 1
+            db.session.delete(rental)
+            db.session.commit()
+            return jsonify({
+                    "customer_id": customer_id,
+                    "video_id": video_id,
+                    "videos_checked_out_count": customer.videos_checked_out_count,
+                    "available_inventory": video.available_inventory
+                    })
+    return invalid_input()
