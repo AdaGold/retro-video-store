@@ -4,7 +4,7 @@ from sqlalchemy import DateTime
 
 
 class Video(db.Model):
-    # __tablename__ = 'right'
+    __tablename__ = 'videos'
     video_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime, nullable=True)
@@ -12,9 +12,7 @@ class Video(db.Model):
     available_inventory = db.Column(db.Integer)
 
     customers = db.relationship(
-        "Customer", secondary="rental")
-
-    # , back_populates="video")
+        'Customer', secondary='rentals', back_populates='videos')
 
     # # 'Task' looks at class in python and loads multiple of those (this is like a pseudo column)
     # tasks = db.relationship('Task', backref='goal', lazy=True)
