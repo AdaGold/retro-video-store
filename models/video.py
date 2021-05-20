@@ -8,4 +8,4 @@ class Video(db.Model):
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime, nullable=True)
     total_inventory = db.Column(db.Integer)
-    available_invenotry = db.Column(db.Integer)
+    available_invenotry = db.Column(db.Integer, default=0)

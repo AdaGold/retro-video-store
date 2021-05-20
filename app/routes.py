@@ -4,13 +4,13 @@ from app import db
 from flask.helpers import make_response
 from models.customer import Customer
 from models.video import Video
-from datetime import date
+from datetime import datetime
 import os
 import requests
 
 # set up blueprints
-video_bp = Blueprint("videos", __name__, url_prefix="/videos")
-customer_bp = Blueprint("customers", __name__, url_prefix="/customers")
+videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 
 # helper function to check that customer/video ids are integers
 def is_int(value):
@@ -20,7 +20,7 @@ def is_int(value):
         return False
 
 # Wave 1: CRUD (Create, Read, Update & Delete) for customer
-@customer_bp.route("", methods=["GET"], strict_slashes=False)
+@customers_bp.route("", methods=["GET"], strict_slashes=False)
 def get_customer():
     customer_name_from_url = request.args.get("name")
     # get customer by name
@@ -37,69 +37,75 @@ def get_customer():
     
     return jsonify(customers_response), 200
 
-@customer_bp.route("/<id>", methods=["GET"], strict_slashes=False)
-def get_one_customer(id):
-    if not is_int(id):
+@customers_bp.route("/<customer_id>", methods=["GET"], strict_slashes=False)
+def get_one_customer(customer_id):
+    if not is_int(customer_id):
         return {
-            "message": f"ID {id} must be an integer",
+            "message": f"ID {customer_id} must be an integer",
             "success": False
         }, 400
     
-    customer = Customer.query.get(id)
+    customer = Customer.query.get(customer_id)
 
     if customer is None:
-        return make_response("", 404)
+        return make_response("Customer does not exist", 404)
     else:
         return {
             "customer": customer.to_json()
         }, 200
 
-@customer_bp.route("", methods=["POST"], strict_slashes=False)
+@customers_bp.route("", methods=["POST"], strict_slashes=False)
 def create_customer():
     try:
         request_body = request.get_json()
 
-        new_customer = Customer(id=request_body["id"],
-                                name=request_body["name"],
+        new_customer = Customer(name=request_body["name"],
                                 postal_code=request_body["postal_code"],
-                                phone=request_body["phone"])
-        db.sesssion.add(new_customer)
+                                phone=request_body["phone"],
+                                registered_at=datetime.now())
+        db.session.add(new_customer)
         db.session.commit()
 
-        return new_customer.to_json(), 200
+        return jsonify({
+            "id": new_customer.customer_id
+        }), 201
     
     except KeyError:
-        return{"details": "Invalid data"}, 400
+        return make_response({"details": "Invalid data - please include a name, postal code and phone number"}, 400)
 
-@customer_bp.route("/<id>", methods=["PUT"], strict_slashes=False)
-def update_customer(id):
+@customers_bp.route("/<customer_id>", methods=["PUT"], strict_slashes=False)
+def update_customer(customer_id):
 
-    customer = Customer.query.get(id)
+    customer = Customer.query.get(customer_id)
 
     if customer:
         customer_data = request.get_json()
 
         customer.name = customer_data["name"]
-
+        customer.postal_code = customer_data["postal_code"]
+        customer.phone = customer_data["phone"]
+        
         db.session.commit()
 
-        return {
-            "customer": customer.to_json()
-        }, 200
+        return jsonify(customer.to_json()), 200
     else:
-        return make_response("", 404)
+        return make_response({"error": "Bad Request"}, 400)
 
-@customer_bp.route("/<id>", methods=["DELETE"], strict_slashes=False)
-def delete_customer(id):
+@customers_bp.route("/<customer_id>", methods=["DELETE"], strict_slashes=False)
+def delete_customer(customer_id):
 
-    customer = Customer.query.get(id)
+    customer = Customer.query.get(customer_id)
 
     if customer is None:
-        return make_response("", 404)
+        return make_response("Customer does not exist", 404)
     else:
         db.session.delete(customer)
         db.session.commit()
 
-        return {
-            "details": f'Customer {customer.id} successfully deleted'
-        }
+        return jsonify({
+            "id": customer.customer_id
+        }), 200
+
+# # Wave 1: CRUD (Create, Read, Update & Delete) for video
+# @video_bp.route("/<id>", methods=["GET"], strict_slashes=False)
+# def
