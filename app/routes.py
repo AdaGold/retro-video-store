@@ -118,7 +118,8 @@ def create_video():
     new_video = Video(
                 title = request_body['title'],
                 release_date = request_body['release_date'],
-                total_inventory = request_body['total_inventory']
+                total_inventory = request_body['total_inventory'],
+                available_inventory = request_body['total_inventory']
             )
     db.session.add(new_video)
     db.session.commit()
@@ -180,16 +181,55 @@ def delete_video(id):
     return jsonify(id=int(id)), 200
 
 
-#database manipulation is handled by rthe Rental model
+#database manipulation is handled by the Rental model
 @rental_bp.route("/check-out", methods=["POST"],strict_slashes=False)  
 def check_out():
     """
-        Input:  
-        Output: 
+        Input:  request to make a new instance of Rental, customer_id video_id are required body params
+        Output: python dictoinary of new Rental instance 
 
     """
     request_body = request.get_json()
+    if "customer_id" not in request_body:
+        return  400
+    if "video_id" not in request_body:
+        return  400
+    
     customer_id = request_body["customer_id"]
     video_id = request_body["video_id"]
+    video = Video.query.get(video_id)#checking database for Video instance
+    if not video:
+        return jsonify(details= "doesnt exist"), 400
+    if video.available_inventory <= 0:
+        return jsonify(details="video not available"), 400
     new_rental = Rental.checkout(customer_id, video_id)
+    
     return jsonify(new_rental.to_python_dict()), 200
+
+
+@rental_bp.route("/check-in", methods=['POST'],strict_slashes=False)
+def check_in():
+    """
+        Input:  request to make a new instance of Rental, customer_id video_id are required body params
+        Output: python dictoinary of new Rental instance 
+    """
+    request_body = request.get_json()
+    try:
+        request_body["customer_id"]
+        request_body["video_id"]
+    except:
+        return make_response({"details": "Invalid data"}, 400)
+    customer_id = request_body["customer_id"]
+    video_id = request_body["customer_id"]
+    new_rental = Rental.check_in(customer_id,video_id)
+    
+    return jsonify(new_rental.to_python_dict()), 200
+
+
+
+
+    try:
+        request_body["customer_id"]
+        request_body["video_id"]
+    except:
+        return make_response({"details": "Invalid data"}, 400)

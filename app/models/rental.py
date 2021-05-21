@@ -46,8 +46,8 @@ class Rental(db.Model):
             Ouput:  python dictionary of Rental instance with added keys customer.videos_checked_out_count and 
                     video.available_inventory
         """
-        from .customer import Customer#gets access to Customer Class
-        from .video import Video#ge
+        from .customer import Customer#gives access to Customer model
+        from .video import Video#gives access to Video model
         
         customer = Customer.query.get(self.customer_id)# taking from self
         video = Video.query.get(self.video_id)
@@ -61,3 +61,26 @@ class Rental(db.Model):
                 "available_inventory": video.available_inventory
             }
     
+    @classmethod
+    def check_in(cls,customer_id,video_id):
+        """
+            Input:  customer_id, video_id
+            Output: new instance of Rental with customer_id, video_id, due_date
+        """
+        from .customer import Customer
+        from .video import Video
+        customer = Customer.query.get(customer_id)
+        video = Video.query.get(video_id)
+        due_date = datetime.datetime.now() + datetime.timedelta(days=7)
+        video_checked_in = Rental (
+                        customer_id = customer.id,
+                        video_id = video.id,
+                        due_date = due_date#? what happens when book is checked in ?
+                        )
+        
+        db.session.add(video_checked_in)
+        db.session.commit()
+        customer.decrease_checkout_count()
+        video.increase_inventory()
+        
+        return video_checked_in

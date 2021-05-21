@@ -36,6 +36,17 @@ class Customer(db.Model):
             }
 
     def increase_checkout_count(self):
+        """
+            Input:  instance of cutomer
+            Output: increases videos_checked_out_count attribute in customer by 1
+        """
         self.videos_checked_out_count = self.videos_checked_out_count + 1
         db.session.commit()
-        
+    
+    def decrease_checkout_count(self):
+        """
+            Input:  instance of cutomer
+            Output: decreases videos_checked_out_count attribute in customer by 1
+        """
+        self.videos_checked_out_count = self.videos_checked_out_count - 1
+        db.session.commit()

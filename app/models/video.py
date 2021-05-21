@@ -14,7 +14,7 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime,nullable=False)
     total_inventory = db.Column(db.Integer,default=0)
     available_inventory = db.Column(db.Integer,default=0)
-    #backref invisible attribute 'customer'. I can use video.customer to access this attribue value 
+    
 
     def to_python_dict(self):
         """
@@ -30,8 +30,20 @@ class Video(db.Model):
         }
     
     def decrease_inventory(self):
-        if self.available_inventory == 0:
-            return
+        """
+            Input:  instance of Video
+            Output: decreased availablity inventory for instance of Video
+        """
 
         self.available_inventory = self.available_inventory - 1
+        db.session.commit()
+    
+    
+    def increase_inventory(self):
+        """
+            Input:  instance of Video
+            Output: increase availablity inventory for instance of Video
+        """
+        
+        self.available_inventory = self.available_inventory + 1
         db.session.commit()
