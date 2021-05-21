@@ -1,6 +1,6 @@
 from app import db, helper
 from .models.customer import Customer
-#from .models.video import Video
+from .models.video import Video
 from flask import request, Blueprint, make_response, jsonify, Response
 from sqlalchemy import desc, asc
 from datetime import date
@@ -26,15 +26,15 @@ def get_customers():
 
 #GET customers with specific ID
 @customer_bp.route("/<id>", methods=["GET"], strict_slashes=False)
-def get_specific_customers(id):
+def get_specific_customers(customer_id):
     
-    if not helper.is_int(id):
+    if not helper.is_int(customer_id):
         return {
             "message": "id must be an integer",
             "success": False
         },400
     
-    customer =  Customer.query.get(id)
+    customer =  Customer.query.get(customer_id)
     
     if customer == None:
         return Response ("" , status=404)
@@ -67,9 +67,9 @@ def add_customers():
 
 #PUT update a customer detail
 @customer_bp.route("<id>", methods=["PUT"], strict_slashes=False)
-def update_customer(id):
+def update_customer(customer_id):
     
-    customer = Customer.query.get(id)
+    customer = Customer.query.get(customer_id)
     
     if customer == None or not customer:
         return Response("", 404)
@@ -91,9 +91,9 @@ def update_customer(id):
 
 #DELETE a customer
 @customer_bp.route("/<id>", methods=["DELETE"], strict_slashes=False)
-def delete_customer(id):
+def delete_customer(customer_id):
     
-    customer = Customer.query.get(id)
+    customer = Customer.query.get(customer_id)
     
     if customer == None:
         return Response("", status=404)
@@ -102,14 +102,36 @@ def delete_customer(id):
         db.session.delete(customer)
         db.session.commit()
         
-        return jsonify(id=int(id)), 200
+        return jsonify(id=int(customer_id)), 200
 
 
 #WAVE 2 - GET /customers/<id>/rentals
 @customer_bp.route("/<id>/rentals", methods=["GET"], strict_slashes=False)
-def get_videos_checkedout(id):
-    pass
+def get_videos_checked_out(customer_id):
+    if not helper.is_int(customer_id):
+        return {
+            "message": "id must be an integer",
+            "success": False
+        },400
 
+    customer = Customer.query.get(customer_id)
+    
+    if not customer or customer == None:
+        return jsonify(""), 404  
+    
+    if customer:
+        rental_list = []
+        for rental in customer.rentals:
+            video = Video.query.get(rental.video_id)
+            if not video or video == None:
+                return jsonify(details = ""), 404
+            else:
+                rental_list.append({"release_date" : video.release_date,
+                "title" : video.title,
+                "due_date" : rental.due_date
+                })
+    
+        return jsonify(rental_list)
 
 #OPTIONAL ENHANCEMENTs 
 #GET /customers/<id>/history

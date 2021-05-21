@@ -1,5 +1,5 @@
 from app import db, helper
-#from .models.customer import Customer
+from .models.customer import Customer
 from .models.video import Video
 from flask import request, Blueprint, make_response, jsonify, Response
 from sqlalchemy import desc, asc
@@ -27,15 +27,15 @@ def get_videos():
 
 #GET video with specific ID
 @video_bp.route("/<id>", methods=["GET"], strict_slashes=False)
-def get_specific_video(id):
+def get_specific_video(video_id):
     
-    if not helper.is_int(id):
+    if not helper.is_int(video_id):
         return {
             "message": "id must be an integer",
             "success": False
         },400
     
-    video =  Video.query.get(id)
+    video =  Video.query.get(video_id)
     
     if video == None:
         return Response ("" , status=404)
@@ -68,9 +68,9 @@ def add_videos():
 
 #PUT update a customer detail
 @video_bp.route("<id>", methods=["PUT"], strict_slashes=False)
-def update_video(id):
+def update_video(video_id):
     
-    video = Video.query.get(id)
+    video = Video.query.get(video_id)
     
     if video == None or not video:
         return Response("", status=404)
@@ -91,9 +91,9 @@ def update_video(id):
 
 #DELETE a video
 @video_bp.route("<id>", methods=["DELETE"], strict_slashes=False)
-def delete_video(id):
+def delete_video(video_id):
     
-    video = Video.query.get(id)
+    video = Video.query.get(video_id)
     
     if video == None:
         return Response("", status=404)
@@ -102,13 +102,29 @@ def delete_video(id):
         db.session.delete(video)
         db.session.commit()
         
-        return jsonify(id=int(id)), 200
+        return jsonify(id=int(video_id)), 200
     
-#WAVE 2 - GET /customers/<id>/rentals
+#WAVE 2 - GET /videos/<id>/rentals
 @video_bp.route("/<id>/rentals", methods=["GET"], strict_slashes=False)
-def get_customers_with_videos(id):
-    pass
-
+def get_rentals_with_videos(video_id):
+    
+    video = Video.query.get(video_id)
+    if not video or video == None:
+        return jsonify(details = ""),404
+    
+    rental_list = []
+    for rental in video.rentals:
+        customer = Customer.query.get(rental.customer_id)
+        if not customer or customer == None:
+            return jsonify(details = ""),404
+        else:
+            rental_list.append({"name" : customer.name,
+             "phone" : customer.phone,
+             "postal_code" : customer.postal_code,
+             "due_date" : rental.due_date
+             })
+    return jsonify(rental_list), 200
+    
 
 #OPTIONAL ENHANCEMENTs 
 #GET /videos/<id>/history

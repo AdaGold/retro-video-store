@@ -8,9 +8,12 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime, nullable=False)
     total_inventory = db.Column(db.Integer, nullable=False)
     #available_inventory = db.Column(db.Integer, nullable=False)
-
+    #establish relationship with customer
+    rentals = db.relationship('Rental', backref='video', lazy=True)
+    
     def calculate_available_inventory(self):
-            pass
+        available_inventory = self.total_inventory - len(self.rentals)
+        return available_inventory
         
     def video_details(self):
         return  {
@@ -18,7 +21,7 @@ class Video(db.Model):
                     "title": self.title,
                     "release_date": self.release_date,
                     "total_inventory": self.total_inventory,
-                    #"available_inventory": self.calculate_available_inventory()
+                    "available_inventory":self.calculate_available_inventory() #wave 2
+                    #"available_inventory": self.calculate_available_inventory() #wave 1
                 }
   
-#     customer_vids = db.relationship('customer_vids', secondary=association_table, backref=db.backref('videos', lazy=True))

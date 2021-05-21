@@ -18,7 +18,7 @@ class Customer(db.Model):
     videos_checked_out_count = db.Column(db.Integer, server_default=db.text("0"))
     
     #establish relationship
-    #videos_checked_out_count = db.relationship('Video', secondary=association_table, backref=db.backref('customers', lazy=True))
+    rentals = db.relationship('Rental', backref='customer', lazy = True)
 
     def details_of_customer_response(self):
         return {
@@ -27,7 +27,7 @@ class Customer(db.Model):
                 "registered_at": self.register_at,
                 "postal_code": self.postal_code,
                 "phone": self.phone,
-                "videos_checked_out_count": self.videos_checked_out_count
+                "videos_checked_out_count": len(self.rentals)
                 }
 
     def add_new_customer(self):
@@ -37,25 +37,3 @@ class Customer(db.Model):
             "postal_code": self.postal_code,
             "phone": self.phone_number
         }
-      
-      
-# class Video(db.Model):
-#     video_id = db.Column(db.Integer, primary_key=True)
-#     title = db.Column(db.String)
-#     release_date = db.Column(db.DateTime, nullable=False)
-#     total_inventory = db.Column(db.Integer, nullable=False)
-#     available_inventory = db.Column(db.Integer, nullable=False)
-    
-#     #customer_vids = db.relationship('customer_vids', secondary=association_table, backref=db.backref('videos', lazy=True))
-    
-#     def calculate_available_inventory(self):
-#         pass
-    
-#     def video_details(self):
-#         return  {
-#                     "id": self.video_id,
-#                     "title": self.title,
-#                     "release_date": self.release_date,
-#                     "total_inventory": self.total_inventory,
-#                     "available_inventory": self.calculate_available_inventory()
-#                 }
