@@ -14,6 +14,7 @@ import requests
 customer_bp = Blueprint("customers", __name__, url_prefix="/customers")
 video_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rental_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
+INVALID_DATA_ERROR = {"error": "Invalid Data"}
 
 @customer_bp.route("", methods=["GET"])
 def get_all_customers():
@@ -28,13 +29,15 @@ def create_new_customer():
     # if "name" not in request_body or "postal_code" not in request_body or "phone" not in request_body:
     keys = ["name", "postal_code", "phone"]
     if dict_helper.missing_any(request_body, keys):
-        return jsonify({"errors": "Invalid data"}), 400      
+        return jsonify(INVALID_DATA_ERROR), 400      
 
-    new_customer = Customer(name = request_body["name"],
-    registered_at = datetime.datetime.now(),
-    postal_code = request_body["postal_code"],
-    phone = request_body["phone"],
-    videos_checked_out_count = 0)
+    new_customer = Customer(
+        name = request_body["name"],
+        registered_at = datetime.datetime.now(),
+        postal_code = request_body["postal_code"],
+        phone = request_body["phone"],
+        videos_checked_out_count = 0
+    )
     db.session.add(new_customer)
     db.session.commit()
 
@@ -44,7 +47,7 @@ def create_new_customer():
 def get_customer_by_id(customer_id):
     customer = Customer.query.get(customer_id)
     if customer == None:
-        return jsonify({"error": "Invalid data"}), 404
+        return jsonify(INVALID_DATA_ERROR), 404
 
     return jsonify(customer.cust_details()), 200
 
@@ -56,7 +59,7 @@ def put_by_customer_id(customer_id):
     if not customer:
         return jsonify({"errors": "Customer not found"}), 404
     if not form_data:
-        return jsonify({"errors": "Invalid data"}), 400
+        return jsonify(INVALID_DATA_ERROR), 400
 
     customer.name = form_data['name']
     customer.postal_code = form_data['postal_code']
@@ -87,13 +90,14 @@ def create_new_video():
     request_body = request.get_json()
     keys = ["title", "release_date", "total_inventory"]
     if dict_helper.missing_any(request_body, keys):
-            return jsonify({"errors": "Invalid data"}), 400      
+            return jsonify(INVALID_DATA_ERROR), 400      
 
-    new_video = Video(title = request_body["title"],
-    release_date = request_body["release_date"],
-    total_inventory = request_body["total_inventory"],
-    available_inventory = request_body["total_inventory"])
-
+    new_video = Video(
+        title = request_body["title"],
+        release_date = request_body["release_date"],
+        total_inventory = request_body["total_inventory"],
+        available_inventory = request_body["total_inventory"]
+    )
     db.session.add(new_video)
     db.session.commit()
 
@@ -103,7 +107,7 @@ def create_new_video():
 def get_video_by_id(video_id):
     video = Video.query.get(video_id)
     if video == None:
-        return jsonify({"error": "Invalid data"}), 404
+        return jsonify(INVALID_DATA_ERROR), 404
     
     return jsonify(video.vid_details()), 200
 
@@ -111,34 +115,39 @@ def get_video_by_id(video_id):
 def put_by_video_id(video_id):
     video = Video.query.get(video_id)
     form_data = request.get_json()
+
     if video == None:
         return jsonify({"errors": "Video not found"}), 404
     if form_data == {}:
-        return jsonify({"errors": "Invalid data"}), 400
+        return jsonify(INVALID_DATA_ERROR), 400
 
     video.title = form_data['title']
     video.release_date = form_data['release_date']
     video.total_inventory = form_data['total_inventory']
     db.session.commit()
+
     return jsonify(video.vid_details()), 200
 
 @video_bp.route("/<video_id>", methods=["DELETE"])
 def delete_video(video_id):
     video = Video.query.get(video_id)
+
     if video == None:
         return jsonify({"errors": "Video not found"}), 404
 
     db.session.delete(video)
     db.session.commit()
+
     return jsonify({"id": video.video_id}), 200
 
 @rental_bp.route("/check-out", methods = ["POST"])
 def check_out_video():
     request_body = request.get_json()
-    if "video_id" not in request_body or "customer_id" not in request_body:
-        return jsonify({"errors": "Invalid data."}), 400
+    keys = ["video_id", "customer_id"]
+    if dict_helper.missing_any(request_body, keys):
+        return jsonify(INVALID_DATA_ERROR), 400
     if not isinstance(request_body["video_id"], int) or not isinstance(request_body["customer_id"], int):
-        return jsonify({"errors": "Invalid data."}), 400
+        return jsonify(INVALID_DATA_ERROR), 400
 
     vid_id = request_body["video_id"]
     cust_id = request_body["customer_id"]
@@ -146,9 +155,7 @@ def check_out_video():
     customer = Customer.query.get(cust_id)
 
     if video == None or customer == None:
-        return jsonify({"error": "Invalid data."}), 404
-    if video.available_inventory == 0:
-        return jsonify({"error": "Out of stock."}), 400
+        return jsonify(INVALID_DATA_ERROR), 404
     if video.available_inventory == 0:
         return jsonify({"error": "Out of stock."}), 400
 
@@ -182,13 +189,13 @@ def check_in_video():
     
 
     if "video_id" not in request_body or "customer_id" not in request_body:
-        return jsonify({"errors": "Invalid data."}), 400
+        return jsonify(INVALID_DATA_ERROR), 400
     if not isinstance(request_body["video_id"], int) or not isinstance(request_body["customer_id"], int):
-        return jsonify({"errors": "Invalid data."}), 400
+        return jsonify(INVALID_DATA_ERROR), 400
     if video == None or customer == None:
-        return jsonify({"error": "Invalid data."}), 404
+        return jsonify(INVALID_DATA_ERROR), 404
     if len(check_if_rental) == 0:
-        return jsonify({"error": "Invalid data."}), 400
+        return jsonify(INVALID_DATA_ERROR), 400
 
     
     video.check_in()
@@ -211,9 +218,8 @@ def check_in_video():
 @customer_bp.route("/<customer_id>/rentals", methods=["GET"])
 def get_rentals_by_customer_by_id(customer_id):
     customer = Customer.query.get(customer_id)
-    # if customer == None:
     if not customer:
-        return jsonify({"error": "Invalid data"}), 404
+        return jsonify(INVALID_DATA_ERROR), 404
     customer_rentals = Rental.query.filter_by(customer_id=customer_id).all()
 
     video_ids = []
@@ -224,10 +230,10 @@ def get_rentals_by_customer_by_id(customer_id):
     for rental in customer_rentals:
         video_ids.append(rental.video_id)
         due_dates.append(rental.due_date)
-    for id in video_ids:
-        videos.append(Video.query.get(id))
-    # videos = Video.query.where(id.in_(video_ids))
-    #way to query/filter without using a loop? optimizes so as to not overload/crash database
+    # for id in video_ids:
+    #     videos.append(Video.query.get(id))
+    videos = Video.query.filter(Video.video_id.in_(video_ids)).all()
+    # ^^ instead of for loop way to query/filter without using a loop? optimizes so as to not overload/crash database
     for video in videos:
         release_dates.append(video.release_date)
         titles.append(video.title)
@@ -247,7 +253,7 @@ def get_rentals_by_customer_by_id(customer_id):
 def get_rentals_by_video(video_id):
     video = Video.query.get(video_id)
     if not video:
-        return jsonify({"error": "Invalid data"}), 404
+        return jsonify(INVALID_DATA_ERROR), 404
     
     video_rentals = Rental.query.filter_by(video_id=video_id).all()
 
