@@ -54,15 +54,6 @@ def get_customer_info(customer_id):
     if customer == None:
         return make_response({"details": "Invalid data"}, 404)
 
-    # return {
-    #     "id": customer.id,
-    #     "name": customer.name,
-    #     "phone": customer.phone,
-    #     "postal_code": customer.postal_code,
-    #     "registered_at": customer.registered_at,
-    #     "videos_checked_out_count": customer.videos_checked_out_count
-    # }
-
     return customer.to_json_customer(), 200
 
 @customers_bp.route("/<customer_id>", methods=["PUT"], strict_slashes=False)
