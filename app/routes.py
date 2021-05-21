@@ -12,8 +12,9 @@ rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 
 @customers_bp.route("", methods=["GET"])
-def get_customer():
+def get_customers():
     customers = Customer.query.all()
+    print("***", customers)
 
     customers_response = [customer.to_json() for customer in customers]
 
@@ -39,44 +40,57 @@ def add_customer():
     db.session.add(new_customer)
     db.session.commit()
 
-    # return jsonify(new_customer.to_json()), 201
     return jsonify({"id": new_customer.id}), 201
 
 
-@customers_bp.route("/<int:id>", methods=["GET", "PUT", "DELETE"])
-def handle_customers(id):
+@customers_bp.route("/<int:id>", methods=["GET"])
+def get_customer(id):
+    customer = Customer.query.get(id)
+    print("***", customer)
+
+    if customer is None:
+        return make_response("Not Found", 404)
+
+    return jsonify(customer.to_json()), 200
+
+
+@customers_bp.route("/<int:id>", methods=["PUT"])
+def update_customer(id):
     customer = Customer.query.get(id)
 
     if customer is None:
         return make_response("Not Found", 404)
 
-    if request.method == "GET":
-        return jsonify(customer.to_json()), 200
+    request_body = request.get_json()
 
-    elif request.method == "PUT":
-        request_body = request.get_json()
+    if not request_body.get("name") or not request_body.get("postal_code") or not request_body.get("phone"):
+        return jsonify({"details": "Invalid data"}), 400
 
-        if not request_body.get("name") or not request_body.get("postal_code") or not request_body.get("phone"):
-            return jsonify({"details": "Invalid data"}), 400
+    customer.name = request_body["name"]
+    customer.postal_code = request_body["postal_code"]
+    customer.phone = request_body["phone"]
+    customer.registered_at = datetime.now().strftime("%a, %d %b %Y, %H:%M:%S")
 
-        customer.name = request_body["name"]
-        customer.postal_code = request_body["postal_code"]
-        customer.phone = request_body["phone"]
-        customer.registered_at = datetime.now().strftime("%a, %d %b %Y, %H:%M:%S")
+    db.session.commit()
 
-        db.session.commit()
+    return jsonify(customer.to_json()), 200
 
-        return jsonify(customer.to_json()), 200
 
-    elif request.method == "DELETE":
-        db.session.delete(customer)
-        db.session.commit()
+@customers_bp.route("/<int:id>", methods=["DELETE"])
+def delete_customer(id):
+    customer = Customer.query.get(id)
 
-        return jsonify({"id": customer.id})
+    if customer is None:
+        return make_response("Not Found", 404)
+    
+    db.session.delete(customer)
+    db.session.commit()
+
+    return jsonify({"id": customer.id})
 
 
 @videos_bp.route("", methods=["GET"])
-def get_video():
+def get_videos():
     videos = Video.query.all()
 
     videos_response = [video.to_json() for video in videos]
@@ -107,43 +121,53 @@ def add_video():
     return jsonify(new_video.to_json()), 201
 
 
-@videos_bp.route("/<int:id>", methods=["GET", "PUT", "DELETE"])
-def handle_videos(id):
+@videos_bp.route("/<int:id>", methods=["GET"])
+def get_video(id):
     video = Video.query.get(id)
 
     if video is None:
         return make_response("Not Found"), 404
 
-    if request.method == "GET":
-        return jsonify(video.to_json()), 200
+    return jsonify(video.to_json()), 200
 
-    if request.method == "PUT":
-        request_body = request.get_json()
 
-        if not request_body.get("title") or not request_body.get("release_date") or not request_body.get("total_inventory"):
-            return make_response("Bad Request"), 400
+@videos_bp.route("/<int:id>", methods=["PUT"])
+def update_videos(id):
+    video = Video.query.get(id)
 
-        video.title = request_body["title"]
-        video.release_date = request_body["release_date"]
-        video.total_inventory = request_body["total_inventory"]
+    if video is None:
+        return make_response("Not Found"), 404
 
-        db.session.commit()
+    request_body = request.get_json()
 
-        return jsonify(video.to_json()), 200
+    if not request_body.get("title") or not request_body.get("release_date") or not request_body.get("total_inventory"):
+        return make_response("Bad Request"), 400
 
-    if request.method == "DELETE":
-        db.session.delete(video)
-        db.session.commit()
+    video.title = request_body["title"]
+    video.release_date = request_body["release_date"]
+    video.total_inventory = request_body["total_inventory"]
 
-        return jsonify({"id": id}), 200
+    db.session.commit()
+
+    return jsonify(video.to_json()), 200
+
+
+@videos_bp.route("/<int:id>", methods=["DELETE"])
+def delete_video(id):
+    video = Video.query.get(id)
+
+    if video is None:
+        return make_response("Not Found"), 404
+
+    db.session.delete(video)
+    db.session.commit()
+
+    return jsonify({"id": id}), 200
 
 
 @rentals_bp.route("/check-out", methods=["POST"])
 def handle_rentals_out():
     request_body = request.get_json()
-
-    # if type("customer_id") != int or type("video_id") != int:
-    #     return make_response({400: "Bad Request"}, 400)
 
     video_id = request_body.get("video_id")
     customer_id = request_body.get("customer_id")
@@ -153,20 +177,10 @@ def handle_rentals_out():
 
     video = Video.query.get(video_id)
     customer = Customer.query.get(customer_id)
-    # video.available_inventory = 1
 
-    new_rental = Rental(customer_id=customer_id, video_id=video_id)
-
-    print("***  request body", request_body)
-    print("*** video id", video_id)
-    print("*** customer id", customer_id)
-    print("*** customer", customer, customer.name)
-    print("*** video", video, video.title)
-    print("***", video.available_inventory)
-
-        # results = db.session.query(Customer, Video, Rental).join(Customer, Customer.id==Rental.customer_id)\
-        #     .join(Video, Video.id==Rental.video_id).filter(Customer.id == customer_id).all()
-        # print("*** rental ", results)
+    # results = db.session.query(Customer, Video, Rental).join(Customer, Customer.id==Rental.customer_id)\
+    #     .join(Video, Video.id==Rental.video_id).filter(Customer.id == customer_id).all()
+    # print("*** rental ", results)
 
     if not customer or not video:
         return make_response({404: "Not Found"}, 404)
@@ -174,65 +188,35 @@ def handle_rentals_out():
     if video.available_inventory <= 0:
         return make_response({400: "Bad Request"}, 400)
 
-    # if check == "check-out":
+    new_rental = Rental(customer_id=customer_id, 
+                        video_id=video_id,
+                        due_date = date.today() + timedelta(days=7))
     
     customer.videos_checked_out_count += 1
     video.available_inventory -= 1
-    new_rental.customer_id = customer.id
-    new_rental.video_id = video.id
-    new_rental.due_date = date.today() + timedelta(days=7)
-
+    
     db.session.add(new_rental)
     db.session.commit()
-    print("*** new rental", new_rental)
+
     return jsonify({"customer_id": new_rental.customer_id,
                     "video_id": new_rental.video_id,
                     "due_date": new_rental.due_date,
                     "videos_checked_out_count": customer.videos_checked_out_count,
                     "available_inventory": video.available_inventory}), 200
 
-    # if check == "check-in":
-    #     customer.videos_checked_out_count -= 1
-    #     video.available_inventory += 1
-
-    #     db.session.add(new_rental)
-    #     db.session.commit()
-
-    #     return make_response({"customer_id": customer_id,
-    #                     "video_id": video_id,
-    #                     "videos_checked_out_count": customer.videos_checked_out_count,
-    #                     "available_inventory": video.available_inventory}, 200)
-
 
 @rentals_bp.route("/check-in", methods=["POST"])
 def handle_rentals_in():
     request_body = request.get_json()
 
-    # if type("customer_id") != int or type("video_id") != int:
-    #     return make_response({400: "Bad Request"}, 400)
-
     video_id = request_body.get("video_id")
     customer_id = request_body.get("customer_id")
-    
 
     if type(customer_id) != int or type(video_id) != int:
         return make_response({400: "Bad Request"}, 400)
 
     video = Video.query.get(video_id)
     customer = Customer.query.get(customer_id)
-
-    
-
-    # new_rental = Rental(customer_id=customer_id, video_id=video_id)
-
-    print("***  request body", request_body)
-    print("*** video id", video_id)
-    print("*** customer id", customer_id)
-    print("*** customer", customer, customer.name)
-    print("*** customer rental", customer.video)
-
-    # rental = Rental.query.filter_by(customer.video)
-    # print("***, rental filter", rental)
 
     # results = db.session.query(Customer, Video, Rental).join(Customer, Customer.id==Rental.customer_id)\
     #     .join(Video, Video.id==Rental.video_id).filter(Customer.id == customer_id).all()
@@ -245,72 +229,36 @@ def handle_rentals_in():
     if not customer.video:
         return make_response({400: "Bad Request"}, 400)
 
-    # if video.available_inventory <= 0:
-    #     return make_response({400: "Bad Request"}, 400)
-
 
     for rental in customer.video:
-        print("*** rental", rental.video_id, video_id)
-        # if rental.video_id == video_id:
-        #     print("blah")
-        customer.videos_checked_out_count -= 1
-        video.available_inventory += 1
-        db.session.delete(rental)
+        if rental.video_id == video_id:
+            customer.videos_checked_out_count -= 1
+            video.available_inventory += 1
+            db.session.delete(rental)
 
-
-
-    print("*** video", video, video.title)
-    print("***", video.available_inventory)
-
-
-
-    # customer.videos_checked_out_count -= 1
-    # video.available_inventory += 1
-
-    # db.session.add(new_rental)
     db.session.commit()
-
-    return make_response({"customer_id": customer_id,
+    
+    return jsonify({"customer_id": customer_id,
                     "video_id": video_id,
                     "videos_checked_out_count": customer.videos_checked_out_count,
-                    "available_inventory": video.available_inventory}, 200)
+                    "available_inventory": video.available_inventory}), 200
 
 
 
 @customers_bp.route("<int:id>/rentals", methods=["GET"])
 def get_customer_rentals(id):
     customer = Customer.query.get(id)
-    
-    print("*** customer ", customer.id)
-    print("*** customer rental", customer.video)
-    # print("***", customer.video[0])
 
     if customer is None:
         return make_response({404: "Not Found"}, 404)
 
     rental_response = []
     for rental in customer.video:
-        
-        print("*** rental id", rental.id)
-        print("*** rental.video_id", rental.video_id)
-        print("*** rental.customer_id", rental.customer_id)
-        print("*** rental due date", rental.due_date)
-
         video = Video.query.get(rental.video_id)
-        print("*** video query ", video)
-        print("*** video.title", video.title)
-        print("*** ", video.release_date)
         
         rental_response.append({"release_date": video.release_date,
                                 "title": video.title,
                                 "due_date": rental.due_date})
-
-        
-        # results = db.session.query(Customer, Video, Rental).join(Customer, Customer.id==rental.customer_id)\
-        #     .join(Video, Video.id==rental.video_id).filter(Customer.id == customer_id).all()
-        # print("*** rental ", results)
-    
-    print("*** rental dict", rental_response)
 
     return jsonify(rental_response), 200
 
@@ -319,31 +267,17 @@ def get_customer_rentals(id):
 def get_video_rentals(id):
     video = Video.query.get(id)
 
-    print("*** video", video.id)
-    print("*** video rental", video.customer)
-
     if video is None:
         return make_response({404: "Not Found"}, 404)
 
     rental_response = []
     for rental in video.customer:
-        print("*** rental id", rental.id)
-        print("*** rental.video_id", rental.video_id)
-        print("*** rental.customer_id", rental.customer_id)
-        print("*** rental due date", rental.due_date)
-
         customer = Customer.query.get(rental.customer_id)
-
-        print("*** customer query ", customer)
-        print("*** customer.title", customer.name)
-        # print("*** ", video.release_date)
 
         rental_response.append({"due_date": rental.due_date,
                                 "name": customer.name,
                                 "phone": customer.phone,
                                 "postal_code": customer.postal_code})
-    
-    print("*** rental dict", rental_response)
 
     return jsonify(rental_response), 200
 
