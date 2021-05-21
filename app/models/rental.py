@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 class Rental(db.Model):
     __tablename__ = 'rentals'
+
     rental_id = db.Column(db.Integer, primary_key=True)
 
     customer_id = db.Column(
@@ -17,7 +18,7 @@ class Rental(db.Model):
 
     due_date = db.Column(
         db.DateTime,
-        default=(datetime.today() + timedelta(days=4)).strftime("%Y-%m-%d")
+        default=(datetime.today() + timedelta(days=7)).strftime("%Y-%m-%d")
     )
 
     def to_json(self):

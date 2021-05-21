@@ -270,10 +270,9 @@ def check_out_video_to_customer():
 
     if not (
             "customer_id" in request_body and
-            "video_id" in request_body
-            # and
-            # is_number(request_body["customer_id"]) and
-            # is_number(request_body["video_id"])
+            "video_id" in request_body and
+            is_number(request_body["customer_id"]) and
+            is_number(request_body["video_id"])
     ):
 
         return make_response({
@@ -319,6 +318,68 @@ def check_out_video_to_customer():
         "customer_id": customer.customer_id,
         "video_id": video.video_id,
         "due_date": rental.due_date,
+        "videos_checked_out_count": customer.videos_checked_out_count,
+        "available_inventory": video.available_inventory
+    }, 200)
+
+
+@rentals_bp.route("/check-in", methods=["POST"])
+def check_in_video_to_customer():
+    """Checks in a video to a customer, and updates the data in the database as such.
+    POST /rentals/check-in
+    """
+
+    request_body = request.get_json()
+
+    if not (
+            "customer_id" in request_body and
+            "video_id" in request_body and
+            is_number(request_body["customer_id"]) and
+            is_number(request_body["video_id"])
+    ):
+
+        return make_response({
+            "errors": [
+                "Bad Request",
+                "'customer_id' is required and should be a number",
+                "'video_id' is required and should be a number"
+            ]
+        }, 400)
+
+    customer = Customer.query.get(request_body["customer_id"])
+    video = Video.query.get(request_body["video_id"])
+
+    if video is None or customer is None:
+        return make_response({
+            "errors": [
+                "Not Found",
+                "Customer does not exist",
+                "Video does not exist"
+            ]
+        }, 404)
+
+    rental = Rental.query.filter_by(
+        customer_id=customer.customer_id,
+        video_id=video.video_id).one_or_none()
+
+    if rental is None:
+        return make_response({
+            "errors": [
+                "Not Found",
+                "The video and customer do not match a current rental"
+            ]
+        }, 400)
+
+    video.available_inventory += 1
+    customer.videos_checked_out_count -= 1
+
+    db.session.delete(rental)
+    db.session.add_all([video, customer])
+    db.session.commit()
+
+    return ({
+        "customer_id": customer.customer_id,
+        "video_id": video.video_id,
         "videos_checked_out_count": customer.videos_checked_out_count,
         "available_inventory": video.available_inventory
     }, 200)
