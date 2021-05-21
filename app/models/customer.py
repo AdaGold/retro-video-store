@@ -16,6 +16,7 @@ class Customer(db.Model):
     postal_code = db.Column(db.Integer)
     phone = db.Column(db.String)
     videos_checked_out_count = db.Column(db.Integer, default=0)
+    children = db.relationship("Rental", back_populates="Customer")
     # Establish many-many relationship with Videos
 
 
