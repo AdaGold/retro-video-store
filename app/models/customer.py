@@ -20,7 +20,7 @@ class Customer(db.Model):
             "postal_code": self.postal_code,
             "phone": self.phone,
             "registered_at": self.registered_at,
-            "videos_checked_out_count": self.videos_checked_out_count
+            "videos_checked_out_count": self.current_videos()
         }
 
     def to_json_with_id(self):
@@ -28,9 +28,11 @@ class Customer(db.Model):
             "id": self.id
         }
 
-
     def is_int(self):
         try:
             return int(self.id)
         except ValueError:
             return False
+
+    def current_videos(self):
+        return len(self.video)

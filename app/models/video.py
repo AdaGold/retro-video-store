@@ -18,7 +18,7 @@ class Video(db.Model):
             "title": self.title,
             "release_date": self.release_date,
             "total_inventory": self.total_inventory,
-            "available_inventory": self.available_inventory 
+            "available_inventory": self.get_available_inventory() 
         }
 
     def is_int(self):
@@ -26,3 +26,6 @@ class Video(db.Model):
             return int(self.id)
         except ValueError:
             return False
+
+    def get_available_inventory(self):
+        return self.total_inventory - len(self.customer)

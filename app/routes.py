@@ -11,12 +11,15 @@ import requests
 import os
 import json
 
+# Creating my blueprints here 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
-@customers_bp.route("", methods = ["POST", "GET"], strict_slashes=False)
+# Wave 1 ==================================================================>
+
 # GET all of the customers. Ability to sort asc or desc by customer name 
+@customers_bp.route("", methods = ["POST", "GET"], strict_slashes=False)
 def handle_customer():
     if request.method == "GET":
         query_param_value = request.args.get("sort")
@@ -82,7 +85,6 @@ def customer_by_id(id):
                 customer.name = request_body["name"]
                 customer.postal_code = request_body["postal_code"]
                 customer.phone = request_body["phone"]
-                # customer.registered_at = request_body["registered_at"]
                 db.session.commit()
                 return customer.to_json(), 200
             else:
@@ -101,7 +103,6 @@ def customer_by_id(id):
 
         else:
             return jsonify(""), 404
-
 
 # GET all videos and ability to sort by asc or desc 
 @videos_bp.route("", methods=["POST", "GET"], strict_slashes=False)
@@ -174,7 +175,6 @@ def video_by_id(id):
         
         return video.to_json(), 200
 
-
 # DELETE video by id 
     elif request.method == "DELETE":
         video = Video.query.get(id)
@@ -188,5 +188,44 @@ def video_by_id(id):
             return jsonify(id=int(id)), 200
 
 
-# # Wave 2 GET rentals from customer 
-# @customers_bp.route("/<id>/rentals", methods=["GET"], strict_slashes=False)
+# Wave 2 ==================================================================>
+
+# GET rentals from customer 
+@customers_bp.route("/<id>/rentals", methods=["GET"], strict_slashes=False)
+
+def create_rental():
+    request_body = request.get_json()
+    video = Video.query.get(request_body["video_id"])
+    customer = Customer.query.get(request_body["customer_id"])
+    if "customer_id" not in request_body.keys() or "video_id" not in request_body.keys():
+        return jsonify(details="Not Found"), 404
+
+    if not customer.is_int(request_body["customer_id"]):
+        return jsonify(details="Bad Request"), 400
+
+    if not video.is_int(request_body["video_id"]):
+        return jsonify(details="Bad Request"), 400
+
+
+    if video is None:
+        return jsonify(details="Not Found"), 404
+    
+    if customer is None:
+        return jsonify(details="Not Found"), 404
+    
+    if video.get_available_inventory() == 0:
+        return jsonify(details="No available inventory"), 400
+    
+    new_rental = Rental(customer_id = request_body["customer_id"],
+                        video_id = request_body["video_id"])
+
+    db.session.add(new_rental)
+    db.session.commit()
+
+    return {
+        "customer_id": customer.id,
+        "video_id": video.id,
+        "due_date": new_rental.due_date,
+        "videos_checked_out_count": customer.current_videos(),
+        "available_inventory": video.get_available_inventory()
+    }, 200

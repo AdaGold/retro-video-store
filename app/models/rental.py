@@ -14,6 +14,12 @@ class Rental(db.Model):
     # create the one to many relationship ----> customer && rental
     # create the one to many relationship ----> Video && rental
 
+    def is_int(self):
+        try:
+            return int(self.id)
+        except ValueError:
+            return False
+
     # def checkout_video(self):
     #         return {
     #             "customer_id": "",
