@@ -27,9 +27,11 @@ def create_app(test_config=None):
     #Models to be migrated
     from app.models.customer import Customer
     from app.models.video import Video
+    from app.models.rental import Rental
     #Importing Blueprints
     from app.routes import customer_bp
     from app.routes import video_bp
+    from app.routes import rental_bp
 
     db.init_app(app)
     migrate.init_app(app, db)
@@ -37,6 +39,8 @@ def create_app(test_config=None):
     #Register the blueprints
     app.register_blueprint(customer_bp)
     app.register_blueprint(video_bp)
+    app.register_blueprint(rental_bp)
+
     return app
 
 

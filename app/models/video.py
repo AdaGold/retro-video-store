@@ -1,17 +1,17 @@
-import re
 from app import db
-
+from app.models.rental import Rental
 
 class Video(db.Model):
     video_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String, nullable=False)
     release_date = db.Column(db.DateTime, nullable=False)
     total_inventory = db.Column(db.Integer, nullable=False)
-    available_inventory = db.Column(db.String, nullable=True)
+    available_inventory = db.Column(db.Integer, nullable=False)
+    #rentals = db.relationship('Rental', backref= 'rentals', lazy=True)
 
     @classmethod
     def create(cls, title, release_date, total_inventory):
-        new_video = Video(title=title, release_date=release_date, total_inventory=total_inventory)
+        new_video = Video(title=title, release_date=release_date, total_inventory=total_inventory, available_inventory=total_inventory)
         db.session.add(new_video)
         db.session.commit()
         return new_video
@@ -35,6 +35,7 @@ class Video(db.Model):
             video.release_date = release_date
         if total_inventory:
             video.total_inventory = total_inventory
+            video.available_inventory = total_inventory
         db.session.commit()
         return video
 

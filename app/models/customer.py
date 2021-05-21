@@ -1,13 +1,15 @@
 from app import db
 from datetime import datetime
+from app.models.rental import Rental
 
 class Customer(db.Model):
     customer_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String, nullable=False)
     postal_code = db.Column(db.String, nullable=False)
     phone = db.Column(db.String, nullable=False)
-    register_at = db.Column(db.DateTime, default=datetime.utcnow)
+    registered_at = db.Column(db.DateTime, default=datetime.utcnow)
     videos_checked_out_count = db.Column(db.Integer, default=0)
+    #rentals = db.relationship('Rental', backref= 'rentals', lazy=True)
 
     @classmethod
     def create(cls, name, postal_code, phone):
@@ -49,8 +51,9 @@ class Customer(db.Model):
         return {
             "id": self.customer_id,
             "name": self.name,
-            "register_at": self.register_at.strftime(format_string),
+            "registered_at": self.registered_at.strftime(format_string),
             "postal_code": self.postal_code,
+            "phone": self.phone,
             "videos_checked_out_count": self.videos_checked_out_count
         }
         
