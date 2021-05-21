@@ -14,12 +14,14 @@ class Video(db.Model):
     customers=relationship("Customer", secondary="rental")
     
     def available_inventory(self):
-        #decreases available inventory by one for check-out
+        #decreases by one
         return self.total_inventory-len(self.customers)
+
+
 
     def check_in_inventory(self):
         #increases available inventory by one for check
-        return self.total_inventory+len(self.customers)
+        return self.total_inventory
 
     def video_json(self):
         return {

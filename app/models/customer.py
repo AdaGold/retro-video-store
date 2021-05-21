@@ -10,7 +10,7 @@ class Customer(db.Model):
     postal_code=db.Column(db.String)
     phone=db.Column(db.String) 
     registered_at=db.Column(db.DateTime, nullable=True, default=None)
-    
+    #videos_checked_out_count=db.Column(db.Integer,default=0)
     #join_clause=db.relationship("Video",secondary=Rental, backref=db.backref('subscribers'), lazy='dynamic')
     #should increase by one, when rental checked out
     #videos_checked_out_count=db.Column(db.Integer) 
@@ -23,11 +23,11 @@ class Customer(db.Model):
     #         return 0
 
     def videos_checked_out_count(self):
-        #increases customer's video checked out count for check out
+        #increases customer's video checked out count by 1 for check out
         return len(self.videos)
 
     def check_in_video_count(self):
-        return len(self.videos)+1
+        return len(self.videos)-1
 
     def customer_json(self):
         return {

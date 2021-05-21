@@ -166,13 +166,14 @@ def delete_video(id):
 def check_out():
     request_body=request.get_json()
     #rental_id and customer_id in request body, if not 404
-
-
+    if type(request_body["video_id"])!=int:
+        return make_response({"error":"Bad Request"},400)
+    
     #once we retreive rental and customer id, query these in customer table, filter and checkout
 
     #Checking to see if video and customer exist
-    if Rental.video is None or Rental.customer is None:
-        return make_response(404)
+    # if Rental.video is None or Rental.customer is None:
+    #     return make_response(404)
     #Checking to see if request body has both keys
     elif all(keys in request_body for keys in ("customer_id","video_id")) == False:
         return make_response({"error":"Bad Request"},400)
@@ -181,9 +182,12 @@ def check_out():
     
     if video==0:
         return make_response({"error":"Bad Request"},400)
+    
     #if all conditions are met, we return the rental status
     else:
         new_rental = Rental(customer_id=request_body["customer_id"], video_id=request_body["video_id"])
+        # new_rental.customer.videos_checked_out_count+=1
+        # new_rental.video.available_inventory-=1
         db.session.add(new_rental)
         db.session.commit()
 
@@ -197,22 +201,36 @@ def check_out():
 def check_in():
     # #drop due date
     # #need to return 400 if video and customer do not match rental
-
+    #check for customer id and video id in request body
     request_body=request.get_json()
-    if Rental.video is None or Rental.customer is None:
-        return make_response(404)
+    if type(request_body["video_id"])!=int:
+        return make_response({"error":"Bad Request"},400)
     else:
+        #check if the customer with the customer id is in my customer table
+        #check if the video with the video id is in my video table
+        #return Error
+        #else- retreive rental record from rental table, and return
+        #retrieve: query and filter by (new_rental)
+        #update available inventory
+        #update video checked out count
+        #
+        #retrieve rental records from db, and delete rental db.session.delete(rental record)
+        #add changes to tables db.session.add_all(list of objects need to change[video,customer]) and for video
+        #db.session.commit() to commit all changes
+        #applies to all changes in my database(only need to do it once)
         new_rental = Rental(customer_id=request_body["customer_id"], video_id=request_body["video_id"])
         db.session.add(new_rental)
         db.session.commit()
 
-        #rental=Rental.query.get(new_rental.id)
         current_rental=new_rental.rental_check_in()
-        if Rental.customer_id != current_rental["customer_id"] and Rental.video_id != current_rental["video_id"]:
-            return make_response({"error":"Bad Request"},400)
+        #if current_rental["video_id"] not in  
+
+
+        # if Rental.customer_id != current_rental["customer_id"] and Rental.video_id != current_rental["video_id"]:
+        #     return make_response({"error":"Bad Request"},400)
         
-        else:
-            return current_rental
+        # else:
+        return current_rental
     
 
 
@@ -232,9 +250,16 @@ def current_rental_customers(video_id):
 
 @customer_bp.route("/<customer_id>/rentals",methods=["GET"])
 def current_rental_customers_by_customer(customer_id):
-    rental_query=request.args.get(customer_id)
+    #whenever we want to grab information from the table, we use class name
+    #check if customer id in database, Customer.query.get, if there is not customer in the db, return 404 error
+    #go to rental model, take records where customer id is equal to customer id i am working with now
+    # rentals=Rental.query.filter_by(customer_id=customer_id) #going to customer_id column in Rental Table
+    #this returns a list of objects, loop through the list of objects, create an empty list, append(get_rentals_by_customers())
+    rental_query=request.args.get(customer_id) #dont need request.args
     if rental_query:
-        rentals=Rental.query.filter_by(rental=rental_query)
+        rentals=Rental.query.filter_by(customer_id=customer_id)
+
+        #rentals=Rental.query.filter_by(rental=rental_query)
     else:
         rentals=Rental.query.all()
     rentals_response=[]

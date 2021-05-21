@@ -11,8 +11,9 @@ class Rental(db.Model):
     customer_id=db.Column(db.Integer,db.ForeignKey('customer.id'),primary_key=True)
     video_id=db.Column(db.Integer,db.ForeignKey('video.id'),primary_key=True)
     
-    
-    due_date= db.Column(db.DateTime(), nullable=True, default=(datetime.now() + timedelta(days=7)))
+    #datetime.today()
+    #default=(datetime.today() + timedelta(days=7)).strftime("%Y-%m-%d")
+    due_date= db.Column(db.DateTime(), nullable=True, default=(datetime.today() + timedelta(days=7)))
     # available_inventory=db.Column(db.Integer,default=Video.total_inventory)
     # videos_checked_out_count=db.Column(db.Integer,default=0)
     customer = relationship(Customer,backref=backref("rental",cascade=None))
@@ -27,8 +28,8 @@ class Rental(db.Model):
             "customer_id": self.customer_id,
             "video_id": self.video_id,
             "due_date": self.due_date,
-            "videos_checked_out_count": self.customer.videos_checked_out_count(),
-            "available_inventory": self.video.available_inventory()
+            "videos_checked_out_count": self.customer.videos_checked_out_count(),#increment
+            "available_inventory": self.video.available_inventory() #decrease this one
         }
         #     "videos_checked_out_count": self.find_number_of_checked_out_videos(),
         #     "available_inventory": self.find_available_inventory()
@@ -38,8 +39,8 @@ class Rental(db.Model):
         return {
             "customer_id": self.customer_id,
             "video_id": self.video_id,
-            "videos_checked_out_count": self.customer.check_in_video_count(),
-            "available_inventory": self.video.check_in_inventory()
+            "videos_checked_out_count": self.customer.check_in_video_count(),#decrease by one
+            "available_inventory": self.video.check_in_inventory() #increase by one
 
         }
 
@@ -54,7 +55,7 @@ class Rental(db.Model):
     def get_rentals_by_customers(self):
         return {
             "due_date": self.due_date,
-            "title": self.customer.name,
-            "release_date": self.customer.phone
+            "title": self.video.title,
+            "release_date": self.video.release_date
             
         }
