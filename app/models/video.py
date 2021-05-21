@@ -1,6 +1,7 @@
 from app import db
 from flask import current_app
 from sqlalchemy import DateTime
+from sqlalchemy.orm import relationship, backref
 
 
 class Video(db.Model):
@@ -11,11 +12,10 @@ class Video(db.Model):
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
 
-    customers = db.relationship(
-        'Customer', secondary='rentals', back_populates='videos')
+    # customers = db.relationship(
+    #     'Customer', secondary='rentals', back_populates='videos')
 
-    # # 'Task' looks at class in python and loads multiple of those (this is like a pseudo column)
-    # tasks = db.relationship('Task', backref='goal', lazy=True)
+    rentals = db.relationship('Rental', backref='rental', lazy=True)
 
     def to_dict(self):
         return {

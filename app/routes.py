@@ -5,17 +5,20 @@ from flask import request, Blueprint, make_response, jsonify
 import requests
 import os
 from app.models.video import Video
+from app.models.rental import Rental
 
 
 videos_bp = Blueprint(
     "videos", __name__, url_prefix="/videos")
 customers_bp = Blueprint(
     "customers", __name__, url_prefix="/customers")
-
+rentals_bp = Blueprint(
+    "rentals", __name__, url_prefix="/rentals")
 
 # ---------------------------
 # WAVE 1 - CUSTOMER ENDPOINTS
 # ---------------------------
+
 
 @customers_bp.route("", methods=["GET"], strict_slashes=False)
 def customer_index():
@@ -63,7 +66,7 @@ def update_customer(customer_id):
         db.session.commit()
         return jsonify(customer.to_json()), 200
         # JSON DICTIONARY !why dis only one
-    return make_response({"error": "Bad Request"}, 400)
+    return make_response({"details": "Bad Request"}, 400)
 
 
 @customers_bp.route("/<customer_id>", methods=["DELETE"], strict_slashes=False)
@@ -139,3 +142,35 @@ def delete_video(video_id):
     # return jsonify(video.to_dict()), 200
     # video_response = {"id": video.video_id}
     return jsonify({"id": video.video_id}), 200
+
+
+# -------------------
+
+# @rentals_bp.route("rentals/check-out", methods=["POST"], strict_slashes=False)
+def checking_out():
+    request_body = request.get_json()
+    video = Video.query.get(request_body["video_id"])
+    if video.available_inventory < 1:
+        return make_response({"details": "This video doesn't have any available inventory currently"}, 400)
+    elif "customer_id" in request_body and "video_id" in request_body:
+        date = Rental.date_due()
+        new_rental = Rental(
+            customer_id=request_body["customer_id"],
+            video_id=request_body["video_id"],
+            due_date=date
+        )
+        db.session.add(new_rental)
+        # int
+        customer = Customer.query.get(request_body["customer_id"])
+        # video = Video.query.get(request_body["video_id"])
+        customer.videos_checked_out_count += 1
+        video.available_inventory -= 1
+        db.session.commit()
+        return jsonify({
+            "customer_id": customer.customer_id,
+            "video_id": video.video_id,
+            "due_date": date,
+            "videos_checked_out_count": customer.videos_checked_out_count,
+            "available_inventory": video.available_inventory
+        })
+    return make_response({"details": "The customer or video does not exist"}, 404)

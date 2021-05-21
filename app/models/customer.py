@@ -1,6 +1,7 @@
 from app import db
 from flask import current_app
 from sqlalchemy import DateTime
+from sqlalchemy.orm import relationship, backref
 
 
 class Customer(db.Model):
@@ -9,11 +10,13 @@ class Customer(db.Model):
     name = db.Column(db.String)
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
-    registered_at = db.Column(db.DateTime)
-    videos_checked_out_count = db.Column(db.Integer, default=0, nullable=True)
+    registered_at = db.Column(db.DateTime, nullable=True)
+    videos_checked_out_count = db.Column(db.Integer, default=0)
 
-    videos = db.relationship(
-        'Video', secondary='rentals', back_populates='customers')
+    # videos = db.relationship(
+    #     'Video', secondary='rentals', back_populates='customers')
+
+    rentals = db.relationship('Rental', backref='rental', lazy=True)
 
     # lowercase 'goal.id' looks at a table in your db
     # goal_id = db.Column(db.Integer, db.ForeignKey(
