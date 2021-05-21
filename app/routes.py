@@ -238,5 +238,5 @@ def get_customers_of_video(video_id):
             "due_date": rental.due_date,
             "name": customer.name,
             "phone": customer.phone,
-            "postal_code": customer.postal_code})
+            "postal_code": int(customer.postal_code)})
     return jsonify(list_of_customers), 200
