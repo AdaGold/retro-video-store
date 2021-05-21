@@ -301,39 +301,39 @@ def checkin_video():
 @customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
 
 def get_customer_rental(customer_id):
+
     # Find the customer with the given id
     customer = Customer.query.get(customer_id)
 
     if customer is None:
         return make_response("", 404)
 
-    if customer.videos_checked_out_count == 0:
-        return []
-
-    return customer.to_dict()
+    customer_rental= []
+    for rental in customer.rentals:
+        video = Video.query.get(rental.video_id)
+        customer_rental.append({"release_date" : video.release_date,
+                            "title" : video.title,
+                            "due_date" : rental.due_date
+                            })
+    return jsonify(customer_rental), 200
 
 ### List the customers who currently have the video checked out ###
 
-@videos_bp.route("/<video_id>/rental", methods=["GET"], strict_slashes=False)
+@videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
 
 def list_customers(video_id):
     # Find the video with the given id
     video = Video.query.get(video_id)
 
     if video is None:
-        return make_response("Video does not exist", 404)
+        return make_response("", 404)
     
-    # when the video is not checked out to any customers
-    if video.total_inventory == available_inventory:
-        return []
-    
-        # results = db.session.query(Foo, Bar, FooBarJoin).join(Foo, Foo.id==FooBarJoin.foo_id)\
-        #     .join(Bar, Bar.id==FooBarJoin.bar_id).filter(Foo.id == X).all()
-
-        # rentals = db.session.query(Rental)\
-        # .join(Video, Video.video_id==Rental.video_id)\
-        # .join(Customer, Customer.customer_id==Rental.customer_id)\
-        # .filter(Video.video_id==video_id).all()
-
-    return video.to_dict(), 200
-
+    video_rental = []
+    for rental in video.video_rentals:
+        customer = Customer.query.get(rental.customer_id)
+        video_rental.append({"name" : customer.name,
+                            "phone" : customer.phone,
+                            "postal_code" : customer.postal_code,
+                            "due_date" : rental.due_date
+                            })
+    return jsonify(video_rental), 200 
