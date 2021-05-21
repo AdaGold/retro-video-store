@@ -196,22 +196,28 @@ def check_out_video():
 
 @rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
 def check_in_video():
+    #query only the rental that matches customer and video id?
     rentals = Rental.query.all()
     request_body = request.get_json()
     customer_id = request_body["customer_id"]
     video_id = request_body["video_id"]
-    customer = Customer.query.get(customer_id)
-    video = Video.query.get(video_id)
-    for rental in customer.videos:
-        if rental.video_id == int(video_id):
-            customer.videos_checked_out_count -= 1
-            video.available_inventory += 1
+    for rental in rentals:
+        if rental.due_date and rental.customer_id == customer_id and rental.video_id == video_id:
+            rental.customer.videos_checked_out_count -= 1
+            rental.video.available_inventory += 1
+            rental.due_date = None
             db.session.delete(rental)
             db.session.commit()
             return jsonify({
                     "customer_id": customer_id,
                     "video_id": video_id,
-                    "videos_checked_out_count": customer.videos_checked_out_count,
-                    "available_inventory": video.available_inventory
-                    })
+                    "videos_checked_out_count": rental.customer.videos_checked_out_count,
+                    "available_inventory": rental.video.available_inventory
+                    }), 200
     return invalid_input()
+
+@rentals_bp.route("/overdue", methods=["GET"], strict_slashes=False)
+def overdue_rentals_index():
+    rentals = Rental.query.all()
+    overdue_rentals = [rental.to_json() for rental in rentals if rental.due_date < datetime.now()]
+    return jsonify(overdue_rentals), 200

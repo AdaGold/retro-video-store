@@ -1,8 +1,8 @@
-"""updates rentals model
+"""updates migrations
 
-Revision ID: 5f174cd00902
+Revision ID: ed61ce7ae811
 Revises: 
-Create Date: 2021-05-19 22:50:25.408114
+Create Date: 2021-05-21 10:27:23.844085
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '5f174cd00902'
+revision = 'ed61ce7ae811'
 down_revision = None
 branch_labels = None
 depends_on = None

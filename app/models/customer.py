@@ -8,6 +8,7 @@ class Customer(db.Model):
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime)
+    #set videos_checked_out_count equal to len(videos)??
     videos_checked_out_count = db.Column(db.Integer)
     videos = db.relationship("Rental", back_populates="customer")
     __tablename__ = "customers"
