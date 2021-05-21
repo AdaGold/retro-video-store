@@ -55,14 +55,16 @@ def one_video(app):
 
 
 @pytest.fixture
-def three_videos(app):
+def four_videos(app):
     db.session.add_all([
         Video(
             title="Batman Begins", release_date=datetime.now(), total_inventory=5, available_inventory=5),
         Video(
             title="The Dark Knight", release_date=datetime.now(), total_inventory=3, available_inventory=3),
         Video(
-            title="The Dark Knight Rises", release_date=datetime.now(), total_inventory=7, available_inventory=7)
+            title="The Dark Knight Rises", release_date=datetime.now(), total_inventory=7, available_inventory=7),
+        Video(
+            title="Cartoon Batman", release_date=datetime.now(), total_inventory=4, available_inventory=4)
     ])
     db.session.commit()
 
@@ -76,13 +78,30 @@ def one_rental(app, one_customer, one_video):
     db.session.add(new_rental)
     db.session.commit()
 
+# @pytest.fixture
+# def three_rentals(app, three_customers, four_videos):
+#     for i in range(1, 4):
+#         customer = Customer.query.get(i)
+#         video = Video.query.get(i)
+#         new_rental = Rental(customer_id=customer.id, video_id=video.id, due_date=datetime(2021, (7-i), 20, 17, 30, 29))
+#         customer.videos_checked_out_count += 1
+#         video.available_inventory -= 1
+#         db.session.add(new_rental)
+#         db.session.commit()
+
 @pytest.fixture
-def three_rentals(app, three_customers, three_videos):
-    for i in range(1, 4):
-        customer = Customer.query.get(i)
+def six_rentals(app, three_customers, four_videos):
+    customers = Customer.query.all()
+    i = 1
+    for customer in customers:
         video = Video.query.get(i)
+        video2 = Video.query.get(i+1)
         new_rental = Rental(customer_id=customer.id, video_id=video.id, due_date=datetime(2021, (7-i), 20, 17, 30, 29))
-        customer.videos_checked_out_count += 1
+        new_rental2 = Rental(customer_id=customer.id, video_id=video2.id, due_date=datetime(2021, (8-i), 15, 17, 30, 29))
+        customer.videos_checked_out_count += 2
         video.available_inventory -= 1
+        video2.available_inventory -=1
         db.session.add(new_rental)
+        db.session.add(new_rental2)
         db.session.commit()
+        i += 1

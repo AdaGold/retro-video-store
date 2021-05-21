@@ -1,6 +1,7 @@
 from flask import current_app
 from app import db
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime, timedelta
 
 class Rental(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -19,3 +20,15 @@ class Rental(db.Model):
             "videos_checked_out_count": self.customer.videos_checked_out_count,
             "available_inventory": self.video.available_inventory
             }
+    
+    def video_history_to_json(self):
+        return {
+            "customer_id": self.customer_id,
+            "name": self.customer.name,
+            "postal_code": self.customer.postal_code,
+            "checkout_date": (self.due_date - timedelta(7)),
+            "due_date": self.due_date
+        }
+    
+    def customer_history_to_json(self):
+        pass

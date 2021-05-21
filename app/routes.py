@@ -216,8 +216,22 @@ def check_in_video():
                     }), 200
     return invalid_input()
 
+
+#---------------------# OPTIONAL ENDPOINTS #---------------------#
+
 @rentals_bp.route("/overdue", methods=["GET"], strict_slashes=False)
 def overdue_rentals_index():
     rentals = Rental.query.all()
     overdue_rentals = [rental.to_json() for rental in rentals if rental.due_date < datetime.now()]
     return jsonify(overdue_rentals), 200
+
+@videos_bp.route("/<video_id>/history", methods=["GET"], strict_slashes=False)
+@video_not_found
+def video_history(video_id):
+    video = Video.query.get(video_id)
+    rentals = video.customers
+    video_history = []
+    for rental in rentals:
+        if rental.due_date < datetime.now():
+            video_history.append(rental.video_history_to_json())
+    return jsonify(video_history), 200
