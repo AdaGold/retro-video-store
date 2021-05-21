@@ -12,6 +12,7 @@ class Rental(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey('customers.customer_id'), nullable=True)
     video_id = db.Column(db.Integer, db.ForeignKey('videos.video_id'), nullable=True)
     due_date = db.Column(db.DateTime, default=datetime.utcnow() + timedelta(days=7))
+
     # backref for customer & video only needed if back_populate is being used
     # customer = db.relationship('Customer', backref='customer', lazy=True)
     # video = db.relationship('Video', backref='video', lazy=True)

@@ -26,11 +26,11 @@ def is_int(value):
 @customers_bp.route("", methods=["POST"], strict_slashes=False)
 def create_customer():
     try:
-        request_body = request.get_json()
+        customer_data = request.get_json()
 
-        new_customer = Customer(name=request_body["name"],
-                                postal_code=request_body["postal_code"],
-                                phone=request_body["phone"],
+        new_customer = Customer(name=customer_data["name"],
+                                postal_code=customer_data["postal_code"],
+                                phone=customer_data["phone"],
                                 registered_at=datetime.now())
         db.session.add(new_customer)
         db.session.commit()
@@ -199,20 +199,28 @@ def delete_video(video_id):
             "id": video.video_id
         }), 200
 
-# Wave 2 routes
-@rentals_bp.route("", methods=["GET"], strict_slashes=False)
-def get_rental():
-    # customer_name_from_url = request.args.get("name")
-    # # get customer by name
-    # if customer_name_from_url:
-    #     customers = Customer.query.filter.by(name=customer_name_from_url)
-    # # get all customers
-    # else:
-    rentals = Rental.query.all()
+# # Wave 2 routes (rental)
+# @rentals_bp.route("/check-out", methods=["POST"], strict_slashes=False)
+# def checkout_rental():
+#     rental_data = request.get_json()
+#     # check video inventory
+#     video = Video.query.get(rental_data["video_id"])
+#     if video.available_inventory == 0:
+#         return make_response({"details": "There are no available copies of this video currently"}, 400)
+#     elif "customer_id" in rental_data and "video_id" in rental_data:
+#         new_rental = Rental(customer_id = rental_data["customer_id"],
+#                             video_id = rental_data["video_id"],
+#                             due_date = rental_data["due_date"])
+#         db.session.add(new_rental)
+        
+#         customer = Customer.query.get(rental_data["customer_id"])
+#         # increment customer video_checked_out_count
+#         customer.videos_checked_out_count += 1
+#         # decrease available video inventory
+#         video.available_inventory -= 1
+#         # commit changes
+#         db.session.commit()
+        
+#         return jsonify(new_rental.to_json), 201
     
-    rentals_response = []
-
-    for rental in rentals:
-        rentals_response.append(rental.to_json())
-    
-    return jsonify(rentals_response), 200
+#     return make_response({"details": "Invalid data"}, 404)

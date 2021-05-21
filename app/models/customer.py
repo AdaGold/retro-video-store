@@ -13,7 +13,8 @@ class Customer(db.Model):
     postal_code = db.Column(db.String)
     registered_at = db.Column(db.DateTime, default=datetime.utcnow())
     videos_checked_out_count = db.Column(db.Integer, default=0)
-    rentals = db.relationship('Rental', backref='rental', lazy=True)
+    videos = db.relationship('Video', back_populates='customers', secondary='rentals')
+    # rentals = db.relationship('Rental', backref='rental', lazy=True)
 
     def to_json(self):
         return {
@@ -24,7 +25,3 @@ class Customer(db.Model):
             "registered_at": self.registered_at,
             "videos_checked_out_count": self.videos_checked_out_count
         }
-
-    def increase_checkout_count(self):
-        self.videos_checked_out_count += 1
-        db.session.commit()
