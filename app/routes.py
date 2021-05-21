@@ -202,3 +202,35 @@ def checking_in():
     if video is None or customer is None:
         return make_response({"details": "The customer or video does not exist"}, 404)
     return make_response({"details": "Invalid required request body parameters"}, 400)
+
+
+@customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
+def get_videos_of_customer(customer_id):
+    customer = Customer.query.get(customer_id)
+    if customer is None:
+        return make_response("Customer does not exist", 404)
+    else:
+        rental = Rental.query.filter_by(customer_id).one_or_none()
+        rentals_response = [(rental.to_dict()) for rental in rental]
+        return rentals_response
+
+
+# @goals_bp.route("/<goal_id>/tasks", methods=["GET"], strict_slashes=False)
+# def getting_tasks_of_one_goal(goal_id):
+#     goal = Goal.query.get(goal_id)
+#     if goal is None:
+#         return make_response("", 404)
+#     tasks = Task.query.join(Goal).filter(Task.goal_id == goal_id).all()
+#     # tasks_response = []
+#     tasks_response = [(task.with_goal()) for task in tasks]
+#     return{"id": goal.goal_id, "title": goal.title, "tasks": tasks_response}, 200
+
+@videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
+def get_customers_of_video(video_id):
+    customer = Customer.query.get(customer_id)
+    if customer is None:
+        return make_response("Customer does not exist", 404)
+    else:
+        rental = Rental.query.filter_by(customer_id).one_or_none()
+        rentals_response = [(rental.to_dict()) for rental in rental]
+        return rentals_response
