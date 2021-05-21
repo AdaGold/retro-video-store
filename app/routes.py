@@ -19,16 +19,17 @@ def bad_request(text):
     return ({"errors":[text]}, 400)
 
 def customer_not_found(customer_id):
-    return ({"errors":["Not Found"]}, 404)
+    return ({"errors":[f"Customer {customer_id} not Found"]}, 404)
 
 
 @customers_bp.route("", methods=["GET"])
 def get_customers_details():
-    #optinonal part sort ascending by id
-    query_sort = request.args.get("sort") 
-    if query_sort == "asc":
-        customers = Customer.query.order_by(Customer.id.asc()).all() 
-    #optional part ends
+    # # sudo code for optional enhancements
+    # query_sort = request.args.get("sort") 
+    # if query_sort == "name":
+    #     query = Customer.query.order_by(Customer.name.asc())
+    # pagination = query.paginate(page, per_page=10, error_out=True,)
+    # # # # optional part ends
     customers = Customer.query.all()
     customers_details = []
     for customer in customers:
@@ -99,7 +100,7 @@ def delete_customer(customer_id):
 
 
 def no_video_found(video_id):
-    return ({"errors":["Not Found"]}, 404)
+    return ({"errors":[f"Video {video_id} not Found"]}, 404)
 
 
 @videos_bp.route("", methods=["GET"])
