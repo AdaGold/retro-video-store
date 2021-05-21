@@ -177,6 +177,7 @@
         "title": "Blacksmith Of The Banished",
         "release_date": "1979-01-18",
         "total_inventory": 10,
+**❗️ The README says to include this key-value pair, but doing so will cause the Postman Tests to fail**
         "available_inventory": 9
         }
 
@@ -226,6 +227,7 @@
         "title": "Blacksmith Of The Banished",
         "release_date": "1979-01-18",
         "total_inventory": 10,
+**❗️ The README says to include this key-value pair, but doing so will cause the Postman Tests to fail**
         "available_inventory": 9
         }
 

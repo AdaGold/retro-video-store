@@ -3,6 +3,7 @@ https://docs.sqlalchemy.org/en/14/orm/basic_relationships.html
 
 
 Creating Many-To-Many Relationships in Flask-SQLAlchemy:
+Uses an association table rather a model
 https://www.youtube.com/watch?v=OvhoYbjtiKc
 
 
@@ -10,16 +11,12 @@ Python doc: datetime — Basic date and time types
 Scroll to classmethod datetime.now(tz=None)
 https://docs.python.org/3/library/datetime.html
 
-    classmethod datetime.now(tz=None)
-    Return the current local date and time.
-
-    If optional argument tz is None or not specified, this is like today(), but, if possible, supplies more precision than can be gotten from going through a time.time() timestamp (for example, this may be possible on platforms supplying the C gettimeofday() function).
-
-    If tz is not None, it must be an **instance of a tzinfo subclass**, and the current date and time are converted to tz’s time zone.
-
-    This function is preferred over today() and utcnow().
-
+Flask / SQLAlchemy: Declaring Models
+https://flask-sqlalchemy.palletsprojects.com/en/2.x/models/#declaring-models
 
 
 Many to many relationships in SQLAlchemy models (Flask)
 https://www.michaelcho.me/article/many-to-many-relationships-in-sqlalchemy-models-flask
+
+Idea for how to write a get_or_404() - esque helper function:
+https://stackoverflow.com/questions/53042728/flask-get-or-404-like-function-but-with-another-status-code

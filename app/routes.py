@@ -148,6 +148,10 @@ def get_single_video(video_id):
 
     # ❗️ Find out if get_or_404 has an optional parameter for a custom error message
     saved_video = Video.query.get_or_404(video_id)
+    # saved_video = Video.query.get(video_id)
+    # if not saved_video:
+    #     return make_response({ "details": "Invalid data"
+    #     }, 404)
 
     return make_response(saved_video.convert_to_json(), 200)
 
@@ -180,7 +184,12 @@ def update_customer(video_id):
 
     valid_id_or_400(video_id)
 
+    # ❗️ Find out if get_or_404 has an optional parameter for a custom error message
     saved_video = Video.query.get_or_404(video_id)
+    # saved_video = Video.query.get(video_id)
+    # if not saved_video:
+    #     return make_response({ "details": "Invalid data"
+    #     }, 404)
 
     request_body = request.get_json()
 
@@ -189,9 +198,10 @@ def update_customer(video_id):
         return make_response({ "details": "Invalid data"
         }, 400)
 
-    saved_video.name = request_body["title"]
-    saved_video.postal_code = request_body["release_date"]
-    saved_video.phone = request_body["total_inventory"]
+    saved_video.title = request_body["title"]
+    saved_video.release_date = request_body["release_date"]
+    saved_video.total_inventory = request_body["total_inventory"]
+
 
     db.session.commit()
 
