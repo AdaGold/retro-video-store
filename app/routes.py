@@ -1,3 +1,4 @@
+from sqlalchemy.orm.base import instance_dict
 from app import db
 from app.models.customer import Customer
 from app.models.video import Video
@@ -84,6 +85,7 @@ def post_videos():
         video = Video(title=request_body["title"],
                 release_date=request_body["release_date"],
                 total_inventory=request_body["total_inventory"],
+                available_inventory=request_body["total_inventory"]
                     )
         db.session.add(video)
         db.session.commit()
@@ -137,81 +139,85 @@ def delete_video(id):
         }
     ), 200
 
-@rentals_bp.route("<rental_id>/check_out", methods=["POST"])
-def post_rentals_out(rental_id):
-    request_body = request.get_json(rental_id)
-    if "customer_id" in request_body.keys() and "video_id" in request_body.keys():
-        rental = Rental(customer_id=request_body["customer_id"],
-                    video_id=request_body["video_id"], 
-                    due_date= date.today() + timedelta(7)
-                    )           
-   
-        customer = request_body("customer_id")
-        video = request_body("video_id")
+@rentals_bp.route("/check-out", methods=["POST"])
+def post_rentals_out():
+    request_body = request.get_json()
+    if "customer_id" in request_body and "video_id" in request_body:
 
+        if not isinstance(request_body["customer_id"], int):
+            return {"details": "Invalid data"}, 400
 
-        db.session.add(rental)
-        db.session.commit()
+        if not isinstance(request_body["video_id"], int):
+            return {"details": "Invalid data"}, 400
+
+        customer = Customer.query.get(request_body["customer_id"])
+        video = Video.query.get(request_body["video_id"])
+
+        if customer is None or video is None:
+            return {"details": "Not found"}, 404 
 
         if video.available_inventory == 0:
-            return make_response(
-                {"details": "Invalid data"
-                }
-                ), 400        
+            return {"details": "Invalid data"}, 400
 
-        else:
-            customer.videos_checked_out_count += 1
-            video.available_inventory -= 1
-            
-            return jsonify({
-            "customer_id": customer.id,
-            "video_id": video.id,
-            "due_date": video.due_date,
-            "videos_checked_out_count": customer.videos_checked_out_count,
-            "available_inventory": video.available_inventory
-                }), 200 
+        rental = Rental(customer_id=customer.id,
+                    video_id=video.id, 
+                    due_date=date.today() + timedelta(7)
+                    )                
+
+        customer.videos_checked_out_count += 1
+        video.available_inventory -= 1
+        
+        db.session.add_all([rental, video, customer])
+        db.session.commit()
+
+        return {
+        "customer_id": customer.id,
+        "video_id": video.id,
+        "due_date": video.rental.due_date,
+        "videos_checked_out_count": customer.videos_checked_out_count,
+        "available_inventory": video.available_inventory
+            }, 200 
 
     else:
-        return make_response(
-            {"details": "Not found"
-            }
-            ), 404 
+        return {"details": "Not found"}, 404 
 
-@rentals_bp.route("<rental_id>/check_in", methods=["POST"])
-def post_rentals_in(rental_id):
-    request_body = request.get_json(rental_id)
-    if "customer_id" in request_body.keys() and "video_id" in request_body.keys():
-        rental = Rental(customer_id=request_body["customer_id"],
-                    video_id=request_body["video_id"]
-                    )           
-        customer = request_body("customer_id")
-        video = request_body("video_id")
+@rentals_bp.route("/check-in", methods=["POST"])
+def post_rentals_in():
+    request_body = request.get_json()
+    if "customer_id" in request_body and "video_id" in request_body:
+        rental = Rental.query.filter_by(video_id=request_body["video_id"], customer_id=request_body["customer_id"]).one_or_none()
+        # rental = Rental(customer_id=request_body["customer_id"],
+        #             video_id=request_body["video_id"]
+        #             )         
+        if rental is None:
+            return {"details": "Not Found"}, 400
+                    
+        customer = Customer.query.get(request_body["customer_id"])
+        video = Video.query.get(request_body["video_id"])
 
-        db.session.add(rental)
-        db.session.commit()
+        if customer is None or video is None:
+            return {"details": "Not Found"}, 400        
 
         if video.available_inventory == 0:
-            return make_response(
-                {"details": "Bad request"
-                }
-                ), 400        
+            return {"details": "Bad request"}, 400        
 
         else:
             customer.videos_checked_out_count -= 1
             video.available_inventory += 1
-            
-            return jsonify({
+
+            db.session.add_all([video, customer])
+            db.session.delete(rental)
+            db.session.commit()
+
+            return {
             "customer_id": customer.id,
             "video_id": video.id,
             "videos_checked_out_count": customer.videos_checked_out_count,
             "available_inventory": video.available_inventory
-                }), 200 
+                }, 200 
 
     else:
-        return make_response(
-            {"details": "Not found"
-            }
-            ), 404 
+        return {"details": "Not found"}, 404 
     
 @customers_bp.route("<customer_id>/rentals", methods=["GET"])
 def get_customer_rentals(customer_id):
@@ -224,14 +230,15 @@ def get_customer_rentals(customer_id):
         response_body.append({
             "release_date": video.release_date,
             "title": video.title,
-            "due_date": video.due_date,
+            "due_date": video.rental.due_date
         })
 
     return jsonify(response_body), 200
 
 @videos_bp.route("<video_id>/rentals", methods=["GET"])
 def get_video_rentals(video_id):
-    video = Video.query.get(id)
+    video = Video.query.get(video_id)
+
     if video is None:
         return make_response(jsonify(None), 404)
     
@@ -245,100 +252,3 @@ def get_video_rentals(video_id):
         })
 
     return jsonify(response_body), 200
-
-
-
-# @tasks_bp.route("/<task_id>/mark_complete", methods=["PATCH"])
-# def mark_complete(task_id):
-#     task = Task.query.get(task_id)
-#     if task is None:
-#         return Response(None),404
-#     task.completed_at = datetime.now()
-#     db.session.commit()
-#     slack_bot_complete(task.title)
-#     return jsonify({"task": task.api_response()}), 200   #removed "true" as argument
-
-# @tasks_bp.route("/<task_id>/mark_incomplete", methods=["PATCH"])
-# def mark_incomplete(task_id):
-#     task = Task.query.get(task_id)
-#     if task is None:
-#         return Response(None),404
-#     task.completed_at = None
-#     db.session.commit()
-#     return jsonify({"task": task.api_response()}), 200    
-
-
-
-#
-
-# @goals_bp.route("", methods=["GET"])
-# def get_goals():
-#     goals = Goal.query.all()
-#     goals_response = [goal.api_response() for goal in goals]
-#     return jsonify(goals_response), 200
-
-# @goals_bp.route("/<goal_id>", methods=["GET"])
-# def get_goal(goal_id):
-#     goal = Goal.query.get(goal_id)
-#     if goal is None:
-#         return make_response(jsonify(None), 404)
-#     return jsonify({"goal": goal.api_response()}), 200    
-
-# @goals_bp.route("/<goal_id>", methods=["PUT"])
-# def put_goal(goal_id):
-#     goal = Goal.query.get(goal_id)
-#     if goal is None:
-#         return Response(None),404
-#     form_data = request.get_json()
-#     goal.title = form_data["title"]
-#     db.session.commit()
-#     return jsonify({"goal": goal.api_response()}), 200 
-
-# @goals_bp.route("/<goal_id>", methods=["DELETE"])
-# def delete_goal(goal_id):
-#     goal = Goal.query.get(goal_id)
-#     if goal is None:
-#         return Response(None),404
-#     db.session.delete(goal)
-#     db.session.commit()
-#     return make_response(
-#         {"details": f'Goal {goal.id} "{goal.title}" successfully deleted'
-#         }
-#     ), 200
-
-# @goals_bp.route("/<goal_id>/tasks", methods=["POST"])
-# def post_goal_tasks(goal_id):
-#     goal = Goal.query.get(goal_id)
-#     if goal is None:
-#         return Response(None),404
-
-#     form_data = request.get_json()
-#     for task_id in form_data["task_ids"]:
-#         task = Task.query.get(task_id)
-#         task.goal_id = goal_id
-#         db.session.commit()
-#     return make_response({"id": goal.id,
-#                     "task_ids": form_data["task_ids"]}), 200
-
-# @goals_bp.route("/<goal_id>/tasks", methods=["GET"])
-# def get_goal_tasks(goal_id):
-#     goal = Goal.query.get(goal_id)
-#     if goal is None:
-#         return Response(None),404
-
-#     tasks_list = [task.api_response() for task in goal.tasks]
-
-#     response_body = {
-#         "id": goal.id,
-#         "title": goal.title,
-#         "tasks": tasks_list
-#         }
-#     return (response_body), 200
-
-# def slack_bot_complete(task_title):
-#     return requests.post(("https://slack.com/api/chat.postMessage"), {
-#         'token': os.environ.get("slackbot_API_KEY"),
-#         'channel': "task-notifications",
-#         'text': f"Someone just completed {task_title}"
-#     }).json()
-
