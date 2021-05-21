@@ -6,7 +6,7 @@
 
 - [X] cust_id primary key
 - [X] name of the customer
-- [X] postal code of the customer (STRING)
+- [X] postal code of the customer (INTEGER)
 - [X] phone number of the customer (STRING)
 - [X] registered_at datetime of when the customer was added to the system (DATETIME)
 - [X] videos_checked_out_count
