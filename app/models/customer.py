@@ -11,6 +11,8 @@ class Customer(db.Model):
     register_date = db.Column(db.DateTime, nullable = True)
     videos_checked_out_count = db.Column(db.Integer, default=0)
 
+    #videos_checked_out_count = relationship("Rental", backref="rentals", lazy=True)
+
     def registered_at(self):
         #need to return a date/time here
         if self.register_date:

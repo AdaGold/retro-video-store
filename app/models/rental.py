@@ -2,10 +2,6 @@ from flask import current_app
 from app import db
 from sqlalchemy.orm import relationship
 from datetime import timedelta
-
-# from .models.customer import Customer
-# from .models.video import Video
-
 from datetime import datetime
 
 class Rental(db.Model):
@@ -13,6 +9,9 @@ class Rental(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey("customer.customer_id"))
     video_id = db.Column(db.Integer, db.ForeignKey("video.video_id")) #do we need primary key?
     due_date = db.Column(db.DateTime)
+    customer = db.relationship('Customer', backref='rentals', lazy=True)
+    video = db.relationship('Video', backref='rentals', lazy=True)
+
     
     @classmethod
     def checkout(cls, customer_id, video_id):
@@ -22,6 +21,7 @@ class Rental(db.Model):
  
         customer = Customer.query.get(customer_id)
         video = Video.query.get(video_id)
+
         due_date = datetime.now() + timedelta(days=7)
         new_rental = Rental(
     
@@ -42,8 +42,9 @@ class Rental(db.Model):
         return new_rental
 
     def return_rental_info(self):
-        return {"id" : self.rental_id,
-                "customer" : self.customer_id,
-                "video_id": self.video_id,
-                "due_date" : self.due_date
+        return {"customer_id" : self.customer_id,
+                "video_id" : self.video_id,
+                "due_date" : self.due_date,
+                "videos_checked_out_count": self.customer.videos_checked_out_count,
+                "available_inventory": self.video.available_inventory
         }
