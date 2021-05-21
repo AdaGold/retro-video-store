@@ -82,3 +82,6 @@ def test_delete_customer(client, one_customer):
     assert response_body == {"id": 1}
     assert Customer.query.get(1) == None
 
+def test_get_customer_rentals(client, one_rental):
+    #Act
+    response = client.get("/customers/1/rentals")
