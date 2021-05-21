@@ -160,9 +160,7 @@ def add_rental():
         "details": "no such video exists"
         }), 400
 
-    # increase the customer's videos_checked_out_count by one
     customer.videos_checked_out_count += 1
-    #decrease the video's available_inventory by one
     if video.available_inventory < 1:
         return jsonify({
         "details": "not enough inventory available. hehe"
@@ -204,8 +202,6 @@ def remove_rental():
     video = results[0][1]
     query_rental = results[0][2]
 
-    # decrease the customer's videos_checked_out_count by one
-    # increase the video's available_inventory by one
     customer.videos_checked_out_count -= 1
     video.available_inventory += 1
     db.session.delete(query_rental)
@@ -219,10 +215,6 @@ def remove_rental():
 
 @customer_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
 def get_rentals_by_id(customer_id):
-
-    # rentals = db.session.query(Rental).join(Customer).filter\
-    # (Rental.customer_id == customer_id).all()
-
     rentals = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
         .join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id == customer_id).all()
 
@@ -231,37 +223,25 @@ def get_rentals_by_id(customer_id):
     rentals = rentals[0][2]
 
     rental_response = []
-    #for rental in rentals:
-    #rental_response.append(video_rental(rentals, video))
     rental_response = [{
             "release_date": video.release_date,
             "title": video.title,
             "due_date": rentals.due_date
             }]
-
     return jsonify(rental_response), 200
 
 @video_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
 def get_rentals_by_video_id(video_id):
-
-    # rentals = db.session.query(Rental).join(Customer).filter\
-    # (Rental.customer_id == customer_id).all()
-
     rentals = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
         .join(Video, Video.video_id==Rental.video_id).filter(Video.video_id == video_id).all()
 
     customer = rentals[0][0]
-    video = rentals[0][1]
     rentals = rentals[0][2]
 
-    rental_response = []
-    #for rental in rentals:
-    #rental_response.append(video_rental(rentals, video))
     rental_response = [{
             "due_date": rentals.due_date,
             "name": customer.name,
             "phone": customer.phone,
             "postal_code": customer.postal_code
             }]
-
     return jsonify(rental_response), 200
