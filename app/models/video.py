@@ -20,7 +20,7 @@ class Video(db.Model):
             "title": self.title,
             "release_date": self.release_date,
             "total_inventory": self.total_inventory,
-            "available_inventory": self.index_available_inventory}
+            "available_inventory": self.index_available_inventory()}
     
     def index_available_inventory(self):
         return self.total_inventory - len(self.customers)
