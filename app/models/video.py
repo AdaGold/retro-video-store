@@ -9,7 +9,7 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime, nullable=True)
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
-    # Establish many-many relationship with Customers
+    customers = db.relationship("Rental", back_populates="video")
 
     def get_video_data_structure(self):
         video_data_structure = {
