@@ -9,6 +9,8 @@ class Video(db.Model):
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
 
+    rentals = db.relationship("Rental", backref="video", lazy=True)
+
     def to_dict(self):
         return {
             "id": self.video_id, 
@@ -20,8 +22,7 @@ class Video(db.Model):
     
 
     def check_out(self):
-        if self.available_inventory:
-            self.available_inventory = self.available_inventory - 1
+        self.available_inventory = self.available_inventory - 1
     
     def check_in(self):
         self.available_inventory = self.available_inventory + 1

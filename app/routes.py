@@ -191,30 +191,37 @@ def valid_rental_input(form_data):
             return True 
     return False
 
-## FUNCTION NEEDS TO BE REWORKED to check that a rental exists ... 
+
 @rentals_bp.route("/check-in", methods=["POST"]) 
 def check_in_video():
     request_body = request.get_json()
     customer_id = request_body["customer_id"]
     video_id = request_body["video_id"]
+
     # check for valid input of customer id and video id 
     if customer_id == None or not type(customer_id) is int:
         return ({"error": "Please provide a valid customer ID"}, 400)
     if video_id == None or not type(video_id) is int:
         return ({"error": "Please provide a valid video ID"}, 400)
-    
     customer = Customer.query.get(customer_id)
     video = Video.query.get(video_id)
+    # check that customer and video exist in database
     if customer == None:
         return ({"error": "Customer not found."}, 404)
     if video == None:
         return ({"error": "Video not found."}, 404)
+    # check that customer has a video checked out
+    # this doesn't handle situations where a customer might 
+    # try to return a video that isn't checked out to them ... 
+    if customer.videos_checked_out_count == 0:
+        return ({"error": "You don't have any videos checked out."}, 400)
 
-    # check to see if rental with customer and video id exists
-    # HOW TO DO THIS!?
-    rental = Rental.query.get(customer_id)
-    if rental == None:
-        return ({"error": "Rental not found."}, 400)
+    rental = Rental.query.filter_by(
+                customer_id=customer_id,
+                video_id=video_id).first()
+
+    if not rental:
+        return {"error": "Rental not found."}, 400
 
     customer.check_in()
     video.check_in()
@@ -226,31 +233,3 @@ def check_in_video():
                 "available_inventory": video.available_inventory}, 200)
 
 
-
-
-
-
-
-
-
-    # request_body = request.get_json()
-    # # NEED TO CHECK THAT THERE IS A RENTAL with this info! 
-    # #if valid rental input is true:
-    # if valid_rental_input(request_body):
-    #     #if customer_id and video_id and are valid and in the request:
-    #     customer = Customer.query.get(request_body["customer_id"])
-    #     video = Video.query.get(request_body["video_id"])
-    #     if customer and video:
-    #         customer.check_in()
-    #         video.check_in()
-
-    #         #do i need this line??
-    #         db.session.commit()
-    #         return ({"customer_id": customer.customer_id,
-    #                     "video_id": video.video_id,
-    #                     "videos_checked_out_count": customer.videos_checked_out_count,
-    #                     "available_inventory": video.available_inventory}, 200)
-    #     # else, return 404 error for not found
-    #     return ({"details": "Customer or video does not exist"}, 400)
-    # # else, return 400
-    # return ({"details": "Invalid data"}, 400)

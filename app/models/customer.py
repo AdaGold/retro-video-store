@@ -10,6 +10,8 @@ class Customer(db.Model):
     registered_at = db.Column(db.DateTime, nullable=True)
     videos_checked_out_count = db.Column(db.Integer, default=0)
 
+    rentals = db.relationship("Rental", backref="customer", lazy=True)
+
     def to_dict(self):
         return {
             "id": self.customer_id, 
