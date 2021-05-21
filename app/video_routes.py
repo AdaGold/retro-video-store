@@ -4,6 +4,7 @@ from app import db
 from dotenv import load_dotenv
 from app.models.video import Video
 from app.models.rental import Rental
+from app.models.customer import Customer
 
 load_dotenv()
 
@@ -67,5 +68,6 @@ def delete_video(id):
 @videos_bp.route("/<id>/rentals", methods = ["GET"])
 def get_customers_with_video(id):
     video = Video.query.get_or_404(id)
-    # out_to = [customer.build_dict() for customer in video.customers_rented_to]
-    return make_response(jsonify(video.customers_rented_to, 200))
+    rentals = video.customers_rented_to
+    results = [results.append(customer) for customer in rentals]
+    return make_response(jsonify(results, 200))

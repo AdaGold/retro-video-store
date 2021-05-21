@@ -1,4 +1,5 @@
 
+from operator import countOf
 from flask import current_app
 from app import db
 from .customer import Customer
@@ -14,11 +15,12 @@ class Video(db.Model):
     customers_rented_to = db.Column(db.Integer, db.ForeignKey('customer.id'),nullable=True)
 
     def calculate_inventory(self):
-        print(self.customers_rented_to)
         if self.customers_rented_to:
-            return self.total_inventory - len([i for i in self.customers_rented_to])
+            self.available_inventory =  self.total_inventory - len([customer.id for customer in self.customers_rented_to])
         else:
-            return self.total_inventory
+            self.available_inventory = self.total_inventory
+        return self.available_inventory
+
 
     def build_dict(self):
         return {
@@ -26,5 +28,5 @@ class Video(db.Model):
             "title" : self.title,
             "release_date" : self.release_date,
             "total_inventory" : self.total_inventory, 
-            "available_inventory" : self.available_inventory
+            "available_inventory" : self.calculate_inventory()
         }

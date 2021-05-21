@@ -3,6 +3,7 @@ from app import db
 from dotenv import load_dotenv
 from app.models.customer import Customer
 from app.models.rental import Rental
+from app.models.video import Video
 from datetime import datetime
 
 
@@ -67,5 +68,8 @@ def delete_customer(id):
 @customers_bp.route("/<id>/rentals", methods = ["GET"])
 def list_rentals(id):
     customer = Customer.query.get_or_404(id)
-    return make_response(jsonify([video.id for video in customer.rentals]), 200)
+    rental = db.session.query(Customer, Video, Rental).join\
+        (Customer, Customer.id == Rental.customer_id).join\
+            (Video, Video.id == Rental.video_id).filter(Customer.id == id).all()
+    return make_response(jsonify(rental), 200)
 
