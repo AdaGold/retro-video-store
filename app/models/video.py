@@ -15,7 +15,6 @@ class Video(db.Model):
     available_inventory = db.Column(db.Integer, default=0)
     # rentals = db.relationship('Rental', backref = 'video')
 
-
 #helper function 
     def to_json_video(self):
         return {

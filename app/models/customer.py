@@ -31,7 +31,7 @@ class Customer(db.Model):
         "id": self.id,
         "name": self.name,
         "phone": self.phone,
-        "postal_code": self.postal_code,
+        "postal_code": int(self.postal_code),
         "registered_at": self.registered_at, # or self.registered_customer()
         "videos_checked_out_count": self.checkout_count
         }
