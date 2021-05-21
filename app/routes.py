@@ -44,7 +44,7 @@ def get_customers():
     for customer in customers:
         list_of_customer.append(customer.to_json_customer())
 
-    return jsonify(list_of_customer)
+    return jsonify(list_of_customer), 200
 
 
 @customers_bp.route("<customer_id>", methods=["GET", "PUT", "DELETE"], strict_slashes=False)
@@ -52,8 +52,8 @@ def handle_customer(customer_id):
 
     customer = Customer.query.get(customer_id)
 
-    # if customer is None:
-    #     return make_response("", 404)
+    if customer is None:
+        return "Not Found.", 404
 
     if request.method == "GET":
         return customer.to_json_customer()
@@ -125,7 +125,7 @@ def handle_video(video_id):
     video = Video.query.get(video_id)
 
     if video is None:
-        return make_response("", 404) 
+        return "Not Found", 404
 
     if request.method == "GET":
         return video.to_json_video()
