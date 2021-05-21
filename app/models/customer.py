@@ -22,3 +22,6 @@ class Customer(db.Model):
     
     def check_out(self):
         self.videos_checked_out_count += 1
+    
+    def check_in(self):
+        self.videos_checked_out_count -= 1

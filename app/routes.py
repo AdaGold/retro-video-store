@@ -146,7 +146,6 @@ def delete_video(video_id):
     return make_response(f"No video with ID #{video_id} found", 404)
 
 #WAVE2
-#current work spot -- rework route to consider outlined flow ... 
 @rentals_bp.route("/check-out", methods=["POST"])
 def check_out_video_to_customer():
     request_body = request.get_json()
@@ -166,8 +165,11 @@ def check_out_video_to_customer():
                                     video_id = request_body["video_id"])
                 new_rental.due_date = datetime.utcnow()+ timedelta(days=7)
                 db.session.add(new_rental)
-                customer.check_out()
-                video.check_out()
+                customer.videos_checked_out_count += 1
+                # customer.check_out()
+                ### THIS ISN'T WORKING!!!!
+                video.available_inventory -= 1
+                # video.check_out()
                 db.session.commit()
                 # return success 200 with response body
                 # CONSIDER making a function that builds successful response body
@@ -182,28 +184,34 @@ def check_out_video_to_customer():
     return ({"details": "Invalid data"}, 400)
 
 
-    # # needs reworking and to be incorporated the above .... 
-    # if valid_rental_input(request_body):
-    #     new_rental = Rental(customer_id = request_body["customer_id"],
-    #                     video_id = request_body["video_id"])
-    #     new_rental.due_date = datetime.utcnow()+ timedelta(days=7)
-    #     db.session.add(new_rental)
-    #     # increase customer's videos_checked_out_count by 1
-    #     customer = Customer.query.get(new_rental.customer_id)
-    #     customer.check_out()
-    #     # decrease video's available_inventory by 1
-    #     video = Video.query.get(new_rental.video_id)
-    #     video.check_out()
-    #     #consider the placement of this line:
-    #     db.session.commit()
-
-    #     return ({"id": new_customer.customer_id}, 201) 
-    # return ({"details": "Invalid data"}, 400)
-
-
 # condsider moving this to the Rental model
 def valid_rental_input(form_data):
     if "customer_id" in form_data and "video_id" in form_data:
         if type(form_data["customer_id"]) is int and type(form_data["video_id"]) is int:
             return True 
     return False
+
+## FUNCTION NEEDS TO BE REWORKED to check that a rental exists ... 
+@rentals_bp.route("/check-in", methods=["POST"])
+def check_in_video():
+    request_body = request.get_json()
+    # NEED TO CHECK THAT THERE IS A RENTAL with this info! 
+    #if valid rental input is true:
+    if valid_rental_input(request_body):
+        #if customer_id and video_id and are valid and in the request:
+        customer = Customer.query.get(request_body["customer_id"])
+        video = Video.query.get(request_body["video_id"])
+        if customer and video:
+            customer.check_in()
+            video.check_in()
+
+            #do i need this line??
+            db.session.commit()
+            return ({"customer_id": customer.customer_id,
+                        "video_id": video.video_id,
+                        "videos_checked_out_count": customer.videos_checked_out_count,
+                        "available_inventory": video.available_inventory}, 200)
+        # else, return 404 error for not found
+        return ({"details": "Customer or video does not exist"}, 400)
+    # else, return 400
+    return ({"details": "Invalid data"}, 400)

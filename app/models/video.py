@@ -18,5 +18,9 @@ class Video(db.Model):
             "available_inventory": self.available_inventory,
             }
     
+
     def check_out(self):
         self.available_inventory = self.available_inventory - 1
+    
+    def check_in(self):
+        self.available_inventory = self.available_inventory + 1
