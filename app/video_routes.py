@@ -26,7 +26,6 @@ def get_video(id):
 
 @videos_bp.route("", methods = ["POST"])
 def add_videos():
-    '''adds videos'''
     request_body = request.get_json()
     if "title" not in request_body.keys() or "release_date" not in request_body.keys() or "total_inventory" not in request_body.keys():
         return make_response({"details": "insufficient data"}, 400)
@@ -35,10 +34,11 @@ def add_videos():
         release_date = request_body["release_date"],
         total_inventory = request_body["total_inventory"]
     )
+
     db.session.add(new_video)
     db.session.commit()
 
-    return make_response(new_video.build_dict(), 201)
+    return make_response({"id": new_video.id}, 201)
 
 @videos_bp.route("/<id>", methods = ["PUT"])
 def update_videos(id):
@@ -69,5 +69,5 @@ def delete_video(id):
 def get_customers_with_video(id):
     video = Video.query.get_or_404(id)
     rentals = video.customers_rented_to
-    results = [results.append(customer) for customer in rentals]
+    results = [customer.customers_dict() for customer in rentals]
     return make_response(jsonify(results, 200))

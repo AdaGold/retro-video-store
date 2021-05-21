@@ -68,8 +68,7 @@ def delete_customer(id):
 @customers_bp.route("/<id>/rentals", methods = ["GET"])
 def list_rentals(id):
     customer = Customer.query.get_or_404(id)
-    rental = db.session.query(Customer, Video, Rental).join\
-        (Customer, Customer.id == Rental.customer_id).join\
-            (Video, Video.id == Rental.video_id).filter(Customer.id == id).all()
-    return make_response(jsonify(rental), 200)
+    rentals = customer.videos_checked_out
+    results = [video.rentals_by_cust() for video in rentals]
+    return make_response(jsonify(results), 200)
 

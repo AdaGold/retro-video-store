@@ -6,8 +6,8 @@ from .video import Video
 
 class Rental(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement = True)
-    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), primary_key=True)
-    video_id = db.Column(db.Integer, db.ForeignKey('video.id'), primary_key=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False)
+    video_id = db.Column(db.Integer, db.ForeignKey('video.id'), nullable=False)
     due_date = db.Column(db.Date(), default = date.today() + timedelta(7), nullable=True)
 
     def build_dict(self):
@@ -18,8 +18,29 @@ class Rental(db.Model):
             "customer_id" : self.customer_id,
             "video_id" : self.video_id,
             "videos_checked_out_count" : customer.count_videos(),
-            "available_inventory" : video.available_inventory
+            "available_inventory" : video.calculate_inventory()
             }
         if self.due_date:
             rental["due_date"] = self.due_date
         return rental
+    
+    def customers_dict(self):
+        customer = Customer.query.get(self.customer_id)
+
+        return {
+            "name" : customer.name,
+            "phone" : customer.phone,
+            "postal_code" : customer.postal_code,
+            "due_date" : self.due_date
+
+
+        }
+    
+    def rentals_by_cust(self):
+        video = Video.query.get(self.video_id)
+
+        return {
+            "title" : video.title,
+            "release_date" : video.release_date,
+            "due_date" : self.due_date
+        } 
