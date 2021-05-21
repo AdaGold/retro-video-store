@@ -26,3 +26,9 @@ https://stackoverflow.com/questions/53042728/flask-get-or-404-like-function-but-
 
 Jared's video on importing new Postman tests
 https://adaacademy.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=1a421205-2a1f-471b-954c-ad2e0187dde6
+
+using a db.Model object (creating aRental Model) which follows the association object pattern ( a variant on many-to-many)
+https://docs.sqlalchemy.org/en/14/orm/basic_relationships.html#association-object
+$$
+
+$$

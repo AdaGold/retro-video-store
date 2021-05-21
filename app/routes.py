@@ -1,12 +1,13 @@
 import requests
 import datetime
 from app import db
-from app.models.video import Video
+from app.models.video import Video, Rental
 from app.models.customer import Customer
 from flask import request, Blueprint, make_response, jsonify, abort
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 # HELPER FUNCTIONS:
 #=============================================================================
@@ -169,7 +170,8 @@ def add_new_video():
 
     new_video = Video(title=request_body["title"], 
                     release_date=request_body["release_date"], 
-                    total_inventory=request_body["total_inventory"])
+                    total_inventory=request_body["total_inventory"],
+                    available_inventory=request_body["total_inventory"])
 
     db.session.add(new_video)
     db.session.commit()
@@ -225,3 +227,75 @@ def delete_customer(video_id):
 # CUSTOM ENDPOINTS:
 #=============================================================================
 
+@rentals_bp.route("/check-out", methods=["POST"], strict_slashes=False)
+# No route argument necessary for this endpoint
+def check_out_video():
+
+    request_body = request.get_json()
+
+    requested_video = Video.query.get_or_404(request_body["video_id"])
+
+    # ❗️ Make this error message more specific
+    if requested_video.available_inventory == 0:
+        return make_response({"Details":"The requested video is not available"}, 400)
+
+    new_rental = Rental(fk_customer_id=request_body["customer_id"], 
+                    fk_video_id=request_body["video_id"])
+
+    # Creates a due date that is the seven days from the current date:
+    new_rental.due_date = datetime.datetime.now() + datetime.timedelta(days=7)
+
+    # Increases the customer's videos_checked_out_count by one: 
+    # ❗️ This code should probably return a warning if repeat check outs are attempted on the same video_id like "did you mean to check out {movie title and id} again"
+    updated_cust = Customer.query.get_or_404(new_rental.fk_customer_id)
+    updated_cust.videos_checked_out_count += 1
+
+    updated_video = Video.query.get_or_404(new_rental.fk_video_id)
+    updated_video.available_inventory -= 1
+
+
+    db.session.add(new_rental)
+    db.session.commit()
+
+    return make_response({ "customer_id": new_rental.fk_customer_id,
+                        "video_id": new_rental.fk_video_id,
+                        "due_date": new_rental.due_date,
+                        "videos_checked_out_count": updated_cust.videos_checked_out_count,
+                        "available_inventory": updated_video.available_inventory
+                    }, 
+                        200)
+
+@rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
+# ❗️ may be able to combine with previous function/endpoint
+def check_in_video():
+
+    request_body = request.get_json()
+
+    # ❗️ This code should probably return a warning if repeat check INS are attempted on the same video_id like "did you mean to check out {movie title and id} again"
+    updated_cust = Customer.query.get_or_404(request_body["customer_id"])
+    updated_cust.videos_checked_out_count -= 1
+
+    updated_video = Video.query.get_or_404(request_body["video_id"])
+    updated_video.available_inventory += 1
+
+    # ❗️ The README doesn't say what to do with the rental record?
+
+    db.session.commit()
+
+    return make_response({ "customer_id": updated_cust.customer_id,
+                        "video_id": updated_video.video_id,
+                        "videos_checked_out_count": updated_cust.videos_checked_out_count,
+                        "available_inventory": updated_video.available_inventory
+                    }, 
+                        200)
+
+    
+@customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
+def get_customer_rentals(customer_id):
+
+    valid_id_or_400(customer_id)
+
+    # Get the customer with matching customer_id
+    saved_customer = Customer.query.get_or_404(customer_id)
+
+    # 

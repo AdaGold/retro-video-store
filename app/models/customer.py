@@ -9,22 +9,21 @@ class Customer(db.Model):
     postal_code = db.Column(db.Integer)
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime)
+    # Needed to give this a default value of 0 so that it can be incrememted in the checkout endpoint:
+    videos_checked_out_count = db.Column(db.Integer, default=0)
 
     current_rentals = relationship('Video', secondary='rental')
                             
 
     def convert_to_json(self):
 
-        videos_checked_out_count = len(self.current_rentals)
-
         response_body = {  
             "id": self.cust_id,
             "name": self.name,
             "registered_at": self.registered_at,
             "postal_code": self.postal_code,
-            "phone": self.phone,
-            # the following will be the # of ids in videos_of_customer:  
-            "videos_checked_out_count": videos_checked_out_count
+            "phone": self.phone,  
+            "videos_checked_out_count": self.videos_checked_out_count
         }
 
 
