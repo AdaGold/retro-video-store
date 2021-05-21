@@ -2,11 +2,13 @@ from app import db
 from flask import Blueprint, request, make_response, jsonify
 from .models.customer import Customer
 from .models.video import Video
+from .models.rental import Rental
 
 
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 
 def error_handling(request_body):
@@ -148,3 +150,22 @@ def get_single_video(video_id):
         return make_response({"details": "invalid data"}, 404)
 
     return make_response(video.return_video_info(), 200)
+
+@rentals_bp.route("/check-out", methods=["POST"])
+def inventory_update():
+    form_data = request.get_json()
+
+    if "customer_id" not in form_data or "video_id" not in form_data:
+        return make_response({"details": "Invalid data"}), 400
+
+    customer_id = form_data["customer_id"]
+    video_id = form_data["video_id"]
+    if isinstance(customer_id, str) or isinstance(video_id, str):
+        return make_response(({"details": "Invalid data type"}), 400)
+
+    new_rental = Rental.checkout(customer_id, video_id)
+    
+    return make_response(new_rental.return_rental_info(), 200)
+#increase the customer videos_checked_out_count by 1
+#decrease the video's available_inventory by one
+#create a due date. The rental's due date is the seven days from the current date.

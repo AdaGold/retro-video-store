@@ -9,6 +9,7 @@ class Customer(db.Model):
     postal_code = db.Column(db.String)
     phone_number = db.Column(db.String)
     register_date = db.Column(db.DateTime, nullable = True)
+    videos_checked_out_count = db.Column(db.Integer, default=0)
 
     def registered_at(self):
         #need to return a date/time here
@@ -25,5 +26,9 @@ class Customer(db.Model):
         "phone": self.phone_number, 
         "videos_checked_out_count": 0       
         }
+    
+    def added_checkout(self):
+        self.videos_checked_out_count = self.videos_checked_out_count + 1
+        db.session.commit()
 
 
