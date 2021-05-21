@@ -291,37 +291,6 @@ def handle_rentals_checkin():
 
     if request.method == "POST":
 
-        # checkin_data = request.get_json()
-
-        # customer_checkin_id = checkin_data["customer_id"]
-        # video_checkin_id = checkin_data["video_id"]
-
-        # customer_data = db.session.query(Customer, Video, CustomerVideoRental).join(Customer, Customer.id==CustomerVideoRental.customer_id)\
-        # .join(Video, Video.id==CustomerVideoRental.video_id).filter(Customer.id == customer_checkin_id).all()
-
-        # customer_rental_list = []
-
-        # for tuple in customer_data:
-        #     customer = tuple[0]
-        #     video = tuple[1] # 1 is index in which Video instances are stored
-
-        #     if video.id == video_checkin_id:
-        #         customer.videos_checked_out_count -= 1
-        #         video.available_inventory += 1
-
-        #     db.session.commit()
-
-        #     customer_rental_list.append({
-        #     "customer_id": customer.id,
-        #     "video_id": video.id,
-        #     "videos_checked_out_count": customer.videos_checked_out_count,
-        #     "available_inventory": video.available_inventory
-        #     })
-
-
-        #     return jsonify(customer_rental_list)
-        
-        
         checkin_data = request.get_json()
 
         customer_checkin_id = checkin_data["customer_id"]
@@ -330,11 +299,27 @@ def handle_rentals_checkin():
         customer = Customer.query.get(customer_checkin_id)
         video = Video.query.get(video_checkin_id)
 
+        rental = CustomerVideoRental.query.all()
+        # # rental = CustomerVideoRental.query.filter_by(customer_id=customer_checkin_id, video_id=video_checkin_id)
+        # .filter 
+        
         if customer == None:
             return "Customer not found.", 404
 
         if video == None:
             return "Video not found.", 404
+
+        match = False
+
+        for record in rental:
+            if record.customer_id == customer_checkin_id and record.video_id == video_checkin_id and record.outstanding:
+                match = True
+                record.outstanding = False
+
+        if not match:
+            return {
+                "details": "Rental not found."
+                }, 400
 
         customer.videos_checked_out_count -= 1
         video.available_inventory += 1
@@ -347,4 +332,46 @@ def handle_rentals_checkin():
         "videos_checked_out_count": customer.videos_checked_out_count,
         "available_inventory": video.available_inventory
         }
+
+
+
+        # customer.videos_checked_out_count -= 1
+        # video.available_inventory += 1
+
+        # db.session.commit()
+        
+        # return {
+        # "customer_id": customer.id,
+        # "video_id": video.id,
+        # "videos_checked_out_count": customer.videos_checked_out_count,
+        # "available_inventory": video.available_inventory
+        # }
+        
+
+
+
+
+        # if rental == None:
+        #     return "Rental not found.", 400
+        
+        # customer_data = db.session.query(Customer, Video, CustomerVideoRental).join(Customer, Customer.id==CustomerVideoRental.customer_id)\
+        # .join(Video, Video.id==CustomerVideoRental.video_id).filter(Customer.id == customer_checkin_id).all()
+
+        # for tuple in customer_data:
+        #     rental = tuple[2] # index 2 stores CustomerVideoRental objects
+
+        #     if rental.customer_id == customer_checkin_id and rental.video_id == video_checkin_id:
+        #         customer.videos_checked_out_count -= 1
+        #         video.available_inventory += 1
+
+        #         db.session.commit()
+            
+        #     else:
+        #         return {
+        #             "details": "No rental record found."}, 400
+
+        # customer.videos_checked_out_count -= 1
+        # video.available_inventory += 1
+
+        # db.session.commit()
 

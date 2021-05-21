@@ -19,6 +19,7 @@ class CustomerVideoRental(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), primary_key=True)
     video_id = db.Column(db.Integer, db.ForeignKey('video.id'), primary_key=True)
     due_date = db.Column(db.DateTime, nullable=True)
+    outstanding = db.Column(db.Boolean, default=True)
 
     # left = relationship('Left', backref=backref('right_association'))
     # right = relationship('Right', backref=backref('left_association'))
