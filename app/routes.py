@@ -16,10 +16,10 @@ customers_bp = Blueprint(
 rentals_bp = Blueprint(
     "rentals", __name__, url_prefix="/rentals")
 
-# ---------------------------
-# WAVE 1 - CUSTOMER ENDPOINTS
-# ---------------------------
 
+# ----------------------------
+# WAVE 1 - CUSTOMER ENDPOINTS
+# ----------------------------
 
 @customers_bp.route("", methods=["GET"], strict_slashes=False)
 def customer_index():
@@ -146,15 +146,14 @@ def delete_video(video_id):
     return jsonify({"id": video.video_id}), 200
 
 
-# ---------------------------
-# WAVE 2 - RENTAL ENDPOINTS
-# ---------------------------
-
+# ----------------------------------
+# WAVE 2 - (mostly) RENTAL ENDPOINTS
+# ----------------------------------
 
 @rentals_bp.route("/check-out", methods=["POST"], strict_slashes=False)
 def checking_out():
     request_body = request.get_json()
-    # INT ??? (order)
+    # INT ??? (the order).
     try:
         video_id = int(request_body["video_id"])
         customer_id = int(request_body["customer_id"])
@@ -187,8 +186,8 @@ def checking_out():
 @rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
 def checking_in():
     request_body = request.get_json()
-    video = Video.query.get(request_body["video_id"])
-    customer = Customer.query.get(request_body["customer_id"])
+    video = Video.query.get_or_404(request_body["video_id"])
+    customer = Customer.query.get_or_404(request_body["customer_id"])
     if "customer_id" in request_body and "video_id" in request_body:
         customer.videos_checked_out_count -= 1
         video.available_inventory += 1
@@ -211,32 +210,33 @@ def checking_in():
     return make_response({"details": "Invalid required request body parameters"}, 400)
 
 
-# @customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
-# def get_videos_of_customer(customer_id):
-#     customer = Customer.query.get(customer_id)
-#     if customer is None:
-#         return make_response("Customer does not exist", 404)
-#     else:
-#         rental = Rental.query.filter_by(customer_id).one_or_none()
-#         rentals_response = [(rental.to_dict()) for rental in rental]
-#         return rentals_response
+@customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
+def get_videos_of_customer(customer_id):
+    # request_body = request.get_json()
+    rentals = Rental.query.filter(Rental.customer_id == customer_id).all()
+    if rentals is None:
+        return make_response({"details": "Customer does not exist"}, 404)
+    list_of_rentals = []
+    for rental in rentals:
+        video = Video.query.get(rental.video_id)
+        list_of_rentals.append({
+            "release_date": video.release_date,
+            "title": video.title,
+            "due_date": rental.due_date})
+    return jsonify(list_of_rentals), 200
 
-# @goals_bp.route("/<goal_id>/tasks", methods=["GET"], strict_slashes=False)
-# def getting_tasks_of_one_goal(goal_id):
-#     goal = Goal.query.get(goal_id)
-#     if goal is None:
-#         return make_response("", 404)
-#     tasks = Task.query.join(Goal).filter(Task.goal_id == goal_id).all()
-#     # tasks_response = []
-#     tasks_response = [(task.with_goal()) for task in tasks]
-#     return{"id": goal.goal_id, "title": goal.title, "tasks": tasks_response}, 200
 
-# @videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
-# def get_customers_of_video(video_id):
-#     customer = Customer.query.get(customer_id)
-#     if customer is None:
-#         return make_response("Customer does not exist", 404)
-#     else:
-#         rental = Rental.query.filter_by(customer_id).one_or_none()
-#         rentals_response = [(rental.to_dict()) for rental in rental]
-#         return rentals_response
+@videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
+def get_customers_of_video(video_id):
+    rentals = Rental.query.filter(Rental.video_id == video_id).all()
+    if rentals is None:
+        return make_response({"details": "Video does not exist"}, 404)
+    list_of_customers = []
+    for rental in rentals:
+        customer = Customer.query.get(rental.customer_id)
+        list_of_customers.append({
+            "due_date": rental.due_date,
+            "name": customer.name,
+            "phone": customer.phone,
+            "postal_code": customer.postal_code})
+    return jsonify(list_of_customers), 200

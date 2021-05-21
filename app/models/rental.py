@@ -17,10 +17,5 @@ class Rental(db.Model):
     due_date = db.Column(
         db.DateTime, default=datetime.now() + timedelta(days=7))
 
-    # def date_due():
-    #     today = datetime.date.today()
-    #     d1 = today.strftime("%Y-%m-%d") + datetime.timedelta(days=7)
-    #     return d1
-
     # video = db.relationship('Video', back_populates='customers')
     # customer = db.relationship('Customer', back_populates='videos')

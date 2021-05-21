@@ -13,9 +13,6 @@ class Customer(db.Model):
     registered_at = db.Column(db.DateTime, nullable=True)
     videos_checked_out_count = db.Column(db.Integer, default=0)
 
-    # videos = db.relationship(
-    #     'Video', secondary='rentals', back_populates='customers')
-
     rentals = db.relationship('Rental', backref='rentals', lazy=True)
 
     # lowercase 'goal.id' looks at a table in your db

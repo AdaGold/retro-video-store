@@ -12,10 +12,12 @@ class Video(db.Model):
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
 
+    rentals = db.relationship('Rental', backref='rental', lazy=True)
+
     # customers = db.relationship(
     #     'Customer', secondary='rentals', back_populates='videos')
 
-    rentals = db.relationship('Rental', backref='rental', lazy=True)
+    # lowercase 'goal.id' looks at a table in your db
 
     def to_dict(self):
         return {
