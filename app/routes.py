@@ -12,15 +12,16 @@ rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 def valid_item(item): # convert to decorator?
     '''
     Checks if item exists in the table
-    Is this even useful? How can I add more functionality to this?
     '''
     if item is not None:
         return True
 
-# is there a way this can be combined with the above function to "validate" data
-# or not because they do slightly different things?
+# can I combine these?
 def valid_data_type(item, data_type):
-    if type(item) != data_type:
+    '''
+    Checks if item is valid data type
+    '''
+    if type(item) == data_type:
         return True
 
 @customers_bp.route("", methods=["GET"])
@@ -210,20 +211,15 @@ def check_out():
     '''
     request_body = request.get_json()
 
-    # if not valid_data_type(request_body["customer_id"], int) or\
-    # if not valid_data_type(request_body["video_id"], int):
-    #     return jsonify("IDs must be an integer"), 400
+    if not valid_data_type(request_body["customer_id"], int) \
+    or not valid_data_type(request_body["video_id"], int):
+        return jsonify("IDs must be an integer"), 400
 
-    if type(request_body["customer_id"]) != int or\
-        type(request_body["video_id"]) != int:
-            return jsonify("IDs must be an integer"), 400
+    customer_id = request_body["customer_id"]
+    video_id = request_body["video_id"]
 
-    # customer_id = request_body["customer_id"]
-    # video_id = request_body["video_id"]
-
-    # replacing customer_id with request_body["customer_id"]
-    customer = Customer.query.get(request_body["customer_id"])
-    video = Video.query.get(request_body["video_id"])
+    customer = Customer.query.get(customer_id)
+    video = Video.query.get(video_id)
 
     if not valid_item(customer) or not valid_item(video):
         return make_response("Customer or video not found", 404)
@@ -260,13 +256,9 @@ def check_in():
     '''
     request_body = request.get_json()
 
-    # if not valid_data_type(request_body["customer_id"], int) or\
-    # if not valid_data_type(request_body["video_id"], int):
-    #     return jsonify("IDs must be an integer"), 400
-
-    if type(request_body["customer_id"]) != int or\
-        type(request_body["video_id"]) != int:
-            return jsonify("IDs must be an integer"), 400
+    if not valid_data_type(request_body["customer_id"], int) \
+    or not valid_data_type(request_body["video_id"], int):
+        return jsonify("IDs must be an integer"), 400
 
     customer = Customer.query.get(request_body["customer_id"])
     video = Video.query.get(request_body["video_id"])
