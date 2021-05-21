@@ -2,12 +2,13 @@ from flask import Blueprint
 from app import db
 from app.models.customer import Customer
 from app.models.video import Video
+from app.models.rentals import Rental
 from flask import request, Blueprint, make_response, jsonify
-from datetime import datetime
-import os
+from datetime import datetime, timedelta
 
 customers_bp = Blueprint("customer", __name__, url_prefix="/customers")
-videos_bp = Blueprint("vidoe", __name__, url_prefix="/videos")
+videos_bp = Blueprint("video", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 
 ####################################################################
@@ -61,8 +62,6 @@ def delete_customer(id):
     db.session.commit() 
     return make_response({"id": customer.id, "success": True}, 200)
 
-
-# my_date = datetime.strptime(my_string, "%Y-%m-%d")
 ####################################################################
 #                              VIDEOS   ROUTES                     #
 ####################################################################
@@ -118,3 +117,69 @@ def delete_video(id):
     db.session.commit() 
     return make_response({"id": video.id, "success": True}, 200)
 
+####################################################################
+#                              RENTAL   ROUTES                     #
+####################################################################
+@rentals_bp.route("/check-out", methods=["POST"])
+def rental_check_out():
+    try:
+        request_body = request.get_json()
+        try:
+            video = Video.query.get(request_body["video_id"])
+            customer = Customer.query.get(request_body["customer_id"])
+        except:
+            return make_response({"Customer or Video Does Not Exist"}, 400)
+            
+        if video.available_inventory > 0:
+            video.available_inventory -= 1
+        else:
+            return make_response({"details":"No more of that video left"}, 400)
+
+        rental = Rental(customer_id=request_body["customer_id"],
+                    video_id=request_body["video_id"],
+                    due_date=datetime.now() + timedelta(days=7))
+        customer.videos_checked_out_count += 1
+        
+        db.session.add(video)
+        db.session.add(customer)
+        db.session.add(rental)
+        db.session.commit()
+        response = {
+                "customer_id": rental.customer_id,
+                "video_id": rental.video_id,
+                "due_date": rental.due_date,
+                "videos_checked_out_count": customer.videos_checked_out_count,
+                "available_inventory": video.available_inventory
+                }
+        return make_response(jsonify(response), 200)
+    except KeyError as err:
+        return make_response({"details":f"Invalid data: {err}"}, 400)
+
+@rentals_bp.route("/check-in", methods=["POST"])
+def rental_check_in():
+    try:
+        request_body = request.get_json()
+        try:
+            video = Video.query.get(request_body["video_id"])
+            customer = Customer.query.get(request_body["customer_id"])
+        except:
+            return make_response({"Customer or Video Does Not Exist"}, 400)
+
+        rental = Rental.query.filter(Rental.customer_id == request_body["customer_id"], Rental.video_id == request_body["video_id"]).one()
+        
+        customer.videos_checked_out_count -= 1
+        video.available_inventory +=1
+        db.session.add(video)
+        db.session.add(customer)
+        db.session.add(rental)
+        db.session.commit()
+        response = {
+                "customer_id": rental.customer_id,
+                "video_id": rental.video_id,
+                "due_date": rental.due_date,
+                "videos_checked_out_count": customer.videos_checked_out_count,
+                "available_inventory": video.available_inventory
+                }
+        return make_response(jsonify(response), 200)
+    except KeyError as err:
+        return make_response({"details":f"Invalid data: {err}"}, 400)

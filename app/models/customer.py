@@ -1,6 +1,5 @@
 from flask import current_app
 from app import db
-from datetime import datetime
 from sqlalchemy import func
 
 
@@ -16,8 +15,7 @@ class Customer(db.Model):
     postal_code = db.Column(db.Integer)
     phone = db.Column(db.String)
     videos_checked_out_count = db.Column(db.Integer, default=0)
-    children = db.relationship("Rental", back_populates="Customer")
-    # Establish many-many relationship with Videos
+    videos = db.relationship("Rental", back_populates="customer")
 
 
     def get_customer_data_structure(self):
