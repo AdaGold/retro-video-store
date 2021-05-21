@@ -9,6 +9,7 @@ import os
 customers_bp = Blueprint("customer", __name__, url_prefix="/customers")
 videos_bp = Blueprint("vidoe", __name__, url_prefix="/videos")
 
+
 ####################################################################
 #                              CUSTOMERS ROUTES                    #
 ####################################################################
@@ -31,7 +32,7 @@ def post_customers():
         db.session.add(new_customer)
         db.session.commit()
         return make_response(new_customer.get_customer_data_structure(), 201)
-    except TypeError as err:
+    except KeyError as err:
         return make_response({"details":f"Invalid data: {err}"}, 400)
 
 @customers_bp.route("/<id>", methods=["GET"])
@@ -41,16 +42,16 @@ def get_customer(id):
 
 @customers_bp.route("/<id>", methods=["PUT"])
 def update_customer(id):
-    request_body = request.get_json()
     customer = Customer.query.get_or_404(id)
     try:
+        request_body = request.get_json()
         customer.name=request_body["name"]
         customer.postal_code=request_body["postal_code"]
         customer.phone=request_body["phone"]
         db.session.add(customer)
         db.session.commit()
-        return make_response(customer.get_customer_data_structure(), 201)
-    except TypeError as err:
+        return make_response(customer.get_customer_data_structure(), 200)
+    except KeyError as err:
         return make_response({"details":f"Invalid data: {err}"}, 400)
 
 @customers_bp.route("/<id>", methods=["DELETE"])
@@ -80,26 +81,33 @@ def post_videos():
     try:
         new_video = Video(title=request_body["title"],
                             release_date=datetime.strptime(request_body["release_date"], "%Y-%m-%d"),
-                            total_inventory=request_body["available_inventory"],
-                            available_inventory=request_body["available_inventory"])
+                            total_inventory=request_body["total_inventory"],
+                            available_inventory=request_body["total_inventory"])
         db.session.add(new_video)
         db.session.commit()
         return make_response({"id": new_video.id}, 201)
-    except TypeError as err:
+    except KeyError as err:
         return make_response({"details":f"Invalid data: {err}"}, 400)
+
+
+@videos_bp.route("/<id>", methods=["GET"])
+def get_video(id):
+    video = Video.query.get_or_404(id)
+    return make_response(video.get_video_data_structure(), 200)
+
 
 @videos_bp.route("/<id>", methods=["PUT"])
 def update_video(id):
-    request_body = request.get_json()
     video = Video.query.get_or_404(id)
     try:
+        request_body = request.get_json()
         video.title=request_body["title"]
         video.release_date=datetime.strptime(request_body["release_date"], "%Y-%m-%d")
-        video.total_inventory=request_body["available_inventory"]
+        video.total_inventory=request_body["total_inventory"]
         db.session.add(video)
         db.session.commit()
-        return make_response(video.get_video_data_structure(), 201)
-    except TypeError as err:
+        return make_response(video.get_video_data_structure(), 200)
+    except KeyError as err:
         return make_response({"details":f"Invalid data: {err}"}, 400)
 
 

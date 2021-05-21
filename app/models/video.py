@@ -15,9 +15,10 @@ class Video(db.Model):
         video_data_structure = {
                     "id":self.id,
                     "title":self.title,
-                    "registered_at": self.release_date.strftime("%Y-%m-%d"),
+                    "release_date": self.release_date.strftime("%Y-%m-%d"),
                     "total_inventory": self.total_inventory,
-                    "available_inventory": self.available_inventory,
+                    "available_inventory": self.available_inventory
                 }
+                
 
         return video_data_structure
