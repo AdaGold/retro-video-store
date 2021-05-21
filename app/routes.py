@@ -3,6 +3,7 @@ import flask_migrate
 from app import db
 from app.models.video import Video 
 from app.models.customer import Customer
+from app.models.rental import Rental
 from flask import request, Blueprint, make_response, Response 
 from flask import jsonify
 from datetime import datetime
@@ -12,6 +13,7 @@ import json
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 @customers_bp.route("", methods = ["POST", "GET"], strict_slashes=False)
 # GET all of the customers. Ability to sort asc or desc by customer name 
@@ -51,8 +53,7 @@ def handle_customer():
 @customers_bp.route("/<id>", methods = ["PUT", "GET", "DELETE"], strict_slashes=False)
 def customer_by_id(id):
     customer = Customer.query.get(id)
-    print(customer.to_json())
-    print(type(customer))
+    
     if request.method == "GET":
         if customer:
             if not customer.is_int():
@@ -65,22 +66,30 @@ def customer_by_id(id):
                 return make_response(customer.to_json(), 200)
 
         else:
-            return jsonify("", 404)
+            return jsonify(details="Not Found"), 404
 
 
 # PUT an update on an exsisting customer 
     elif request.method == "PUT":
-        if customer:
-            request_body = request.get_json()
-            customer.name = request_body["name"]
-            customer.postal_code = request_body["postal_code"]
-            customer.phone = request_body["phone"]
-            customer.registered_at = request_body["registered_at"]
-            db.session.commit()
-            return customer.to_json(), 200
+        request_body = request.get_json()
+        print(request_body)
+        if request_body != None:
+            if ("name" not in request_body or 
+                "postal_code" not in request_body or 
+                "phone" not in request_body):
+                return jsonify(details="Bad request"), 400
+            if customer:
+                customer.name = request_body["name"]
+                customer.postal_code = request_body["postal_code"]
+                customer.phone = request_body["phone"]
+                # customer.registered_at = request_body["registered_at"]
+                db.session.commit()
+                return customer.to_json(), 200
+            else:
+                return jsonify(""), 404
 
         else:
-            return jsonify(""), 400
+            return jsonify(""), 404
 
 
 # DELETE an existing customer by id
@@ -90,8 +99,8 @@ def customer_by_id(id):
             db.session.commit()
             return jsonify(id=int(id)), 200
 
-    else:
-        return jsonify("", 404)
+        else:
+            return jsonify(""), 404
 
 
 # GET all videos and ability to sort by asc or desc 
@@ -134,17 +143,16 @@ def handle_video():
 def video_by_id(id):
     video = Video.query.get(id)
     if request.method == "GET":
-        if not id.is_int(id):
-            return {
-            "message": "id must be an integer",
-            "success": False
-        }, 400
-    
-        if video == None:
-            return Response ("" , 404)
-    
         if video:
+            if not video.is_int():
+                return {
+                "message": "id must be an integer",
+                "success": False
+            }, 400
+        
             return make_response(video.to_json(), 200)
+        else: #if there is no video 
+            return Response ("", 404)
 
 # PUT an update on a current video by id
     elif request.method == "PUT":
@@ -178,4 +186,5 @@ def video_by_id(id):
             db.session.commit()
             
             return jsonify(id=int(id)), 200
+
 
