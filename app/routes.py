@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, make_response
 from app.models import customer 
 from app.models.customer import Customer
 from app.models.video import Video
-from app.models.rental import Rental 
+# from app.models.rental import Rental 
 from datetime import datetime, time 
 from app import db 
 
@@ -26,19 +26,25 @@ def create_customers():
     customer = Customer(name = request_body["name"],
         postal_code = request_body["postal_code"],
         phone = request_body["phone"],
-        register_at = datetime.datetime.now())
+        register_at = datetime.now())
 
     db.session.add(customer)
     db.session.commit()
 
-    return customer.to_json_customer(), 201
+    return jsonify({
+        "id": customer.id
+    }), 201
 
 @customers_bp.route("", methods=["GET"], strict_slashes=False)
 def get_customers():
     customers = Customer.query.all()
+
+    list_of_customer = []
     
     for customer in customers:
-        return jsonify(customer.to_json_customer())
+        list_of_customer.append(customer.to_json_customer())
+
+    return jsonify(list_of_customer)
 
 
 @customers_bp.route("<customer_id>", methods=["GET", "PUT", "DELETE"], strict_slashes=False)
@@ -74,8 +80,8 @@ def handle_customer(customer_id):
         db.session.commit()
 
         return jsonify({
-            "id": customer.id,
-            "details": f'Customer {customer.id}, {customer.name}, successfully deleted.'})
+            "id": customer.id })
+            # "details": f'Customer {customer.id}, {customer.name}, successfully deleted.'})
 
 #route for class Video
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
@@ -134,6 +140,6 @@ def handle_video(video_id):
 
 
 #route for class rental  
-rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
+# rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 

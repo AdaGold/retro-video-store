@@ -29,7 +29,8 @@ class Customer(db.Model):
         return {
         "id": self.id,
         "name": self.name,
+        "phone": self.phone,
         "postal_code": self.postal_code,
-        "register_at": self.register_at, # or self.registered_customer()
-        "checkout_count": self.checkout_count
+        "registered_at": self.register_at, # or self.registered_customer()
+        "videos_checked_out_count": self.checkout_count
         }
