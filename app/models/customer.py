@@ -8,18 +8,14 @@ class Customer(db.Model):
     name = db.Column(db.String)
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
-    register_at = db.Column(db.DateTime)
-    videos_checked_out_count = db.Column(db.Integer)
+    register_at = db.Column(db.DateTime, default=datetime.now(), nullable=True)
+    videos_checked_out_count = db.Column(db.Integer, default=0)
 
     def customer_response(self):
-        if self.register_at:
-            registered = datetime.datetime(self.register_at)
-        else:
-            registered = None
         customer_dictionary={
             "id": self.customer_id,
             "name": self.name,
-            "registered_at": registered,
+            "registered_at": self.register_at,
             "postal_code": self.postal_code,
             "phone": self.phone,
             "videos_checked_out_count": self.videos_checked_out_count
