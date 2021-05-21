@@ -11,13 +11,14 @@
 # video_id	integer	ID of the video to be checked out
 
 from app.models import customer
+from app.models import video 
 from flask import current_app
 from app import db
 
 class Rental(db.Model):
     rental_id = db.Column(db.Integer, primary_key=True)
-    customer_id = db.Column(db.Integer, db.ForeignKey('customer.customer_id'), nullable=True)
-    video_id = db.Column(db.Integer, db.ForeignKey('video.video_id'), nullable=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=True)
+    video_id = db.Column(db.Integer, db.ForeignKey('video.id'), nullable=True)
     due_date = db.Column(db.DateTime, nullable = True)
 
 

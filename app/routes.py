@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, make_response
 from app.models import customer 
 from app.models.customer import Customer
 from app.models.video import Video
-# from app.models.rental import Rental 
+from app.models.rental import Rental 
 from datetime import datetime, time 
 from app import db 
 
@@ -148,6 +148,6 @@ def handle_video(video_id):
 
 
 #route for class rental  
-# rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 
