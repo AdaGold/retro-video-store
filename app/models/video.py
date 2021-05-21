@@ -9,7 +9,8 @@ class Video(db.Model):
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime, nullable=True)
     total_inventory = db.Column(db.Integer)
-    available_inventory = db.Column(db.Integer,default=0, nullable = True)
+    # available_inventory = db.Column(db.Integer,default=0, nullable = True)
+    # returns a list of customers linked to this particular video (since multiple copies)
     customers = db.relationship('Customer', back_populates='videos', secondary='rentals')
     # rentals = db.relationship('Rental', backref='rental', lazy=True)
 
@@ -19,5 +20,7 @@ class Video(db.Model):
             "title": self.title,
             "release_date": self.release_date,
             "total_inventory": self.total_inventory,
-            "available_inventory": self.available_inventory
-        }
+            "available_inventory": self.index_available_inventory}
+    
+    def index_available_inventory(self):
+        return self.total_inventory - len(self.customers)

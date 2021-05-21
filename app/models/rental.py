@@ -17,11 +17,11 @@ class Rental(db.Model):
     # customer = db.relationship('Customer', backref='customer', lazy=True)
     # video = db.relationship('Video', backref='video', lazy=True)
 
-    def to_json(self):
-        return {
-            "customer_id": self.customer_id,
-            "video_id": self.video_id,
-            "due_date": self.due_date,
-            "videos_checked_out_count": self.customer.videos_checked_out_count,
-            "available_inventory": self.video.available_inventory
-        }
+    # def to_json(self):
+    #     return {
+    #         "customer_id": self.customer_id,
+    #         "video_id": self.video_id,
+    #         "due_date": self.due_date,
+    #         "videos_checked_out_count": self.customer.videos_checked_out_count,
+    #         "available_inventory": self.video.available_inventory
+    #     }

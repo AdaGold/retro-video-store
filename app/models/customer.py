@@ -12,7 +12,8 @@ class Customer(db.Model):
     phone = db.Column(db.String)
     postal_code = db.Column(db.String)
     registered_at = db.Column(db.DateTime, default=datetime.utcnow())
-    videos_checked_out_count = db.Column(db.Integer, default=0)
+    # videos_checked_out_count = db.Column(db.Integer, default=0)
+    # creates a list of checked out videos
     videos = db.relationship('Video', back_populates='customers', secondary='rentals')
     # rentals = db.relationship('Rental', backref='rental', lazy=True)
 
@@ -23,5 +24,9 @@ class Customer(db.Model):
             "phone": self.phone,
             "postal_code": self.postal_code,
             "registered_at": self.registered_at,
-            "videos_checked_out_count": self.videos_checked_out_count
+            # index_checked_out function can be called to show checkout count
+            "videos_checked_out_count": self.index_checked_out()
         }
+    # returns the length (amount) of checked out videos, via videos list
+    def index_checked_out(self):
+        return len(self.videos)
