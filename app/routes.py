@@ -2,15 +2,14 @@ from flask import Blueprint, request, jsonify, make_response
 from app.models import customer 
 from app.models.customer import Customer
 from app.models.video import Video
-from app.models.rental import Rental 
-from datetime import datetime, time 
+# from app.models.rental import Rental 
+from datetime import datetime, time, timedelta
 from app import db 
 
-#route for class Customer 
+#route for class Customer, Video, Rental 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
-
-# #route for class Video
-# videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+# rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 #Post customers detail tests
 @customers_bp.route("", methods=["POST"], strict_slashes=False)
@@ -18,7 +17,7 @@ def create_customers():
 
     request_body = request.get_json()
 
-    if not "name" in request_body or not "postal_code" in request_body or not "phone" in request_body:
+    if "name" not in request_body or "postal_code" not in request_body or "phone" not in request_body:
         return jsonify({
             "errors": "Not Found"
             }), 400
@@ -26,7 +25,7 @@ def create_customers():
     customer = Customer(name = request_body["name"],
         postal_code = request_body["postal_code"],
         phone = request_body["phone"],
-        register_at = datetime.now())
+        registered_at = datetime.now())
 
     db.session.add(customer)
     db.session.commit()
@@ -47,50 +46,69 @@ def get_customers():
     return jsonify(list_of_customer), 200
 
 
-@customers_bp.route("<customer_id>", methods=["GET", "PUT", "DELETE"], strict_slashes=False)
-def handle_customer(customer_id):
+@customers_bp.route("/<customer_id>", methods=["GET"], strict_slashes=False)
+def get_customer_info(customer_id):
 
     customer = Customer.query.get(customer_id)
 
-    if customer is None:
-        return "Not Found.", 404
+    if customer == None:
+        return make_response({"details": "Invalid data"}, 404)
 
-    if request.method == "GET":
-        return customer.to_json_customer()
+    # return {
+    #     "id": customer.id,
+    #     "name": customer.name,
+    #     "phone": customer.phone,
+    #     "postal_code": customer.postal_code,
+    #     "registered_at": customer.registered_at,
+    #     "videos_checked_out_count": customer.videos_checked_out_count
+    # }
 
-    if request.method == "PUT":
-        request_body = request.get_json()
+    return customer.to_json_customer(), 200
 
-        if not "name" in request_body or not "postal_code" in request_body or not "phone" in request_body:
-            return jsonify({
-                "errors": "Not Found"
-                }), 400
+@customers_bp.route("/<customer_id>", methods=["PUT"], strict_slashes=False)
+def update_customer(customer_id):
 
-        customer.name = request_body["name"]
-        customer.postal_code = request_body["postal_code"]
-        customer.phone = request_body["phone"]
+    customer = Customer.query.get(customer_id)
 
-        db.session.commit()
+    if customer == None:
+        return make_response({"details": "Invalid data"}, 404)
 
-        return customer.to_json_customer()
+    request_body = request.get_json()
 
-    if request.method == "DELETE":
-
-        db.session.commit()
-        # db.session.commit()
-
+    if not "name" in request_body or not "postal_code" in request_body or not "phone" in request_body:
         return jsonify({
-            "id": customer.id})
+            "errors": "Not Found"
+            }), 400
+    
+    customer.name = request_body["name"]
+    customer.postal_code = request_body["postal_code"]
+    customer.phone = request_body["phone"]
 
-#route for class Video
-videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+    db.session.commit()
+
+    return customer.to_json_customer(), 200
+
+
+@customers_bp.route("<customer_id>", methods=["DELETE"], strict_slashes=False)
+def delete_customer(customer_id):
+    
+    customer = Customer.query.get(customer_id)
+
+    if customer == None:
+        return make_response({"details": "Invalid data"}, 404)
+
+    db.session.delete(customer)
+    db.session.commit()
+
+    return jsonify({
+        "id": customer.id}), 200
 
 @videos_bp.route("", methods=["POST"], strict_slashes=False)
 def create_videos():
 
     request_body = request.get_json()
 
-    if not "title" in request_body or not "release_date" in request_body or not "total_inventory" in request_body:
+    if "title" not in request_body or "release_date" not in request_body or "total_inventory" not in request_body:
         return jsonify({
             "errors": "Not Found"
             }), 400
@@ -105,8 +123,6 @@ def create_videos():
     return jsonify({
         "id": video.id
     }), 201
-
-    # return customer.to_json_customer(), 201
 
 @videos_bp.route("", methods=["GET"], strict_slashes=False)
 def get_video():
@@ -146,8 +162,140 @@ def handle_video(video_id):
         return jsonify({
             "id": video.id })
 
+# #rental checkout 
+# @rentals_bp.route("/rentals/check_out", methods=["POST"], strict_slashes=False)
+# def rental_checkout():
+#     rental = request.get_json()
 
-#route for class rental  
-rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
+# # The API should return back detailed errors and a status 400: Bad Request if the video does not have any available inventory before check out
+#     if (rental["customer_id"]) is not int or (rental["rental_id"]) is not int:
+#         return {
+#             "detail": "Invaid Data. Must be an Integer."
+#         }, 400
+
+#     rental_list = Rental(customer_id = rental["customer_id"],
+#                         video_id = rental["video_id"],
+#                         due_date = datetime.now() + timedelta(7))# adds 7 days to datetime.now(current_date)
 
 
+# # customer checks out a video
+# # when checks out successfully:
+# # adds #customer's videos_checked_out by one
+# # Descrease the #video's available_inventory by one
+# # also create a due_date 7 days from current date
+
+# #customer_id and video_id are integers
+
+# #due_date = due_date is always 7 days from checked out date
+# #videos_checked_out_count = videos_checked_out_count ++
+# #available_inventory = available_inventory - videos_checked_out_count 
+
+# # The API should return back detailed errors and a status 404: Not Found if the customer does not exist
+#     customer = Customer.query.get(rental_list.customer_id)
+#     if customer is None:
+#         return "Not Found", 404
+
+# # The API should return back detailed errors and a status 404: Not Found if the video does not exist
+#     video = Video.query.get(rental_list.video_id)
+#     if video is None:
+#         return "Not Found", 404
+
+#     if video.available_inventory == 0:
+#         return {
+#             "message": "No inventory."
+#         }, 400
+
+#     customer.videos_checked_out_count += 1
+#     video.available_inventory -= 1
+
+#     db.session.add(rental_list)
+#     db.session.commit()
+
+#     return {
+#         "customer_id": rental_list.customer_id,
+#         "video_id": rental_list.video_id,
+#         "due_date": rental_list.due_date, #7 days from checked out date
+#         "videos_checked_out_count": customer.videos_checked_out_count,
+#         "available_inventory": video.available_inventory 
+#     }
+
+
+# @rentals_bp.route("/rentals/check_in", methods=["POST"], strict_slashes=False)
+# def rental_checkin():
+#     checkin_list= request.get_json()
+
+#     checkin_customer = checkin_list["customer_id"]
+#     checkin_video = checkin_list["video_id"]
+
+#     customer = Customer.query.get(checkin_customer)
+#     video = Video.query.get(checkin_video)
+
+#     rental = Rental.query.all()
+
+#     if customer is None:
+#         return "Customer not found.", 404
+
+#     if video is None:
+#         return "Video not found.", 404
+
+#     customer.videos_checked_out_count -= 1
+#     video.available_inventory += 1
+
+#     db.session.commit()
+
+#     return {
+#         "customer_id": customer.id,
+#         "video_id": video.id,
+#         "videos_checked_out_count": customer.videos_checked_out_count,
+#         "available_inventory": video.available_inventory
+#     }
+
+
+# @rentals_bp.route("/customers/<id>/rentals", methods=["GET"], strict_slashes=False)
+# List the videos a customer currently has checked out
+# def get_video_by_customer_checkout(id):
+
+#     customer = Customer.query.get(id)
+
+#     if not customer:
+#         return({"details":"Invalid data"},400)
+
+#     video_list =[]
+
+#     for rental in customer.rentals:
+
+#         video = Video.query.get(rental.video_id)
+
+#         video_list.append({
+#             "release_date": video.release_date,
+#             "title": video.title,
+#             "due_date": rental.due_date
+
+#         })
+
+#     return jsonify(video_list)
+
+
+# # @rentals_bp.route("/videos/<id>/rentals", methods=["GET"], strict_slashes=False)
+# # List the customers who currently have the video checked out
+# def get_customer_by_video_checkout(id):
+
+#     video= Video.query.get(id)
+
+#     if not video:
+#         return({"details":"Invalid data"},400)
+
+#     customer_list = []
+
+#     for rental in video.rentals:
+
+#         customer = Customer.query.get(rental.customer_id)
+
+#         customer_list.append({
+#             "name":Customer.name,
+#             "phone":video.phone,
+#             "postal_code":Customer.postal_code,
+#             "due_date":rental.due_date
+
+#         })
+#     return jsonify(customer_list)

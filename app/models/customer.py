@@ -14,9 +14,9 @@ class Customer(db.Model):
     name = db.Column(db.String)
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
-    register_at = db.Column(db.DateTime, nullable = True)
+    registered_at = db.Column(db.DateTime, nullable = True)
     checkout_count = db.Column(db.Integer, default =0) #why do I need this here?
-    rentals = db.relationship('Rental', backref = 'customer')
+    # rentals = db.relationship('Rental', backref = 'customer')
     
 
     def registered_customer(self):
@@ -32,6 +32,6 @@ class Customer(db.Model):
         "name": self.name,
         "phone": self.phone,
         "postal_code": self.postal_code,
-        "registered_at": self.register_at, # or self.registered_customer()
+        "registered_at": self.registered_at, # or self.registered_customer()
         "videos_checked_out_count": self.checkout_count
         }
