@@ -15,3 +15,18 @@ def test_create_rental(client, one_customer, one_video):
     assert response_body["video_id"] == 1
     assert response_body["videos_checked_out_count"] == 1
     assert response_body["available_inventory"] == 9
+
+def test_return_rental(client, one_rental):
+    # Act
+    response = client.post("/rentals/check-in", json={
+        "customer_id": 1,
+        "video_id": 1
+    })
+
+    response_body = response.get_json()
+    # Assert
+    assert response.status_code == 200
+    assert response_body["customer_id"] == 1
+    assert response_body["video_id"] == 1
+    assert response_body["videos_checked_out_count"] == 0
+    assert response_body["available_inventory"] == 10

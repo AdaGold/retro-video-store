@@ -2,6 +2,7 @@ import pytest
 from app import create_app
 from app.models.customer import Customer
 from app.models.video import Video
+from app.models.rental import Rental
 from app import db
 from datetime import datetime
 
@@ -24,6 +25,27 @@ def app():
 def client(app):
     return app.test_client()
 
+@pytest.fixture
+def one_rental(app):
+    c = Customer(name = "minh",
+                postal_code = 98123,
+                phone = "555-555-5555",
+                register_at = datetime.utcnow())
+
+    v = Video(title = "Howls Moving Castle",
+            release_date = "2005-07-17",
+            total_inventory = 10)
+
+    r = Rental(customer_id = 1,
+                video_id = 1)
+    
+    db.session.add(c)
+    db.session.add(v)
+    db.session.commit()
+    db.session.add(r)
+    db.session.commit()
+
+
 
 @pytest.fixture
 def one_customer(app):
@@ -32,7 +54,7 @@ def one_customer(app):
                 phone = "555-555-5555",
                 register_at = datetime.utcnow())
 
-    db.session.add(c) 
+    db.session.add(c)
     db.session.commit()
 
 

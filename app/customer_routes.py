@@ -102,3 +102,7 @@ def delete_customer(customer_id):
     db.session.commit()
 
     return {"id": customer.customer_id},200
+
+
+# @customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
+# def get_customer_rentals():
