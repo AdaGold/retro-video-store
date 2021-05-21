@@ -9,14 +9,15 @@ customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
-def valid_item(item): # convert to decorator?
+def valid_item(item):
     '''
     Checks if item exists in the table
     '''
     if item is not None:
         return True
 
-# can I combine these?
+# not sure if it's better to combine valid_item and valid_data_type
+# since they technically check for two different things
 def valid_data_type(item, data_type):
     '''
     Checks if item is valid data type
