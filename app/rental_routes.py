@@ -7,6 +7,13 @@ from app.models.video import Video
 
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
+def is_int(value):
+    try:
+        return int(value)
+    except ValueError:
+        return False
+
+
 @rentals_bp.route("/check-out",methods=["POST"], strict_slashes=False)
 def create_rental():
     body = request.get_json()
@@ -15,7 +22,20 @@ def create_rental():
         "video_id" not in body.keys()):
         return {"error" : "Not Found"}, 404
 
+    if not is_int(body["customer_id"]):
+        return {"error" : "Bad Request"}, 400
+
+    if not is_int(body["video_id"]):
+        return {"error" : "Bad Request"}, 400
+
     video = Video.query.get(body["video_id"])
+    customer = Customer.query.get(body["customer_id"])
+
+    if video is None:
+        return {"error" : "Not Found"}, 404
+    
+    if customer is None:
+        return {"error" : "Not Found"}, 404
     
     if video.get_available_inventory() == 0:
         return{"error": "No Available Inventory"}, 400
@@ -25,8 +45,6 @@ def create_rental():
 
     db.session.add(new_rental)
     db.session.commit()
-
-    customer = Customer.query.get(body["customer_id"])
 
     return {
         "customer_id": customer.customer_id,
@@ -48,7 +66,7 @@ def return_rental():
     rental = Rental.query.filter(Rental.customer_id == body["customer_id"], Rental.video_id == body["video_id"]).first()
 
     if rental is None:
-        return ("", 400)
+        return {"error" : "Bad Request"}, 400
 
     customer = Customer.query.get(body["customer_id"])
 
