@@ -233,3 +233,35 @@ def check_in_video():
                 "available_inventory": video.available_inventory}, 200)
 
 
+@customers_bp.route("/<customer_id>/rentals", methods=["GET"])
+def get_rentals_by_customer(customer_id):
+    customer = Customer.query.get(customer_id)
+    if not customer:
+        return {"error": "Customer not found."}, 400
+    rental_list = []
+    for rental in customer.rentals:
+        video = Video.query.get(rental.video_id)
+        video_info = {
+            "release_date": video.release_date,
+            "title": video.title,
+            "due_date": rental.due_date
+        }
+        rental_list.append(video_info)
+    return jsonify(rental_list)
+
+@videos_bp.route("<video_id>/rentals", methods=["GET"])
+def get_customers_by_rental(video_id):
+    video = Video.query.get(video_id)
+    if not video:
+        return {"error": "Video not found."}, 400
+    customer_list = []
+    for rental in video.rentals:
+        customer = Customer.query.get(rental.customer_id)
+        customer_info = {
+            "name": customer.name,
+            "phone": customer.phone,
+            "postal_code": customer.postal_code,
+            "due_date": rental.due_date
+        }
+        customer_list.append(customer_info)
+    return jsonify(customer_list)
