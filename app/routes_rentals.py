@@ -20,7 +20,7 @@ def check_out_rentals():
     video = Video.query.get(video_id)
 
     if customer and video: 
-        if video.available_inventory == 0: 
+        if video.available_inventory <= 0: 
             return {"details": "insufficient inventory"}, 400
         else:
             new_rental = Rental.make_a_rental(request_body, id=None)
@@ -31,7 +31,6 @@ def check_out_rentals():
             db.session.commit()
 
             return jsonify(new_rental.check_out_to_json(customer, video)), 200
-
     return make_response("", 404)
 
 @rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
@@ -56,11 +55,9 @@ def check_in_rentals():
                 db.session.delete(rental)
             db.session.commit()
 
-            return {
-                    "customer_id": customer_id,
-                    "video_id": video_id,
-                    "videos_checked_out_count": max(0,customer.videos_checked_out_count),
-                    "available_inventory": video.available_inventory            
-            }, 200
+            to_json = rental.check_out_to_json(customer, video)
+            del to_json["due_date"]
+            return jsonify(to_json), 200
+
         return {"details": "this rental record does not exist"}, 400
     return make_response("", 404)

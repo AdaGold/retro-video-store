@@ -52,13 +52,7 @@ def update_video(video_id):
             if key not in update_data or bool(update_data) is False:
                 return {"details": "Invalid data"}, 400
 
-        video.title = update_data["title"]
-        video.release_date = update_data["release_date"]
-        video.total_inventory = update_data["total_inventory"]
-        
-        # update_data["customer_id"] = customer_id
-        # db.session.query(Customer).update(update_data)
-
+        db.session.query(Video).filter(Video.video_id==video_id).update(update_data)
         db.session.commit()
         return jsonify(video.to_json()), 200
     

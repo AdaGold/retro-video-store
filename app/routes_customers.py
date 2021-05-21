@@ -52,10 +52,7 @@ def update_customer(customer_id):
             if key not in update_data or bool(update_data) is False:
                 return {"details": "Invalid data"}, 400
 
-        customer.name = update_data["name"]
-        customer.postal_code = update_data["postal_code"]
-        customer.phone = update_data["phone"]
-
+        db.session.query(Customer).filter(Customer.customer_id==customer_id).update(update_data)
         db.session.commit()
         return jsonify(customer.to_json()), 200
     

@@ -15,7 +15,7 @@ class Rental(db.Model):
                 "customer_id": self.customer_id,
                 "video_id": self.video_id,
                 "due_date": self.due_date,
-                "videos_checked_out_count": customer.videos_checked_out_count, 
+                "videos_checked_out_count": max(0,customer.videos_checked_out_count), 
                 "available_inventory": video.available_inventory            
         }
         return to_json
