@@ -8,8 +8,8 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime) 
     total_inventory = db.Column(db.Integer) 
     available_inventory = db.Column(db.Integer)
-    # Becca: same as Customer file
-    #rental = db.relationship('Rental', backref='rental', lazy=True) # import the rental model up top?
+    # Becca: make same as Customer file
+    #rental = db.relationship('Rental', backref='video', lazy=True)
     
     def to_json(self):
         return {
@@ -19,3 +19,8 @@ class Video(db.Model):
             "total_inventory": self.total_inventory,
             "available_inventory": self.available_inventory
             }
+    
+    # class Parent(Base):
+    # __tablename__ = 'parent'
+    # id = Column(Integer, primary_key=True)
+    # children = relationship("Child", backref="parent")

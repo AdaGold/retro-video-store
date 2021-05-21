@@ -1,6 +1,7 @@
 from app import db
+from app.models import video
 from app.models.customer import Customer
-#from app.models.rentals import Rental
+from app.models.rentals import Rental
 from app.models.video import Video
 from flask import json, request, Blueprint, make_response, jsonify, Flask
 from datetime import datetime
@@ -14,7 +15,7 @@ load_dotenv()
 
 customer_bp = Blueprint("customers", __name__, url_prefix="/customers")
 video_bp = Blueprint("videos", __name__, url_prefix="/videos")
-#rental_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
+rental_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 # CRUD CUSTOMERS
 @customer_bp.route("", methods=["GET"])
@@ -133,9 +134,9 @@ def create_video():
 
     new_video = Video(title=request_body["title"],
                     release_date=request_body["release_date"], # offer this format when creating a video: "1981-08-12" and it'll turn it to datetime obj in response
-                    total_inventory=request_body["total_inventory"]) #,   # set this to 0??? to address 'null should be 0' in postman test? 
+                    total_inventory=request_body["total_inventory"], #,   # set this to 0??? to address 'null should be 0' in postman test? 
                     # commented next line out for tests
-                    #available_inventory=request_body["available_inventory"])
+                    available_inventory=request_body["total_inventory"])
 
     db.session.add(new_video)
     db.session.commit()
@@ -183,15 +184,78 @@ def delete_single_video(video_id):
     db.session.commit()
     return make_response({"id": single_video.video_id}, 200) 
 
-# # CRUD RENTALS ???
-# @rental_bp.route("/check-out", methods=["POST"])
-# def create_rental():
-#     """Check out a video to a customer, re-creating it as a rental in the process"""
-#     request_body = request.get_json() # employee scanning the movie the customer wants to take home
+# CRUD RENTALS
+@rental_bp.route("/check-out", methods=["POST"])
+def check_out_video():
+    """Check out a video to a customer"""
+    request_body = request.get_json() # {'customer_id': 7, 'video_id': 'not a valid id', 'check_out_date': datetime.datetime(2021, 5, 20, 18, 11, 13, 797662)}
 
-#     video_turned_rental = Rental(customer_id=request_body["customer_id"],
-#                                 video_id=request_body["video_id"],
-#                                 check_out_date=datetime.now()) #
-#     return jsonify(video_turned_rental.to_json())
+    if "customer_id" not in request_body or "video_id" not in request_body: # only check that keys exist in arg being passed by API
+        return make_response({"details": "Incomplete entry. Please include customer ID and video ID."}, 400)
+    elif (type(request_body["customer_id"]) != int) or (type(request_body["video_id"]) != int):
+        return make_response({"details": "Customer ID and video ID must be integers!"}, 400)
+    loaned_video = Rental(customer_id=request_body["customer_id"],
+                                video_id=request_body["video_id"],
+                                check_out_date=datetime.now()) 
 
+    customer = Customer.query.get(loaned_video.customer_id)
+    video = Video.query.get(loaned_video.video_id)
+
+    if customer is None or video is None: # 'is' or '=='?
+        return make_response({"details": "The customer and/or the video does not exist."}, 404)
+    if video.available_inventory == 0:
+        return make_response({"details": "All copies of this video are checked out."}, 400)
+
+    customer.videos_checked_out_count += 1 # add 1 to the customer's num vids checked out
+    video.available_inventory -= 1 # remove 1 from total available inventory bc someone has it now
+
+    db.session.add(loaned_video)
+    db.session.commit()
+    return jsonify(loaned_video.to_json())
+
+@rental_bp.route("/check-in", methods=["POST"])
+def check_in_video():
+    """Checks a customer's video back in"""
+    request_body = request.get_json() # {"customer_id": 16, "video_id": 17}
+    print('CHECK IN RB: ', request_body)
+
+    for detail in ["customer_id", "video_id"]: 
+        if not (detail in request_body):
+            return make_response({}, 400) # checks that incoming request body is complete (keys all present)
+
+    returned_video = Rental(customer_id=request_body["customer_id"],
+                            video_id=request_body["video_id"])
+    customer = Customer.query.get(returned_video.customer_id)
+    video = Video.query.get(returned_video.video_id)
+
+    if customer is None or video is None: # 'is' or '=='?
+        return make_response({"details": "The customer and/or the video does not exist."}, 404)
+    if (video.video_id != request_body["video_id"]) or (customer.customer_id != request_body["customer_id"]):
+        return make_response("", 400)
+    if video.available_inventory == video.total_inventory:
+        return make_response({
+            "customer_id": customer.customer_id,
+            "video_id": video.video_id,
+            "videos_checked_out_count": customer.videos_checked_out_count, 
+            "available_inventory": video.available_inventory
+            }, 400)
+
+    customer.videos_checked_out_count -= 1 # add 1 to the customer's num vids checked out
+    video.available_inventory += 1 # remove 1 from total available inventory bc someone has it now
+
+    db.session.add(returned_video)
+    db.session.commit()
+    return jsonify({
+            "customer_id": customer.customer_id,
+            "video_id": video.video_id,
+            "videos_checked_out_count": customer.videos_checked_out_count, 
+            "available_inventory": video.available_inventory
+            })
+
+@customer_bp.route("/customer_id/rentals", methods=["GET"])
+def list_customer_videos(customer_id):
+    """Retrieves all videos a customer has checked out"""
+    hold_customer_rented_vids = []
+    customer = Customer.query.get(customer_id) # customer whose videos we're looking for
+    print('RENTALS: ', customer)
 
