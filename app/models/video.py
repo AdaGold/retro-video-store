@@ -2,7 +2,6 @@ from app import db
 
 def default_inventory(video):
     return video.get_current_parameters()['total_inventory']
-    # why does this work if the function isn't called with ()?
 
 class Video(db.Model):
     video_id = db.Column(db.Integer, primary_key=True, autoincrement=True)

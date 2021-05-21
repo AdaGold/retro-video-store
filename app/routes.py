@@ -12,8 +12,15 @@ rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 def valid_item(item): # convert to decorator?
     '''
     Checks if item exists in the table
+    Is this even useful? How can I add more functionality to this?
     '''
     if item is not None:
+        return True
+
+# is there a way this can be combined with the above function to "validate" data
+# or not because they do slightly different things?
+def valid_data_type(item, data_type):
+    if type(item) != data_type:
         return True
 
 @customers_bp.route("", methods=["GET"])
@@ -203,15 +210,20 @@ def check_out():
     '''
     request_body = request.get_json()
 
+    # if not valid_data_type(request_body["customer_id"], int) or\
+    # if not valid_data_type(request_body["video_id"], int):
+    #     return jsonify("IDs must be an integer"), 400
+
     if type(request_body["customer_id"]) != int or\
         type(request_body["video_id"]) != int:
             return jsonify("IDs must be an integer"), 400
 
-    customer_id = request_body["customer_id"]
-    video_id = request_body["video_id"]
+    # customer_id = request_body["customer_id"]
+    # video_id = request_body["video_id"]
 
-    customer = Customer.query.get(customer_id)
-    video = Video.query.get(video_id)
+    # replacing customer_id with request_body["customer_id"]
+    customer = Customer.query.get(request_body["customer_id"])
+    video = Video.query.get(request_body["video_id"])
 
     if not valid_item(customer) or not valid_item(video):
         return make_response("Customer or video not found", 404)
@@ -247,6 +259,10 @@ def check_in():
     Increases video's available_inventory
     '''
     request_body = request.get_json()
+
+    # if not valid_data_type(request_body["customer_id"], int) or\
+    # if not valid_data_type(request_body["video_id"], int):
+    #     return jsonify("IDs must be an integer"), 400
 
     if type(request_body["customer_id"]) != int or\
         type(request_body["video_id"]) != int:
@@ -284,7 +300,7 @@ def get_customer_videos(customer_id):
     if customer is None:
         return make_response("", 400)
 
-    video_list = [] # list of videos currently rented by customer
+    video_list = [] # list of videos currently rented by a particular customer
 
     rental_results = db.session.query(Customer, Video, Rental).join(
         Customer, Customer.customer_id==Rental.customer_id).join(
@@ -306,7 +322,7 @@ def get_customer_videos(customer_id):
 @videos_bp.route("/<video_id>/rentals", methods=["GET"])
 def get_video_customers(video_id):
     '''
-    Gets list of all customers who have checked out a video
+    Gets list of all customers who have checked out a particulat video
     '''
     video = Video.query.get(video_id)
     if not valid_item(video):
