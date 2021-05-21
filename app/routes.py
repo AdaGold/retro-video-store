@@ -6,6 +6,7 @@ from app.models.customer import Customer
 from app.models.rental import Rental 
 from datetime import datetime, time, timedelta
 from app import db 
+from sqlalchemy.orm import relationship, backref
 
 #route for class Customer, Video, Rental 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
@@ -112,7 +113,8 @@ def create_videos():
     
     video = Video(title= request_body["title"],
         release_date = request_body["release_date"],
-        total_inventory = request_body["total_inventory"])
+        total_inventory = request_body["total_inventory"],
+        available_inventory = request_body['total_inventory'])
 
     db.session.add(video)
     db.session.commit()
@@ -171,14 +173,14 @@ def rental_checkout():
 
 # The API should return back detailed errors and a status 400: Bad Request if the video does not have any available inventory before check out
 #check-out of invalid customer ID and video ID
-    if (rental["customer_id"]) is not int or (rental["rental_id"]) is not int:
+    if not isinstance(rental["customer_id"], int) or not isinstance(rental["video_id"], int):
         return {
             "detail": "Invaid Data. Must be an Integer."
         }, 400
 
-    # rental_list = Rental(customer_id = rental["customer_id"],
-    #                     video_id = rental["video_id"],
-    #                     due_date = datetime.now() + timedelta(days=7))# adds 7 days to datetime.now(current_date)
+    rental_list = Rental(customer_id = rental["customer_id"],
+                        video_id = rental["video_id"],
+                        due_date = datetime.now() + timedelta(days=7))# adds 7 days to datetime.now(current_date)
 
 # customer checks out a video
 # when checks out successfully:
@@ -193,27 +195,28 @@ def rental_checkout():
 #available_inventory = available_inventory - videos_checked_out_count 
 
 # The API should return back detailed errors and a status 404: Not Found if the customer does not exist
-#     customer = Customer.query.get(rental_list.customer_id)
-#     if customer is None:
-#         return "Not Found", 404
+    customer = Customer.query.get(rental_list.customer_id)
+    if customer is None:
+        return "Not Found", 404
 
 # # The API should return back detailed errors and a status 404: Not Found if the video does not exist
-#     video = Video.query.get(rental_list.video_id)
-#     if video is None:
-#         return "Not Found", 404
+    video = Video.query.get(rental_list.video_id)
+    if video is None:
+        return "Not Found", 404
 
-#     # if video.available_inventory == 0:
-#     #     return {
-#     #         "message": "No inventory."
-#     #     }, 400
+    # if video.available_inventory <= 0:
+    #     return {
+    #         "message": "Invalid data."
+    #     }, 400
 
-    customer.videos_checked_out_count += 1
+    customer.checkout_count += 1
     video.available_inventory -= 1
 
-    # db.session.add(rental_list)
+
+    db.session.add(rental_list)
     db.session.commit()
 
-    return Rental.to_json_rental(), 200
+    return rental_list.to_json_rental(), 200
 
     # return {
     #     "customer_id": rental_list.customer_id,
@@ -242,7 +245,7 @@ def rental_checkin():
     if video is None:
         return "Video not found.", 404
 
-    customer.videos_checked_out_count -= 1
+    customer.checkout_count -= 1
     video.available_inventory += 1
 
     db.session.commit()
@@ -250,7 +253,7 @@ def rental_checkin():
     return {
         "customer_id": customer.id,
         "video_id": video.id,
-        "videos_checked_out_count": customer.videos_checked_out_count,
+        "videos_checked_out_count": customer.checkout_count,
         "available_inventory": video.available_inventory
     }
 
