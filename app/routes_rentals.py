@@ -29,7 +29,7 @@ def check_out_rentals():
             
             db.session.add(new_rental)
             db.session.commit()
-            print(Rental.query.all())
+
             return jsonify(new_rental.check_out_to_json(customer, video)), 200
 
     return make_response("", 404)
@@ -47,18 +47,20 @@ def check_in_rentals():
     video = Video.query.get(video_id)
 
     if customer and video: 
-        customer.videos_checked_out_count -= 1
-        if customer.videos_checked_out_count < 0: 
-            return {"details": "video checked out count can't be less than 0"}, 400
-        
-        video.available_inventory += 1
-        db.session.commit()
+        rental = Rental.query.filter_by(customer_id=customer_id, video_id=video_id).all()
+        if rental: 
+            customer.videos_checked_out_count -= 1
+            video.available_inventory += 1
+            
+            for rental in rental:
+                db.session.delete(rental)
+            db.session.commit()
 
-        return {
-                "customer_id": customer_id,
-                "video_id": video_id,
-                "videos_checked_out_count": customer.videos_checked_out_count,
-                "available_inventory": video.available_inventory            
-        }, 200
-
+            return {
+                    "customer_id": customer_id,
+                    "video_id": video_id,
+                    "videos_checked_out_count": max(0,customer.videos_checked_out_count),
+                    "available_inventory": video.available_inventory            
+            }, 200
+        return {"details": "this rental record does not exist"}, 400
     return make_response("", 404)
