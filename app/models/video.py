@@ -1,10 +1,13 @@
 from app import db
 
+def avail_inv_default(context):
+    return context.get_current_parameters()['total_inventory']
+
 class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String)
     total_inventory = db.Column(db.Integer)
-    available_inventory = db.Column(db.Integer)
+    available_inventory = db.Column(db.Integer, default=avail_inv_default)
     release_date = db.Column(db.DateTime)
     rentals = db.relationship("Rental", back_populates="video", lazy=True)
 

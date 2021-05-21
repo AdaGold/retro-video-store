@@ -17,16 +17,15 @@ def create_new_video():
     new_video_data = request.get_json()
     if new_video_data.keys() >= {"title", "release_date", "total_inventory"}:
         new_video = Video(**new_video_data)
-        new_video.available_inventory = new_video_data["total_inventory"]
         db.session.add(new_video)
         db.session.commit()
-        return new_video.video_to_json(), 201
-    return {"details": "Invalid data"}, 400
+        return jsonify(new_video.video_to_json()), 201
+    return jsonify({"details": "Invalid data"}), 400
 
 @videos_bp.route("/<int:video_id>", methods=["GET"], strict_slashes=False)
 def get_single_video(video_id):
     video = Video.query.get_or_404(video_id)
-    return video.video_to_json(), 200
+    return jsonify(video.video_to_json()), 200
 
 @videos_bp.route("/<int:video_id>", methods=["PUT"], strict_slashes=False)
 def update_single_video(video_id):
@@ -37,15 +36,15 @@ def update_single_video(video_id):
         video.release_date = update_video_data["release_date"]
         video.total_inventory = update_video_data["total_inventory"]
         db.session.commit()
-        return video.video_to_json(), 200
-    return {"details": "Invalid data"}, 400
+        return jsonify(video.video_to_json()), 200
+    return jsonify({"details": "Invalid data"}), 400
 
 @videos_bp.route("/<int:video_id>", methods=["DELETE"], strict_slashes=False)
 def delete_single_video(video_id):
     video = Video.query.get_or_404(video_id)
     db.session.delete(video)
     db.session.commit()
-    return {"id": video.id}, 200
+    return jsonify({"id": video.id}), 200
 
 @videos_bp.route("/<int:video_id>/rentals", methods=["GET"], strict_slashes=False)
 def get_videos_check_out_by_customer(video_id):

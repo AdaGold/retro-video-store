@@ -19,13 +19,13 @@ def create_new_customer():
         new_customer = Customer(**new_customer_data)
         db.session.add(new_customer)
         db.session.commit()
-        return new_customer.customer_to_json(), 201
-    return {"details": "Invalid data"}, 400
+        return jsonify(new_customer.customer_to_json()), 201
+    return jsonify({"details": "Invalid data"}), 400
 
 @customers_bp.route("/<int:customer_id>", methods=["GET"], strict_slashes=False)
 def get_single_customer(customer_id):
     customer = Customer.query.get_or_404(customer_id)
-    return customer.customer_to_json(), 200
+    return jsonify(customer.customer_to_json()), 200
 
 @customers_bp.route("/<int:customer_id>", methods=["PUT"], strict_slashes=False)
 def update_single_customer(customer_id):
@@ -36,15 +36,15 @@ def update_single_customer(customer_id):
         customer.postal_code = update_customer_data["postal_code"]
         customer.phone = update_customer_data["phone"]
         db.session.commit()
-        return customer.customer_to_json(), 200
-    return {"details": "Invalid data"}, 400
+        return jsonify(customer.customer_to_json()), 200
+    return jsonify({"details": "Invalid data"}), 400
 
 @customers_bp.route("/<int:customer_id>", methods=["DELETE"], strict_slashes=False)
 def delete_single_customer(customer_id):
     customer = Customer.query.get_or_404(customer_id)
     db.session.delete(customer)
     db.session.commit()
-    return {"id": customer.id}, 200
+    return jsonify({"id": customer.id}), 200
 
 @customers_bp.route("/<int:customer_id>/rentals", methods=["GET"], strict_slashes=False)
 def get_videos_check_out_by_customer(customer_id):
