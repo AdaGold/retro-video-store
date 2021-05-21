@@ -1,5 +1,7 @@
 from re import S
 from flask import current_app
+from app.models.rentals import Rental
+# from app.models.videos import Video
 from app import db
 
 class Customer(db.Model):
@@ -9,6 +11,7 @@ class Customer(db.Model):
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime,nullable=True)
     videos_checked_out_count = db.Column(db.Integer, default=0)
+    rentals = db.relationship('Rental',backref = 'customer')
 
     def to_json(self):
         return {
@@ -18,4 +21,5 @@ class Customer(db.Model):
             "phone":self.phone,
             "registered_at":self.registered_at,
             "videos_checked_out_count":self.videos_checked_out_count
+        
         }

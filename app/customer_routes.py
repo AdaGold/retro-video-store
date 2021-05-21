@@ -1,13 +1,18 @@
 from re import U
+from flask.wrappers import Response
+
+from werkzeug.wrappers import ResponseStreamMixin
 from app import db
 from app.models.customers import Customer
 from app.models.videos import Video
+from app.models.rentals import Rental
 from flask import request, Blueprint, make_response, jsonify
-from datetime import datetime
+from datetime import datetime,timedelta
 import os, requests
 
 customers_bp = Blueprint("cumtomers",__name__,url_prefix="/customers")
 videos_bp = Blueprint("videos",__name__,url_prefix="/videos")
+rentals_bp = Blueprint("rentals",__name__,url_prefix="/rentals")
 
 
 @customers_bp.route("", methods=["POST","GET"], strict_slashes = False)
@@ -122,3 +127,95 @@ def a_single_video(video_id):
         db.session.commit()
 
         return make_response({"id":video_id}, 200)
+
+@customers_bp.route("/<id>/rentals", methods=["GET"], strict_slashes = False)
+def get_rentals_by_customer(id):
+    customer = Customer.query.get(id)
+    if not customer:
+        return({"details":"Invalid data"},400)
+    rental_list =[]
+    for rental in customer.rentals:
+        video = Video.query.get(rental.video_id)
+        rental_list.append({
+            "release_date":video.release_date,
+            "title":video.title,
+            "due_date":rental.due_date
+
+        })
+    return jsonify(rental_list)
+
+
+@videos_bp.route("/<id>/rentals", methods=["GET"], strict_slashes = False)
+def get_rentals_by_customer(id):
+    video= Video.query.get(id)
+    if not video:
+        return({"details":"Invalid data"},400)
+    rental_list =[]
+    for rental in video.rentals:
+        customer = Customer.query.get(rental.customer_id)
+        rental_list.append({
+            "name":Customer.name,
+            "phone":video.phone,
+            "postal_code":Customer.postal_code,
+            "due_date":rental.due_date
+
+        })
+    return jsonify(rental_list)
+
+
+@rentals_bp.route("/check-out", methods=["POST"], strict_slashes = False)
+def check_out():
+    request_body = request.get_json()
+    if type(request_body["customer_id"]) is not int or type(request_body["video_id"]) is not int:
+        return({"details":"Invalid data"},400)
+    
+    customer = Customer.query.get(request_body["customer_id"])
+    video = Video.query.get(request_body["video_id"])
+    
+    rental= Rental(
+        customer_id=customer.customer_id,
+        video_id=video.video_id,
+        due_date=datetime.utcnow()+timedelta(days=7)
+    )
+
+    if video.available_inventory <= 0:
+        return({"details":"Invalid data"},400)
+    else:
+        video.available_inventory -=1
+        customer.videos_checked_out_count +=1
+        db.session.add(rental)
+        db.session.commit()
+        return rental.rental_to_json(),200
+    
+@rentals_bp.route("/check-in", methods=["POST"], strict_slashes = False)  
+def check_in():
+
+    request_body = request.get_json()
+    
+    if type(request_body["customer_id"]) is not int or type(request_body["video_id"]) is not int:
+        return({"details":"Invalid data"},400) 
+    customer = Customer.query.get(request_body["customer_id"])
+    video = Video.query.get(request_body["video_id"])
+    rental = Rental.query.filter_by(
+        customer_id = request_body["customer_id"],
+        video_id = request_body["video_id"]
+    ).first()
+    if not rental:
+        return({"details":"Invalid data"},400) 
+    # rental_check_in=Rental.query.get(request_body["customer_id"], request_body["video_id"])
+    # rental_check_in_body = Rental(
+    #     customer_id=rental_check_out["customer_id"],
+    #     video_id=rental_check_out["video_id"],
+    #     videos_checked_out_count=rental_check_out["videos_checked_out_count"],
+    #     available_inventory=rental_check_out["available_inventory"]
+    # )
+
+    if rental.customer.videos_checked_out_count <=0:
+        return({"details":"Invalid data"},400)
+        
+    rental.video.available_inventory += 1
+    rental.customer.videos_checked_out_count -= 1
+    db.session.commit()
+    response = rental.rental_to_json()
+    del response["due_date"]
+    return response,200
