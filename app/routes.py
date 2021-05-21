@@ -24,12 +24,15 @@ def customer_not_found(customer_id):
 
 @customers_bp.route("", methods=["GET"])
 def get_customers_details():
-    # # sudo code for optional enhancements
+
+    # # # sudo code for optional enhancements
     # query_sort = request.args.get("sort") 
     # if query_sort == "name":
     #     query = Customer.query.order_by(Customer.name.asc())
-    # pagination = query.paginate(page, per_page=10, error_out=True,)
-    # # # # optional part ends
+    # if more_query_sort = "n"
+    # pagination = Customer.query.order_by(Customer.id.asc()).paginate(page, per_page=10, error_out=True)
+    # # # 
+
     customers = Customer.query.all()
     customers_details = []
     for customer in customers:
