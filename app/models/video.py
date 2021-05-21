@@ -17,6 +17,8 @@ class Video(db.Model):
 
     def check_out(self):
         self.available_inventory -= 1
+        db.session.commit()
 
     def check_in(self):
         self.available_inventory += 1
+        db.session.commit()

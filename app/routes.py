@@ -163,10 +163,10 @@ def check_out_video():
     customer.check_out()
 
     new_rental = Rental(
-    video_id = request_body["video_id"],
-    customer_id = request_body["customer_id"],
-    due_date = datetime.datetime.now()+datetime.timedelta(days=7))
-
+        video_id = request_body["video_id"],
+        customer_id = request_body["customer_id"],
+        due_date = datetime.datetime.now()+datetime.timedelta(days=7)
+    )
     db.session.add(new_rental)
     db.session.commit()
 
@@ -186,7 +186,6 @@ def check_in_video():
     video = Video.query.get(vid_id)
     customer = Customer.query.get(cust_id)
     check_if_rental = Rental.query.filter_by(video_id=vid_id, customer_id=cust_id).all()
-    
 
     if "video_id" not in request_body or "customer_id" not in request_body:
         return jsonify(INVALID_DATA_ERROR), 400
@@ -196,11 +195,15 @@ def check_in_video():
         return jsonify(INVALID_DATA_ERROR), 404
     if len(check_if_rental) == 0:
         return jsonify(INVALID_DATA_ERROR), 400
+    if len(check_if_rental) != 0:
+        rental = check_if_rental[0]
+        if rental.checked_out == False:
+            return jsonify({"error": "video already checked-in"}), 400
 
-    
+    rental = check_if_rental[0]
+    rental.check_in()
     video.check_in()
     customer.check_in()
-    db.session.commit()
 
     rental_return = {
         "customer_id": cust_id,
@@ -209,8 +212,7 @@ def check_in_video():
         "available_inventory": video.available_inventory
         }
 
-    rental = check_if_rental[0]    
-    db.session.delete(rental)
+    
     db.session.commit()
 
     return jsonify(rental_return), 200
