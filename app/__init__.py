@@ -24,6 +24,7 @@ def create_app(test_config=None):
     # Import models here for Alembic setup
     from app.models.customer import Customer
     from app.models.video import Video
+    from app.models.rental import Rental
 
     db.init_app(app)
     migrate.init_app(app, db)

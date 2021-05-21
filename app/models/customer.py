@@ -1,6 +1,8 @@
 from flask import current_app
-from datetime import datetime
 from app import db
+from datetime import datetime
+from sqlalchemy.orm import backref
+
 
 
 class Customer(db.Model):
@@ -10,10 +12,9 @@ class Customer(db.Model):
     postal_code = db.Column(db.Integer)
     registered_at = db.Column(db.DateTime, nullable = True, default = None)
     videos_checked_out_count = db.Column(db.Integer, autoincrement=False, default=0)
-    # video_id = db.Column(db.Integer, db.ForeignKey('video.video_id'), nullable=True)
+    rental = db.relationship("Rental", backref='customer', lazy=True)
 
-    # Included completed_at to check if nullable is working
-    def to_json(self):
+    def customer_info(self):
             return {
                 "id": self.customer_id,
                 "name": self.name,

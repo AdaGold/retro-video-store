@@ -1,23 +1,18 @@
 from flask import current_app
-from datetime import datetime
 from app import db
-
+from sqlalchemy import DateTime
+from datetime import datetime, date, timedelta
 
 class Rental(db.Model):
-    customer_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String)
-    phone_number = db.Column(db.String(12))
-    postal_code = db.Column(db.Integer)
-    registered_at = db.Column(db.DateTime, nullable = True, default = None)
-    videos_checked_out_count = db.Column(db.Integer, autoincrement=False, default=0)
-    # video_id = db.Column(db.Integer, db.ForeignKey('video.video_id'), nullable=True)
+    rental_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.customer_id'), primary_key=True)
+    video_id = db.Column(db.Integer, db.ForeignKey('video.video_id'), primary_key=True)
+    # due_date = db.Column(db.DateTime, default=(datetime.datetime.utcnow() + timedelta(days=7)))
 
-    # Included completed_at to check if nullable is working
-    def to_json(self):
-            return {
-                "id": self.customer_id,
-                "name": self.name,
-                "phone": self.phone_number,
-                "postal_code": self.postal_code,
-                "registered_at": self.registered_at,
-                "videos_checked_out_count": self.videos_checked_out_count
+    def rental_info(self):
+        return {
+            "rental_id": self.rental_id,
+            "customer_id": self.customer_id,
+            "video_id": self.video_id,
+            "due_date": self.due_date
+            }

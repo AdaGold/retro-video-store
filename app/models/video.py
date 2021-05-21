@@ -1,6 +1,8 @@
 from flask import current_app
-from datetime import datetime
 from app import db
+from datetime import datetime
+from sqlalchemy.orm import backref
+
 
 class Video(db.Model):
     video_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -8,10 +10,9 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime, nullable = True)
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
-    # customers = db.relationship("Customer", backref='video', lazy=True)
+    rental = db.relationship("Rental", backref='video', lazy=True)
 
-
-    def to_json(self):
+    def video_info(self):
         return {
             "id": self.video_id,
             "title": self.title,
