@@ -19,16 +19,22 @@ class Rental(db.Model):
                 "available_inventory": video.available_inventory            
         }
         return to_json
-    
-    def check_in_to_json(self, customer, video): 
-        to_json = {
-                "customer_id": self.customer_id,
-                "video_id": self.video_id,
-                "videos_checked_out_count": customer.videos_checked_out_count, 
-                "available_inventory": video.available_inventory            
+
+    def customers_associated_rentals(self, video): 
+        return {
+                "release_date": video.release_date, 
+                "title": video.title, 
+                "due_date": self.due_date
         }
-        return to_json
     
+    def videos_associated_rentals(self, customer): 
+        return {
+                "name": customer.name, 
+                "phone": customer.phone, 
+                "postal_code": customer.postal_code,
+                "due_date": self.due_date
+        }
+
     @classmethod
     def make_a_rental(cls, json, id): 
         return cls(rental_id=id,

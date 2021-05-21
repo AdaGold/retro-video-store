@@ -26,8 +26,10 @@ def check_out_rentals():
             new_rental = Rental.make_a_rental(request_body, id=None)
             customer.videos_checked_out_count += 1
             video.available_inventory -= 1
+            
+            db.session.add(new_rental)
             db.session.commit()
-
+            print(Rental.query.all())
             return jsonify(new_rental.check_out_to_json(customer, video)), 200
 
     return make_response("", 404)

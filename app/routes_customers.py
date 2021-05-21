@@ -1,4 +1,6 @@
 from app.models.customer import Customer
+from app.models.rental import Rental
+from app.models.video import Video
 from flask import Blueprint, request, jsonify, make_response
 from app import db 
 
@@ -53,9 +55,6 @@ def update_customer(customer_id):
         customer.name = update_data["name"]
         customer.postal_code = update_data["postal_code"]
         customer.phone = update_data["phone"]
-        
-        # update_data["customer_id"] = customer_id
-        # db.session.query(Customer).update(update_data)
 
         db.session.commit()
         return jsonify(customer.to_json()), 200
@@ -73,5 +72,22 @@ def delete_customer(customer_id):
         return {
             "id": customer_id
         }, 200 
+    
+    return make_response("", 404)
+
+@customers_bp.route("<int:customer_id>/rentals", methods=["GET"], strict_slashes=False)
+def get_rentals_from_customers(customer_id): 
+    customer = Customer.query.get(customer_id)
+
+    if customer: 
+        rentals = Rental.query.filter_by(customer_id=customer_id).all()
+        rental_list = [] 
+
+        if rentals != None: 
+            for rental in rentals: 
+                video = Video.query.get(rental.video_id)
+                rental_list.append(rental.customers_associated_rentals(video))
+            return jsonify(rental_list), 200
+        return jsonify(rental_list), 200 
     
     return make_response("", 404)
