@@ -1,3 +1,4 @@
+import re
 from app import db
 from app.models.customer import Customer
 from datetime import datetime
@@ -149,29 +150,19 @@ def delete_video(video_id):
 # WAVE 2 - RENTAL ENDPOINTS
 # ---------------------------
 
-# def integer(n):
-#     try:
-#         isinstance(n, int)
-#     except:
-#         return make_response({"details": "The customer or video does not exist"}, 400)
-
 
 @rentals_bp.route("/check-out", methods=["POST"], strict_slashes=False)
 def checking_out():
     request_body = request.get_json()
-    # INT ???
-    video = Video.query.get(request_body["video_id"])
-    customer = Customer.query.get(request_body["customer_id"])
-
+    # INT ??? (order)
     try:
-        video_id = isinstance(request_body["video_id"], int)
-        customer_id = isinstance(request_body("customer_id"), int]
+        video_id = int(request_body["video_id"])
+        customer_id = int(request_body["customer_id"])
     except ValueError or KeyError:
         return make_response({"details": "The customer or video does not exist"}, 400)
-    if video is None or customer is None:
-        return make_response({"details": "The customer or video does not exist"}, 400)
-
-    elif video.available_inventory < 1:
+    video = Video.query.get_or_404(request_body["video_id"])
+    customer = Customer.query.get_or_404(request_body["customer_id"])
+    if video.available_inventory < 1:
         return make_response({"details": "This video doesn't have any current available inventory"}, 400)
     elif "customer_id" in request_body and "video_id" in request_body:
         # date = Rental.date_due()
@@ -215,8 +206,8 @@ def checking_in():
             "videos_checked_out_count": customer.videos_checked_out_count,
             "available_inventory": video.available_inventory
         }), 200
-    if video is None or customer is None:
-        return make_response({"details": "The customer or video does not exist"}, 404)
+    # if video is None or customer is None:
+    #     return make_response({"details": "The customer or video does not exist"}, 404)
     return make_response({"details": "Invalid required request body parameters"}, 400)
 
 
