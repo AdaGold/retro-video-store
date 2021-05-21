@@ -152,6 +152,7 @@ def add_rental():
         return jsonify({
         "details": "no such customer exists"
         }), 400
+
     try:
         video = Video.query.get(video_id)
     except:
@@ -190,21 +191,36 @@ def remove_rental():
         "details": "Invalid data"
         }), 400
     customer_id_request = request_body["customer_id"]
-    print(request_body)
-
-    #TODO need to specify the video and customer id
-
-
     results = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
-            .join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id == customer_id_request).all()
+        .join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id == customer_id_request).all()
 
-    response_arr =[]
-    # print(type(results))
-    print(results[0][0].to_json())
-    # for result in results[0]:
-    #     print(type(result))
-    
-    print("***************")
-    print("***************")
-    print("***************")
-    return(response_arr), 200
+    if len(results) < 1:
+        return jsonify({
+        "details": "so such rental exists"
+        }), 400
+    customer = results[0][0]
+    video = results[0][1]
+    try:
+        query_rental = results[0][2]
+    except:
+        return jsonify({
+        "details": "no such rental exists"
+        }), 400
+
+    # decrease the customer's videos_checked_out_count by one
+    # increase the video's available_inventory by one
+    customer.videos_checked_out_count -= 1
+    video.available_inventory += 1
+    db.session.delete(query_rental)
+    db.session.commit()
+    return jsonify({
+        "customer_id": customer.customer_id,
+        "video_id" : video.video_id,
+        "videos_checked_out_count": customer.videos_checked_out_count,
+        "available_inventory": video.available_inventory
+        }), 200
+
+    # print("***************")
+    # print("***************")
+    # print("***************")
+    # return(response_arr), 200
