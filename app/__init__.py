@@ -14,15 +14,7 @@ def create_app(test_config=None):
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI")
 
-    # app.config['SQLALCHEMY_ECHO'] = True
-
-    # if test_config is None:
-    #     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
-    #         "SQLALCHEMY_DATABASE_URI")
-    # else:
-    #     app.config["TESTING"] = True
-    #     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
-    #         "SQLALCHEMY_TEST_DATABASE_URI")
+    # app.config['SQLALCHEMY_ECHO'] = True # TA Bion - for viewing database setup between Python & Flask, SQLAlchemy
 
     # Import models here for Alembic setup
     from app.models.customer import Customer

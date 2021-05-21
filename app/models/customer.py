@@ -6,8 +6,8 @@ class Customer(db.Model):
     name = db.Column(db.String)
     postal_code = db.Column(db.String)
     phone_num = db.Column(db.String)
-    register_at = db.Column(db.DateTime, nullable=True) # add package for this
-    videos_checked_out_count = db.Column(db.Integer, default=0) # just added, 0 must be returned for new customer
+    register_at = db.Column(db.DateTime, nullable=True)
+    videos_checked_out_count = db.Column(db.Integer, default=0)
 
     def to_json(self):
 
@@ -17,5 +17,5 @@ class Customer(db.Model):
             "registered_at": self.register_at,
             "postal_code": self.postal_code,
             "phone": self.phone_num,
-            "videos_checked_out_count": self.videos_checked_out_count # logic not yet available lol
+            "videos_checked_out_count": self.videos_checked_out_count
         }
