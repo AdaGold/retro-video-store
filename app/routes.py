@@ -63,7 +63,7 @@ def create_customer():
         
     # 400: Bad Request if missing title, description, or completed_at     
     if "name" not in request_body or "postal_code" not in request_body or "phone" not in request_body:
-        return jsonify({"details": "Invalid data"}), 400        
+        return jsonify({"details": "invalid data"}), 400        
     else:
         new_customer = Customer(
             name = request_body["name"],
@@ -161,7 +161,7 @@ def create_video():
         
     # 400: Bad Request if missing title, release date, or total inventory    
     if "title" not in request_body or "release_date" not in request_body or "total_inventory" not in request_body:
-        return jsonify({"details": "Invalid data"}), 400        
+        return jsonify({"details": "invalid data"}), 400        
     else:
         new_video = Video(
             title = request_body["title"],
@@ -189,7 +189,7 @@ def update_video(video_id):
     new_data = request.get_json()
 
     if not is_valid_data(new_data):
-        return make_response("Invalid data", 400)
+        return make_response("invalid data", 400)
 
     video.title = new_data["title"],
     video.release_date = new_data["release_date"],
@@ -231,7 +231,7 @@ def checkout_video():
 
     # Error if missing customer, video, or no available inventory    
     if customer is None or checked_out_video is None:
-        return jsonify({"details": "Invalid data"}), 404
+        return jsonify({"details": "invalid data"}), 404
 
     if checked_out_video.available_inventory == 0:
         return {"details": "inventory out of stock"}, 400        
@@ -273,7 +273,7 @@ def checkin_video():
         
     # 404: Not Found if missing customer, video   
     if customer is None or checked_in_video is None:
-        return jsonify({"details": "Invalid data"}), 404
+        return jsonify({"details": "invalid data"}), 404
     
     # 400: Bad Request if the video and customer do not match a current rental
     rental = Rental.query.filter_by(
@@ -282,7 +282,7 @@ def checkin_video():
             ).first()
 
     if not rental:
-        return jsonify({"details": "Invalid data"}), 400         
+        return jsonify({"details": "invalid data"}), 400         
    
     # decrease the customer's videos_checked_out_count by one
     customer.videos_checked_out_count -= 1
@@ -309,12 +309,13 @@ def get_customer_rental(customer_id):
         return make_response("", 404)
 
     customer_rental= []
+    # for every item in the collection of rentals associated with that customer, look up each video with its id and then grab the video's data
     for rental in customer.rentals:
         video = Video.query.get(rental.video_id)
         customer_rental.append({"release_date" : video.release_date,
-                            "title" : video.title,
-                            "due_date" : rental.due_date
-                            })
+                                "title" : video.title,
+                                "due_date" : rental.due_date
+                                })
     return jsonify(customer_rental), 200
 
 ### List the customers who currently have the video checked out ###
