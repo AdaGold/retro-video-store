@@ -5,8 +5,8 @@ from app import db
 
 class Rental(db.Model):
     rental_id = db.Column(db.Integer, primary_key=True)
-    customer_id = db.Column(db.Integer, db.ForeignKey('video.video_id'))
-    video_id = db.Column(db.Integer, db.ForeignKey('customer.customer_id'))
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.customer_id'))
+    video_id = db.Column(db.Integer, db.ForeignKey('video.video_id'))
     due_date = db.Column(db.DateTime, nullable=True, default=None)
     #alternate default for due_date: default=(datetime.now()+timedelta(days=7))
 

@@ -4,7 +4,7 @@ from app.models.customer import Customer
 from app.models.video import Video
 from app.models.rental import Rental
 # from sqlalchemy import desc, asc 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import requests
 import os
 
@@ -146,7 +146,8 @@ def delete_video(video_id):
         return make_response({"id": video.video_id}, 200)
     return make_response(f"No video with ID #{video_id} found", 404)
 
-#WAVE2
+
+# WAVE2 -- not working ???
 @rentals_bp.route("/check-out", methods=["POST"])
 def check_out_video_to_customer():
     request_body = request.get_json()
@@ -167,60 +168,23 @@ def check_out_video_to_customer():
         return ({"error": "Video not found."}, 404)
     if video.available_inventory == 0:
         return ({"error": "No available inventory."}, 400)
-
+    
     new_rental = Rental(customer_id = customer_id, 
                         video_id = video_id)
-    new_rental.due_date = datetime.utcnow()+ timedelta(days=7)
+    new_rental.due_date = date.today() + timedelta(days=7)
     db.session.add(new_rental)
-    # customer.videos_checked_out_count += 1
     customer.check_out()
-    ### THIS ISN'T WORKING!!!!
-    # video.available_inventory -= 1
     video.check_out()
     db.session.commit()
-    # return success 200 with response body
     # CONSIDER making a function that builds successful response body
-    return ({"customer_id": new_rental.customer_id,
-                "video_id": new_rental.video_id,
+    return make_response({"customer_id": customer.customer_id,
+                "video_id": video.video_id,
                 "due_date": new_rental.due_date,
                 "videos_checked_out_count": customer.videos_checked_out_count,
                 "available_inventory": video.available_inventory}, 200)
 
-    # if valid_rental_input(request_body):
-    #     #if customer_id and video_id and are valid and in the request:
-    #     customer = Customer.query.get(customer_id)
-    #     video = Video.query.get(video_id)
-    #     if customer and video:
-    #         # if inventory is available:
-    #         if video.available_inventory == 0:
-    #             return ({"details": "No available inventory."}, 400)
-    #         else:
-    #         # else video.available_inventory > 0:
-    #             # proceed with creating rental
-    #             new_rental = Rental(customer_id = request_body["customer_id"], 
-    #                                 video_id = request_body["video_id"])
-    #             new_rental.due_date = datetime.utcnow()+ timedelta(days=7)
-    #             db.session.add(new_rental)
-    #             customer.videos_checked_out_count += 1
-    #             # customer.check_out()
-    #             ### THIS ISN'T WORKING!!!!
-    #             video.available_inventory -= 1
-    #             # video.check_out()
-    #             db.session.commit()
-    #             # return success 200 with response body
-    #             # CONSIDER making a function that builds successful response body
-    #             return ({"customer_id": new_rental.customer_id,
-    #                         "video_id": new_rental.video_id,
-    #                         "due_date": new_rental.due_date,
-    #                         "videos_checked_out_count": customer.videos_checked_out_count,
-    #                         "available_inventory": video.available_inventory}, 200)
-    #     # else, return 404 error for not found
-    #     return ({"details": "Customer or video does not exist"}, 404)
-    # # else, return 400
-    # return ({"details": "Invalid data"}, 400)
-
-
 # condsider moving this to the Rental model
+# not currently being used .... 
 def valid_rental_input(form_data):
     if "customer_id" in form_data and "video_id" in form_data:
         if type(form_data["customer_id"]) is int and type(form_data["video_id"]) is int:
@@ -228,26 +192,65 @@ def valid_rental_input(form_data):
     return False
 
 ## FUNCTION NEEDS TO BE REWORKED to check that a rental exists ... 
-@rentals_bp.route("/check-in", methods=["POST"])
+@rentals_bp.route("/check-in", methods=["POST"]) 
 def check_in_video():
     request_body = request.get_json()
-    # NEED TO CHECK THAT THERE IS A RENTAL with this info! 
-    #if valid rental input is true:
-    if valid_rental_input(request_body):
-        #if customer_id and video_id and are valid and in the request:
-        customer = Customer.query.get(request_body["customer_id"])
-        video = Video.query.get(request_body["video_id"])
-        if customer and video:
-            customer.check_in()
-            video.check_in()
+    customer_id = request_body["customer_id"]
+    video_id = request_body["video_id"]
+    # check for valid input of customer id and video id 
+    if customer_id == None or not type(customer_id) is int:
+        return ({"error": "Please provide a valid customer ID"}, 400)
+    if video_id == None or not type(video_id) is int:
+        return ({"error": "Please provide a valid video ID"}, 400)
+    
+    customer = Customer.query.get(customer_id)
+    video = Video.query.get(video_id)
+    if customer == None:
+        return ({"error": "Customer not found."}, 404)
+    if video == None:
+        return ({"error": "Video not found."}, 404)
 
-            #do i need this line??
-            db.session.commit()
-            return ({"customer_id": customer.customer_id,
-                        "video_id": video.video_id,
-                        "videos_checked_out_count": customer.videos_checked_out_count,
-                        "available_inventory": video.available_inventory}, 200)
-        # else, return 404 error for not found
-        return ({"details": "Customer or video does not exist"}, 400)
-    # else, return 400
-    return ({"details": "Invalid data"}, 400)
+    # check to see if rental with customer and video id exists
+    # HOW TO DO THIS!?
+    rental = Rental.query.get(customer_id)
+    if rental == None:
+        return ({"error": "Rental not found."}, 400)
+
+    customer.check_in()
+    video.check_in()
+    db.session.commit()
+    # CONSIDER making a function that builds successful response body
+    return ({"customer_id": customer.customer_id,
+                "video_id": video.video_id,
+                "videos_checked_out_count": customer.videos_checked_out_count,
+                "available_inventory": video.available_inventory}, 200)
+
+
+
+
+
+
+
+
+
+    # request_body = request.get_json()
+    # # NEED TO CHECK THAT THERE IS A RENTAL with this info! 
+    # #if valid rental input is true:
+    # if valid_rental_input(request_body):
+    #     #if customer_id and video_id and are valid and in the request:
+    #     customer = Customer.query.get(request_body["customer_id"])
+    #     video = Video.query.get(request_body["video_id"])
+    #     if customer and video:
+    #         customer.check_in()
+    #         video.check_in()
+
+    #         #do i need this line??
+    #         db.session.commit()
+    #         return ({"customer_id": customer.customer_id,
+    #                     "video_id": video.video_id,
+    #                     "videos_checked_out_count": customer.videos_checked_out_count,
+    #                     "available_inventory": video.available_inventory}, 200)
+    #     # else, return 404 error for not found
+    #     return ({"details": "Customer or video does not exist"}, 400)
+    # # else, return 400
+    # return ({"details": "Invalid data"}, 400)
