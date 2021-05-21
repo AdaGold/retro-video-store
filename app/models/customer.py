@@ -7,12 +7,8 @@ class Customer(db.Model):
     registered_at = db.Column(db.DateTime, nullable=True, default=None)
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
+    videos_checked_out_count = db.Column(db.Integer)
     
-    def get_video_count(self):
-        rentals = Rental.query.filter_by(customer_id = self.customer_id)
-        checked_out = len(rentals)
-        return checked_out
-
     def cust_details(self):
         return {
         "id": self.customer_id,
@@ -20,4 +16,12 @@ class Customer(db.Model):
         "registered_at": self.registered_at,
         "postal_code": self.postal_code,
         "phone": self.phone,
-        "videos_checked_out_count": 0}
+        "videos_checked_out_count": self.videos_checked_out_count}
+
+    def check_out(self):
+        self.videos_checked_out_count += 1
+
+
+    def check_in(self):
+        self.videos_checked_out_count -= 1
+    

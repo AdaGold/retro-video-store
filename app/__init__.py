@@ -12,6 +12,7 @@ def create_app(test_config=None):
     app = Flask(__name__)
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI")
+    # app.config['SQLALCHEMY_ECHO'] = True
 
     # Import models here for Alembic setup
     from app.models.video import Video
@@ -25,8 +26,10 @@ def create_app(test_config=None):
 
     from .routes import customer_bp
     from .routes import video_bp
+    from .routes import rental_bp
     
     app.register_blueprint(customer_bp)
     app.register_blueprint(video_bp)
+    app.register_blueprint(rental_bp)
 
     return app

@@ -6,10 +6,17 @@ class Video(db.Model):
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime, nullable=True, default=None)
     total_inventory = db.Column(db.Integer)
+    available_inventory = db.Column(db.Integer)
 
     def vid_details(self):
         return {
         "id": self.video_id,
         "title": self.title,
         "release_date": self.release_date,
-        "total_inventory": int(self.total_inventory)}
+        "total_inventory": self.total_inventory}
+
+    def check_out(self):
+        self.available_inventory -= 1
+
+    def check_in(self):
+        self.available_inventory += 1
