@@ -1,7 +1,6 @@
 from re import S
 from flask import current_app
 from app.models.rentals import Rental
-# from app.models.videos import Video
 from app import db
 
 class Customer(db.Model):

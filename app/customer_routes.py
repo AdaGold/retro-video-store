@@ -1,6 +1,5 @@
 from re import U
 from flask.wrappers import Response
-
 from werkzeug.wrappers import ResponseStreamMixin
 from app import db
 from app.models.customers import Customer
@@ -154,9 +153,9 @@ def get_rentals_by_customer(id):
     for rental in video.rentals:
         customer = Customer.query.get(rental.customer_id)
         rental_list.append({
-            "name":Customer.name,
-            "phone":video.phone,
-            "postal_code":Customer.postal_code,
+            "name":customer.name,
+            "phone":customer.phone,
+            "postal_code":customer.postal_code,
             "due_date":rental.due_date
 
         })
@@ -166,7 +165,9 @@ def get_rentals_by_customer(id):
 @rentals_bp.route("/check-out", methods=["POST"], strict_slashes = False)
 def check_out():
     request_body = request.get_json()
-    if type(request_body["customer_id"]) is not int or type(request_body["video_id"]) is not int:
+    if type(request_body["customer_id"]) is not int or "customer_id" not in request_body:
+        return({"details":"Invalid data"},400)
+    if type(request_body["video_id"]) is not int or "video_id" not in request_body:
         return({"details":"Invalid data"},400)
     
     customer = Customer.query.get(request_body["customer_id"])
@@ -176,16 +177,23 @@ def check_out():
         customer_id=customer.customer_id,
         video_id=video.video_id,
         due_date=datetime.utcnow()+timedelta(days=7)
-    )
+        )
 
-    if video.available_inventory <= 0:
-        return({"details":"Invalid data"},400)
+    if customer is None and video is None:
+        return {"error":"not found"}, 404
+    
+        # import pdb
+        # pdb.set_trace()
     else:
-        video.available_inventory -=1
-        customer.videos_checked_out_count +=1
-        db.session.add(rental)
-        db.session.commit()
-        return rental.rental_to_json(),200
+        if video.available_inventory <= 0:
+            return({"details":"Invalid data"},400)
+        else:
+            video.available_inventory -= 1
+            customer.videos_checked_out_count += 1
+            db.session.add(rental)
+            db.session.commit()
+            return rental.rental_to_json(),200
+    # return make_response("",404)
     
 @rentals_bp.route("/check-in", methods=["POST"], strict_slashes = False)  
 def check_in():
@@ -194,22 +202,18 @@ def check_in():
     
     if type(request_body["customer_id"]) is not int or type(request_body["video_id"]) is not int:
         return({"details":"Invalid data"},400) 
+
     customer = Customer.query.get(request_body["customer_id"])
     video = Video.query.get(request_body["video_id"])
     rental = Rental.query.filter_by(
         customer_id = request_body["customer_id"],
         video_id = request_body["video_id"]
     ).first()
+    
     if not rental:
         return({"details":"Invalid data"},400) 
-    # rental_check_in=Rental.query.get(request_body["customer_id"], request_body["video_id"])
-    # rental_check_in_body = Rental(
-    #     customer_id=rental_check_out["customer_id"],
-    #     video_id=rental_check_out["video_id"],
-    #     videos_checked_out_count=rental_check_out["videos_checked_out_count"],
-    #     available_inventory=rental_check_out["available_inventory"]
-    # )
 
+    
     if rental.customer.videos_checked_out_count <=0:
         return({"details":"Invalid data"},400)
         
@@ -219,3 +223,5 @@ def check_in():
     response = rental.rental_to_json()
     del response["due_date"]
     return response,200
+    
+

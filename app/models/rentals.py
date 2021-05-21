@@ -1,7 +1,5 @@
-# from app.models.customers import Customer
 from flask import current_app
 from sqlalchemy.orm import defaultload
-# from app.models.videos import Video
 from app import db
 from datetime import datetime
 
@@ -17,10 +15,10 @@ class Rental(db.Model):
             "customer_id":self.customer_id,
             "video_id":self.video_id,
             "due_date":self.due_date,
-            # "videos_checked_out_count":customer.videos_checked_out_count,
-            # "available_inventory":video.available_inventory
-
+            "videos_checked_out_count":self.customer.videos_checked_out_count,
+            "available_inventory":self.video.available_inventory
         }
+
 
     
         
