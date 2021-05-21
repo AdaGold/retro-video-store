@@ -1,6 +1,8 @@
 from app import db
 from flask import Blueprint, request, jsonify
+from app.models.customer import Customer
 from app.models.video import Video
+from app.models.rental import Rental
 
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 
@@ -99,3 +101,27 @@ def delete_video(video_id):
     db.session.commit()
 
     return {"id": video.video_id},200
+
+
+@videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
+def get_video_customers(video_id):
+    if not is_int(video_id):
+        return ("", 400)
+
+    rentals = Rental.query.filter(Rental.video_id == video_id)
+
+    if rentals is None:
+        return ("", 404)
+    
+    list_of_rentals = []
+
+    for rental in rentals:
+        customer = Customer.query.get(rental.customer_id)
+        list_of_rentals.append(
+        {"due_date": rental.due_date,
+        "name": customer.name,
+        "phone": customer.phone,
+        "postal_code": customer.postal_code}
+        )
+    
+    return jsonify(list_of_rentals), 200
