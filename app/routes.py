@@ -62,6 +62,20 @@ def delete_customer(id):
     db.session.commit() 
     return make_response({"id": customer.id, "success": True}, 200)
 
+@customers_bp.route("/<id>/rentals", methods=["GET"])
+def get_customer_videos(id):
+    customer = Customer.query.get_or_404(id)
+    response = []
+    for rental in customer.videos:
+        video = Video.query.get_or_404(rental.video_id)
+        date_formatted = rental.due_date.strftime("%Y-%m-%d")
+        response.append({
+            "release_date": video.release_date,
+            "title": video.title,
+            "due_date": date_formatted,
+        })
+    return make_response(jsonify(response), 200)
+
 ####################################################################
 #                              VIDEOS   ROUTES                     #
 ####################################################################
@@ -117,6 +131,20 @@ def delete_video(id):
     db.session.commit() 
     return make_response({"id": video.id, "success": True}, 200)
 
+@videos_bp.route("/<id>/rentals", methods=["GET"])
+def get_videos_customers(id):
+    video = Video.query.get_or_404(id)
+    response = []
+    for rental in video.customers:
+        customer = Customer.query.get_or_404(rental.customer_id)
+        response.append({
+            "phone": customer.phone,
+            "postal_code": customer.postal_code,
+            "name": customer.name,
+            "due_date": rental.due_date,
+        })
+    return make_response(jsonify(response), 200)
+
 ####################################################################
 #                              RENTAL   ROUTES                     #
 ####################################################################
@@ -128,7 +156,7 @@ def rental_check_out():
             video = Video.query.get(request_body["video_id"])
             customer = Customer.query.get(request_body["customer_id"])
         except:
-            return make_response({"Customer or Video Does Not Exist"}, 400)
+            return make_response({"Error":"Customer or Video Does Not Exist"}, 400)
             
         if video.available_inventory > 0:
             video.available_inventory -= 1
@@ -159,27 +187,29 @@ def rental_check_out():
 def rental_check_in():
     try:
         request_body = request.get_json()
-        try:
-            video = Video.query.get(request_body["video_id"])
-            customer = Customer.query.get(request_body["customer_id"])
-        except:
-            return make_response({"Customer or Video Does Not Exist"}, 400)
+
+        video = Video.query.get(request_body["video_id"])
+        customer = Customer.query.get(request_body["customer_id"])
+
+        if video.available_inventory < video.total_inventory:
+            video.available_inventory += 1
+        else:
+            return make_response(jsonify({"Error":"We have all those videos"}), 400)
 
         rental = Rental.query.filter(Rental.customer_id == request_body["customer_id"], Rental.video_id == request_body["video_id"]).one()
         
         customer.videos_checked_out_count -= 1
-        video.available_inventory +=1
+
         db.session.add(video)
         db.session.add(customer)
-        db.session.add(rental)
+        db.session.delete(rental)
         db.session.commit()
         response = {
                 "customer_id": rental.customer_id,
                 "video_id": rental.video_id,
-                "due_date": rental.due_date,
                 "videos_checked_out_count": customer.videos_checked_out_count,
                 "available_inventory": video.available_inventory
                 }
         return make_response(jsonify(response), 200)
-    except KeyError as err:
-        return make_response({"details":f"Invalid data: {err}"}, 400)
+    except:
+        return make_response({"details":"invalid keys"}, 400)
