@@ -26,7 +26,7 @@ def get_videos():
 
 
 #GET video with specific ID
-@video_bp.route("/<id>", methods=["GET"], strict_slashes=False)
+@video_bp.route("/<video_id>", methods=["GET"], strict_slashes=False)
 def get_specific_video(video_id):
     
     if not helper.is_int(video_id):
@@ -67,7 +67,7 @@ def add_videos():
 
 
 #PUT update a customer detail
-@video_bp.route("<id>", methods=["PUT"], strict_slashes=False)
+@video_bp.route("<video_id>", methods=["PUT"], strict_slashes=False)
 def update_video(video_id):
     
     video = Video.query.get(video_id)
@@ -90,7 +90,7 @@ def update_video(video_id):
     
 
 #DELETE a video
-@video_bp.route("<id>", methods=["DELETE"], strict_slashes=False)
+@video_bp.route("<video_id>", methods=["DELETE"], strict_slashes=False)
 def delete_video(video_id):
     
     video = Video.query.get(video_id)
@@ -104,8 +104,8 @@ def delete_video(video_id):
         
         return jsonify(id=int(video_id)), 200
     
-#WAVE 2 - GET /videos/<id>/rentals
-@video_bp.route("/<id>/rentals", methods=["GET"], strict_slashes=False)
+#WAVE 2 - GET /videos/<video_id>/rentals
+@video_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
 def get_rentals_with_videos(video_id):
     
     video = Video.query.get(video_id)
@@ -127,4 +127,4 @@ def get_rentals_with_videos(video_id):
     
 
 #OPTIONAL ENHANCEMENTs 
-#GET /videos/<id>/history
+#GET /videos/<video_id>/history

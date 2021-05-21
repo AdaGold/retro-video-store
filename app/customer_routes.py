@@ -25,7 +25,7 @@ def get_customers():
 
 
 #GET customers with specific ID
-@customer_bp.route("/<id>", methods=["GET"], strict_slashes=False)
+@customer_bp.route("/<customer_id>", methods=["GET"], strict_slashes=False)
 def get_specific_customers(customer_id):
     
     if not helper.is_int(customer_id):
@@ -66,7 +66,7 @@ def add_customers():
 
 
 #PUT update a customer detail
-@customer_bp.route("<id>", methods=["PUT"], strict_slashes=False)
+@customer_bp.route("<customer_id>", methods=["PUT"], strict_slashes=False)
 def update_customer(customer_id):
     
     customer = Customer.query.get(customer_id)
@@ -90,7 +90,7 @@ def update_customer(customer_id):
     return jsonify(""), 400 
 
 #DELETE a customer
-@customer_bp.route("/<id>", methods=["DELETE"], strict_slashes=False)
+@customer_bp.route("/<customer_id>", methods=["DELETE"], strict_slashes=False)
 def delete_customer(customer_id):
     
     customer = Customer.query.get(customer_id)
@@ -106,7 +106,7 @@ def delete_customer(customer_id):
 
 
 #WAVE 2 - GET /customers/<id>/rentals
-@customer_bp.route("/<id>/rentals", methods=["GET"], strict_slashes=False)
+@customer_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
 def get_videos_checked_out(customer_id):
     if not helper.is_int(customer_id):
         return {
