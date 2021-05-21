@@ -20,14 +20,16 @@ def create_app(test_config=None):
         app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
             "SQLALCHEMY_TEST_DATABASE_URI")
 
-    from app.models.customer import Customer
-    from app.models.video import Video
+    # from app.models.customer import Customer
+    # from app.models.video import Video
+    # from app.models.rental import Rental
 
     db.init_app(app)
     migrate.init_app(app, db)
 
-    from .routes import customers_bp, videos_bp
+    from .routes import customers_bp, videos_bp, rentals_bp
     app.register_blueprint(customers_bp)
     app.register_blueprint(videos_bp)
+    app.register_blueprint(rentals_bp)
 
     return app
