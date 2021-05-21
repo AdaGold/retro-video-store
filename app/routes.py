@@ -28,13 +28,13 @@ def get_single_customer(customer_id):
     if customer:
         return customer.to_json(), 200
     else:
-        return jsonify(None), 404
+        return {"details": "Customer not found"}, 404
 
 @customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
 def get_customer_rentals(customer_id):
-    # results = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id).join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id == customer_id).all()
-    # print(results[0][1].to_json())
     customer = Customer.query.get(customer_id)
+    if not customer:
+        return {"details": "Customer not found"}, 404
     videos = customer.videos_rent
     response = []
     for video in videos:
@@ -59,9 +59,9 @@ def update_customer(customer_id):
             db.session.commit()
             return customer.to_json(), 200
         else:
-            return jsonify(None), 400
+            return {"details": "Invalid data"}, 400
     else:
-        return jsonify(None), 404
+        return {"details": "Customer not found"}, 404
         
 @customers_bp.route("", methods=["POST"], strict_slashes=False)
 def create_customer():
@@ -83,7 +83,7 @@ def delete_customer(customer_id):
         db.session.commit()
         return customer.to_json(), 200
     else:
-        return jsonify(None), 404
+        return {"details": "Customer not found"}, 404
       
 #################### Routes for Videos ####################
 @videos_bp.route("", methods=["GET"], strict_slashes=False)
@@ -98,7 +98,7 @@ def get_single_customer(video_id):
     if video:
         return video.to_json(), 200
     else:
-        return jsonify(None), 404
+        return {"details": "Video not found"}, 404
       
 @videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False) 
 def get_video_renters(video_id):
@@ -107,21 +107,17 @@ def get_video_renters(video_id):
         return {"details": "Video not found"}, 404
     else:
         customers = video.renters
-        if not customers:
-            return jsonify([])
-        else:
-            response = []
-            for customer in customers:
-                related_rental = Rental.query.filter_by(customer_id=customer.customer_id, video_id=video_id).first() 
-                customer_info = {
-                    "due_date": related_rental.due_date,
-                    "name": customer.name,
-                    "phone": customer.phone,
-                    "postal_code": customer.postal_code,
-                }
-                response.append(customer_info)
-                print(response)
-            return jsonify(response), 200
+        response = []
+        for customer in customers:
+            related_rental = Rental.query.filter_by(customer_id=customer.customer_id, video_id=video_id).first() 
+            customer_info = {
+                "due_date": related_rental.due_date,
+                "name": customer.name,
+                "phone": customer.phone,
+                "postal_code": customer.postal_code,
+            }
+            response.append(customer_info)
+        return jsonify(response), 200
               
 @videos_bp.route("", methods=["POST"], strict_slashes=False)
 def create_video():
@@ -147,9 +143,9 @@ def update_video(video_id):
             db.session.commit()
             return video.to_json(), 200
         else:
-            return jsonify(None), 400
+            return {"details": "Invalid data"}, 400
     else:
-        return jsonify(None), 404
+        return {"details": "Video not found"}, 404
       
 @videos_bp.route("/<video_id>", methods=["DELETE"], strict_slashes=False)
 def delete_video(video_id):
@@ -159,7 +155,7 @@ def delete_video(video_id):
         db.session.commit()
         return video.to_json(), 200
     else:
-        return jsonify(None), 404
+        return {"details": "Video not found"}, 404
       
 #################### Routes for Rentals ####################
 @rentals_bp.route("/check-out", methods=["POST"], strict_slashes=False)
@@ -168,15 +164,14 @@ def check_out():
     customer_id = request_body["customer_id"]
     video_id = request_body["video_id"]
     if not is_int(customer_id) or not is_int(video_id):
-        return jsonify(None), 400
+        return {"details": "Invalid data"}, 400
     else:
         customer = Customer.query.get(customer_id)
         video = Video.query.get(video_id)
-        print("Hello")
         if not customer or not video:
-            return jsonify(None), 404
+            return {"details": "Rental information not found"}, 404
         if video.available_inventory == 0:
-            return jsonify(None), 400
+            return {"details": "Video not available"}, 400
         else:
             new_rental = Rental.from_json(request_body)
             new_rental.due_date = datetime.utcnow() + timedelta(days=7)
@@ -200,9 +195,9 @@ def check_in():
     video = Video.query.get(video_id)
     rental = Rental.query.filter_by(customer_id=customer_id, video_id=video_id).first()
     if not customer or not video:
-        return jsonify(None), 404
+        return {"details": "Rental information not found"}, 404
     if not rental:
-        return jsonify(None), 400
+        return {"details": "Video already checked in"}, 400
     else:
         db.session.delete(rental)
         db.session.commit()
