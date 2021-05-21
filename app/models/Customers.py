@@ -1,6 +1,7 @@
 from flask import current_app
 from app import db 
 from sqlalchemy.orm import relationship
+from datetime import datetime
 
 
 
@@ -12,6 +13,8 @@ class Customer(db.Model):
     customer_phone = db.Column(db.String(14))
     register_at = db.Column(db.DateTime)
     videos_checked_out_count = db.Column(db.Integer)
+
+    #curious about what this is doing and why it works w/o it 
     # videos = relationship("Rental", back_populates="customer")
     
 
@@ -29,7 +32,8 @@ class Customer(db.Model):
 
 
 
-    # @classmethod
-    # def new_customer_from_json(cls, body):
-    #     new_customer = Customer(customer_name=body["name"], customer_zip=body["postal_code"], customer_phone=body["phone"])
-    #     return new_customer
+    @classmethod
+    def new_customer_from_json(cls, request_body):
+        new_customer = Customer(customer_name=request_body["name"], customer_zip=request_body["postal_code"], customer_phone=request_body["phone"], register_at=datetime.now(), videos_checked_out_count=0)
+        
+        return new_customer

@@ -2,8 +2,8 @@ from flask import current_app
 from sqlalchemy.orm import relationship 
 from app import db 
 
-# def default_value(video):
-#     return video.get_current_parameters()["total_inventory"]
+def default_value(video):
+    return video.get_current_parameters()["total_inventory"]
 
 class Video(db.Model):
     __tablename__ = "videos"
@@ -11,7 +11,7 @@ class Video(db.Model):
     video_title = db.Column(db.String(120))
     release_date = db.Column(db.DateTime)
     total_inventory = db.Column(db.Integer) 
-    available_inventory = db.Column(db.Integer)
+    available_inventory = db.Column(db.Integer, default=default_value)
     # customers = relationship("Rental", back_populates="video")
 
 

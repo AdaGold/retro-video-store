@@ -89,7 +89,7 @@ def update_single_customer(customer_id):
 def post_new_customer():
     request_body = request.get_json()
     try:
-        new_customer = Customer(customer_name=request_body["name"], customer_zip=request_body["postal_code"], customer_phone=request_body["phone"], register_at=datetime.now(), videos_checked_out_count=0)
+        new_customer = Customer.new_customer_from_json(request_body)
     except KeyError:
         return make_response({"That didn't work.": "Invalid data or format."}, 400)
     db.session.add(new_customer)
@@ -143,7 +143,7 @@ def get_all_videos():
 def create_new_video():
     request_body = request.get_json()
     try:
-        new_video = Video(video_title=request_body["title"], release_date=request_body["release_date"], total_inventory=request_body["total_inventory"], available_inventory=request_body["total_inventory"])
+        new_video = Video(video_title=request_body["title"], release_date=request_body["release_date"], total_inventory=request_body["total_inventory"])
     except KeyError:
         return make_response({"That didn't work.": "Invalid data or format."}, 400)
     
