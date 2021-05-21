@@ -6,8 +6,6 @@ from app.models.video import Video
 from flask import jsonify
 from flask import request, make_response
 from datetime import datetime, timedelta
-import os
-import requests 
 
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
