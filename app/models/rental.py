@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 
 class Rental(db.Model):
     __tablename__= "rental"
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key = True, autoincrement = True)
     due_date = db.Column(db.Integer, nullable=True, default = datetime.now() + timedelta(days=7))
     video_id = db.Column(db.Integer, db.ForeignKey('video.id'), primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), primary_key=True)

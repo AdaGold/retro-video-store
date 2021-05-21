@@ -190,13 +190,13 @@ def video_by_id(id):
 
 # Wave 2 ==================================================================>
 
-# GET rentals from customer 
-@customers_bp.route("/<id>/rentals", methods=["GET"], strict_slashes=False)
-
-def create_rental():
+# GET new rentals from customer 
+@customers_bp.route("/check-out",methods=["POST"], strict_slashes=False)
+def checkout_rental():
     request_body = request.get_json()
     video = Video.query.get(request_body["video_id"])
     customer = Customer.query.get(request_body["customer_id"])
+
     if "customer_id" not in request_body.keys() or "video_id" not in request_body.keys():
         return jsonify(details="Not Found"), 404
 
@@ -206,7 +206,6 @@ def create_rental():
     if not video.is_int(request_body["video_id"]):
         return jsonify(details="Bad Request"), 400
 
-
     if video is None:
         return jsonify(details="Not Found"), 404
     
@@ -215,10 +214,10 @@ def create_rental():
     
     if video.get_available_inventory() == 0:
         return jsonify(details="No available inventory"), 400
-    
+
     new_rental = Rental(customer_id = request_body["customer_id"],
                         video_id = request_body["video_id"])
-
+    
     db.session.add(new_rental)
     db.session.commit()
 
@@ -229,3 +228,63 @@ def create_rental():
         "videos_checked_out_count": customer.current_videos(),
         "available_inventory": video.get_available_inventory()
     }, 200
+
+    # return a rental from customer
+@rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
+def return_rental():
+    request_body = request.get_json()
+    rental = Rental.query.filter(Rental.customer_id == request_body["customer_id"], Rental.video_id == request_body["video_id"]).first()
+    customer = Customer.query.get(request_body["customer_id"])
+    customer_videos = customer.video
+
+    if "customer_id" not in request_body.keys() or "video_id" not in request_body.keys():
+        return jsonify(details="Not Found"), 404
+    
+    if rental is None:
+        return jsonify(details="Bad Request"), 400
+
+    for video in customer_videos:
+        if video.id == request_body["video_id"]:
+            customer_videos.remove(video)
+
+    db.session.commit()
+    
+    video = Video.query.get(request_body["video_id"])
+
+    return {
+            "customer_id": customer.id,
+            "video_id": video.id,
+            "videos_checked_out_count": customer.current_videos(),
+            "available_inventory": video.get_available_inventory()
+        }, 200
+
+
+# GET list if video customers 
+# @videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
+# def get_video_customers(video_id):
+#     def is_int(self):
+#         try:
+#             return int(self.id)
+#         except ValueError:
+#             return False
+
+#     if not is_int(video_id):
+#         return ("", 400)
+
+#     rentals = Rental.query.filter(Rental.video_id == video_id)
+
+#     if rentals is None:
+#         return ("", 404)
+    
+#     list_of_rentals = []
+
+#     for rental in rentals:
+#         customer = Customer.query.get(rental.id)
+#         list_of_rentals.append(
+#         {"due_date": rental.due_date,
+#         "name": customer.name,
+#         "phone": customer.phone,
+#         "postal_code": customer.postal_code}
+#         )
+    
+#     return jsonify(list_of_rentals), 200
