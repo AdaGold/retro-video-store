@@ -1,15 +1,124 @@
 from app import db
 from app.models.video import Video
 from app.models.customer import Customer
+from app.models.rental import Rental
 from flask import request, Blueprint, make_response, jsonify
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 
 now=datetime.now()
 
 customer_bp = Blueprint("customer", __name__, url_prefix="/customers")
 video_bp = Blueprint("video", __name__, url_prefix="/videos")
+rental_bp = Blueprint("rental", __name__, url_prefix="/rentals")
+
+@customer_bp.route("/<customer_id>/rentals", methods=["GET"])
+def get_rentals(customer_id):
+
+    rentals = db.session.query(Rental).filter(Rental.customer_id ==customer_id)
+
+    if rentals is None:
+        return jsonify(None), 404
+
+    elif request.method == "GET":
+        response = []
+
+        for rental in rentals:
+
+            video = Video.query.get(rental.video_id)
+
+            response.append({
+                "release_date": video.release_date,
+                "title": video.title,
+                "due_date": rental.due_date
+            })
+
+        return jsonify(response), 200
+
+@rental_bp.route("/check-in", methods=["POST"])
+def return_video():
+    if request.method == "POST":
+
+        request_body = request.get_json()
+
+        if request_body["customer_id"] and request_body["video_id"]:
+            
+            returned_rental = Rental(customer_id=request_body["customer_id"],
+                                video_id=request_body["video_id"])
+
+            customer = Customer.query.get(request_body["customer_id"])
+            video = Video.query.get(request_body["video_id"])
+
+            if not customer or not video:
+                response = "Not found tho"
+                return jsonify(response), 404
+
+            elif customer.videos_checked_out_count != 0:
+
+                customer.videos_checked_out_count -= 1
+                video.available_inventory += 1
+
+                db.session.commit()
+
+                response = {"customer_id": returned_rental.customer_id,
+                            "video_id": returned_rental.video_id,
+                            "videos_checked_out_count": customer.videos_checked_out_count,
+                            "available_inventory": video.available_inventory}
+                
+                return jsonify(response), 200
+            
+            else:
+                response = "No available inventory"
+            return jsonify(response), 400
+
+        else:
+            response = "Must include name_id and video_id"
+            return jsonify(response), 400
+
+
+@rental_bp.route("/check-out", methods=["POST"])
+def rent_video():
+    if request.method == "POST":
+
+        request_body = request.get_json()
+
+        if request_body["customer_id"] and request_body["video_id"]:
+            
+            new_rental = Rental(customer_id=request_body["customer_id"],
+                                video_id=request_body["video_id"],
+                                due_date = now + timedelta(7))
+
+            customer = Customer.query.get(request_body["customer_id"])
+            video = Video.query.get(request_body["video_id"])
+
+            if not customer or not video:
+                response = "Not found tho"
+                return jsonify(response), 404
+
+            elif video.available_inventory != 0:
+
+                customer.videos_checked_out_count += 1
+                video.available_inventory -= 1
+
+                db.session.add(new_rental)
+                db.session.commit()
+
+                response = {"customer_id": new_rental.customer_id,
+                            "video_id": new_rental.video_id,
+                            "due_date": new_rental.due_date,
+                            "videos_checked_out_count": customer.videos_checked_out_count,
+                            "available_inventory": video.available_inventory}
+                
+                return jsonify(response), 200
+            
+            else:
+                response = "No available inventory"
+            return jsonify(response), 400
+
+        else:
+            response = "Must include name_id and video_id"
+            return jsonify(response), 400
 
 
 @customer_bp.route("", methods=["GET", "POST"], strict_slashes=False)
@@ -29,7 +138,7 @@ def handle_customer():
                 "name": customer.name,
                 "postal_code": customer.postal_code,
                 "phone": customer.phone,
-                "register_at": customer.register_at,
+                "registered_at": customer.registered_at,
                 "videos_checked_out_count": customer.videos_checked_out_count
             })
         
@@ -43,7 +152,7 @@ def handle_customer():
             new_customer = Customer(name=request_body["name"], 
                                     postal_code=request_body["postal_code"],
                                     phone=request_body["phone"],
-                                    register_at=now)
+                                    registered_at=now)
 
             db.session.add(new_customer)
             db.session.commit()
