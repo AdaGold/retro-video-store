@@ -70,8 +70,8 @@ def delete_video(id):
 @videos_bp.route("/<id>/rentals", methods = ["GET"])
 def get_customers_with_video(id):
     #gets each customer who have rented a video by video
-    
+
     video = Video.query.get_or_404(id)
     rentals = video.customers_rented_to
     results = [customer.customers_dict() for customer in rentals]
-    return make_response(jsonify(results, 200))
+    return make_response(jsonify(results), 200)
