@@ -99,7 +99,8 @@ def create_video():
         new_video = Video(
             title=request_body["title"],
             release_date=request_body["release_date"],
-            total_inventory=request_body["total_inventory"]
+            total_inventory=request_body["total_inventory"],
+            available_inventory=request_body["total_inventory"]
         )
         db.session.add(new_video)
         db.session.commit()
@@ -144,7 +145,15 @@ def delete_video(video_id):
     return jsonify({"id": video.video_id}), 200
 
 
-# -------------------
+# ---------------------------
+# WAVE 2 - RENTAL ENDPOINTS
+# ---------------------------
+
+# def integer(n):
+#     try:
+#         isinstance(n, int)
+#     except:
+#         return make_response({"details": "The customer or video does not exist"}, 400)
 
 
 @rentals_bp.route("/check-out", methods=["POST"], strict_slashes=False)
@@ -153,7 +162,18 @@ def checking_out():
     # INT ???
     video = Video.query.get(request_body["video_id"])
     customer = Customer.query.get(request_body["customer_id"])
-    if "customer_id" in request_body and "video_id" in request_body:
+
+    try:
+        video_id = isinstance(request_body["video_id"], int)
+        customer_id = isinstance(request_body("customer_id"), int]
+    except ValueError or KeyError:
+        return make_response({"details": "The customer or video does not exist"}, 400)
+    if video is None or customer is None:
+        return make_response({"details": "The customer or video does not exist"}, 400)
+
+    elif video.available_inventory < 1:
+        return make_response({"details": "This video doesn't have any current available inventory"}, 400)
+    elif "customer_id" in request_body and "video_id" in request_body:
         # date = Rental.date_due()
         new_rental = Rental(
             customer_id=request_body["customer_id"],
@@ -170,10 +190,6 @@ def checking_out():
             "videos_checked_out_count": customer.videos_checked_out_count,
             "available_inventory": video.available_inventory
         }, 200)
-    elif video is None or customer is None:
-        return make_response({"details": "The customer or video does not exist"}, 404)
-    elif video.available_inventory < 1:
-        return make_response({"details": "This video doesn't have any current available inventory"}, 400)
     return make_response({"details": "Invalid required request body parameters"}, 400)
 
 
@@ -204,16 +220,15 @@ def checking_in():
     return make_response({"details": "Invalid required request body parameters"}, 400)
 
 
-@customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
-def get_videos_of_customer(customer_id):
-    customer = Customer.query.get(customer_id)
-    if customer is None:
-        return make_response("Customer does not exist", 404)
-    else:
-        rental = Rental.query.filter_by(customer_id).one_or_none()
-        rentals_response = [(rental.to_dict()) for rental in rental]
-        return rentals_response
-
+# @customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
+# def get_videos_of_customer(customer_id):
+#     customer = Customer.query.get(customer_id)
+#     if customer is None:
+#         return make_response("Customer does not exist", 404)
+#     else:
+#         rental = Rental.query.filter_by(customer_id).one_or_none()
+#         rentals_response = [(rental.to_dict()) for rental in rental]
+#         return rentals_response
 
 # @goals_bp.route("/<goal_id>/tasks", methods=["GET"], strict_slashes=False)
 # def getting_tasks_of_one_goal(goal_id):
@@ -225,12 +240,12 @@ def get_videos_of_customer(customer_id):
 #     tasks_response = [(task.with_goal()) for task in tasks]
 #     return{"id": goal.goal_id, "title": goal.title, "tasks": tasks_response}, 200
 
-@videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
-def get_customers_of_video(video_id):
-    customer = Customer.query.get(customer_id)
-    if customer is None:
-        return make_response("Customer does not exist", 404)
-    else:
-        rental = Rental.query.filter_by(customer_id).one_or_none()
-        rentals_response = [(rental.to_dict()) for rental in rental]
-        return rentals_response
+# @videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
+# def get_customers_of_video(video_id):
+#     customer = Customer.query.get(customer_id)
+#     if customer is None:
+#         return make_response("Customer does not exist", 404)
+#     else:
+#         rental = Rental.query.filter_by(customer_id).one_or_none()
+#         rentals_response = [(rental.to_dict()) for rental in rental]
+#         return rentals_response

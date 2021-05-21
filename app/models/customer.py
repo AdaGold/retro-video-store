@@ -16,23 +16,17 @@ class Customer(db.Model):
     # videos = db.relationship(
     #     'Video', secondary='rentals', back_populates='customers')
 
-    rentals = db.relationship('Rental', backref='rental', lazy=True)
+    rentals = db.relationship('Rental', backref='rentals', lazy=True)
 
     # lowercase 'goal.id' looks at a table in your db
     # goal_id = db.Column(db.Integer, db.ForeignKey(
     #     'goal.goal_id'), nullable=True)
-
-    # def is_complete(self):
-    #     if self.completed_at:
-    #         return True
-    #     else:
-    #         return False
 
     def to_json(self):
         return {
             "id": self.customer_id,
             "name": self.name,
             "registered_at": self.registered_at,
-            "postal_code": self.postal_code,
+            "postal_code": int(self.postal_code),
             "phone": self.phone,
             "videos_checked_out_count": self.videos_checked_out_count}
