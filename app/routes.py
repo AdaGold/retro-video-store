@@ -1,18 +1,20 @@
 from flask import Blueprint
 import flask_migrate
-from app import db 
+from app import db
 from app.models.video import Video 
 from app.models.customer import Customer
-from flask import request, Blueprint, make_response 
+from flask import request, Blueprint, make_response, Response 
 from flask import jsonify
-from datetime import date
+from datetime import datetime
 import requests
 import os
+import json
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 
 @customers_bp.route("", methods = ["POST", "GET"], strict_slashes=False)
+# GET all of the customers. Ability to sort asc or desc by customer name 
 def handle_customer():
     if request.method == "GET":
         query_param_value = request.args.get("sort")
@@ -27,81 +29,72 @@ def handle_customer():
 
         customers_response = []
         for customer in customers:
-            customers_response.append(customer.to_json)
+            customers_response.append(customer.to_json())
         return jsonify(customers_response), 200 
 
+# POST a new customer with or without all required fields filled in 
     elif request.method == "POST":
         request_body = request.get_json()
-        if "name" not in request_body or "postal code" not in request_body or "phone" not in request_body:
-            return {
-                "details": "Invalid data"
-            }, 400
+        if "name" not in request_body or "postal_code" not in request_body or "phone" not in request_body:
+            return jsonify({"details": "Invalid data"}), 400
 
-        elif "name" in request_body and "postal code" in request_body and "phone" in request_body:
-            new_customer = Customer(
-                            name = request_body["name"],
-                            postal_code = request_body["postal code"],
-                            phone = request_body["phone"])
-            db.session.add(new_customer)
-            db.session.commit()
-            return new_customer.to_json_with_id(), 201
+        new_customer = Customer(
+                        name = request_body["name"],
+                        postal_code = request_body["postal_code"],
+                        phone = request_body["phone"],
+                        registered_at = datetime.now())
+        db.session.add(new_customer)
+        db.session.commit()
+        return jsonify(new_customer.to_json()), 201
 
-
+# GET customer by their id
 @customers_bp.route("/<id>", methods = ["PUT", "GET", "DELETE"], strict_slashes=False)
 def customer_by_id(id):
     customer = Customer.query.get(id)
+    print(customer.to_json())
+    print(type(customer))
     if request.method == "GET":
         if customer:
-            if customer.id:
-                return {"customer": customer.to_json()}
-            else:
+            if not customer.is_int():
                 return {
-                    "customer": {
-                    "id": customer.id,
-                    "name": customer.name,
-                    "postal code": customer.postal_code,
-                    "phone": customer.phone,
-                    "registered_at": customer.registered_at,
-                    "videos checked out count": customer.videos_checked_out_count}
-            }, 200
+                    "message": "invalid data",
+                    "success": False 
+                }, 400
+            
+            if customer.id:
+                return make_response(customer.to_json(), 200)
 
         else:
-            return (f"None", 404)
+            return jsonify("", 404)
 
+
+# PUT an update on an exsisting customer 
     elif request.method == "PUT":
         if customer:
             request_body = request.get_json()
             customer.name = request_body["name"]
-            customer.postal_code = request_body["postal code"]
+            customer.postal_code = request_body["postal_code"]
             customer.phone = request_body["phone"]
-            customer.registered_at = request_body["registered at"]
+            customer.registered_at = request_body["registered_at"]
             db.session.commit()
-            return {
-                    "customer": {
-                    "id": customer.id,
-                    "name": customer.name,
-                    "postal code": customer.postal_code,
-                    "phone": customer.phone,
-                    "registered_at": customer.registered_at,
-                    "videos checked out count": customer.videos_checked_out_count}
-            }, 200
+            return customer.to_json(), 200
 
         else:
-            return (f"None", 404)
+            return jsonify(""), 400
 
+
+# DELETE an existing customer by id
     elif request.method == "DELETE":
         if customer:
             db.session.delete(customer)
             db.session.commit()
-            return {
-                "details": f"Customer {customer.id} \"{customer.name}\" successfully deleted"
-            }, 200
-        else:
-            return (f"None", 404)
+            return jsonify(id=int(id)), 200
 
     else:
-        return (f"None", 404)
+        return jsonify("", 404)
 
+
+# GET all videos and ability to sort by asc or desc 
 @videos_bp.route("", methods=["POST", "GET"], strict_slashes=False)
 def handle_video():
     if request.method == "GET":  
@@ -119,50 +112,70 @@ def handle_video():
             videos_response.append(video.to_json())
         return jsonify(videos_response), 200
 
+# POST new video 
     elif request.method == "POST":
         request_body = request.get_json()
-        if "title" in request_body:
-            new_video = Video(title = request_body["title"])
-            db.session.add(new_video)
-            db.session.commit() 
+    if ("title" not in request_body or 
+        "release_date" not in request_body or 
+        "total_inventory" not in request_body):
+        return jsonify(details="Bad request"),400
+    
+    new_video = Video(title=request_body["title"],
+                        release_date=request_body["release_date"],
+                        total_inventory=request_body["total_inventory"])
+    
+    db.session.add(new_video)
+    db.session.commit()
+    
+    return make_response(jsonify(id=new_video.id) ,201)
 
-            return jsonify(new_video), 201
-        else:
-            return {
-                "details": "Invalid data"
-            }, 400
-
-
+# GET video by id 
 @videos_bp.route("/<id>", methods=["GET", "PUT", "DELETE"], strict_slashes=False)
 def video_by_id(id):
     video = Video.query.get(id)
     if request.method == "GET":
+        if not id.is_int(id):
+            return {
+            "message": "id must be an integer",
+            "success": False
+        }, 400
+    
+        if video == None:
+            return Response ("" , 404)
+    
         if video:
-            return video.to_json, 200
+            return make_response(video.to_json(), 200)
 
-        else:
-            return (f"None", 404)
-
+# PUT an update on a current video by id
     elif request.method == "PUT":
-        if video:
-            request_body = request.get_json()
-            video.title = request_body["title"]
-            db.session.commit()
+        video = Video.query.get(id)
+        
+        if video == None or not video:
+            return Response("", status=404)
+        
+        form_data = request.get_json()
+        
+        if not form_data or not form_data["title"] or not form_data["release_date"] or not form_data["total_inventory"]:
+            return Response("", 400)
 
-            return video.to_json, 200
+        video.title = form_data["title"]
+        video.release_date = form_data["release_date"]
+        video.total_inventory = form_data["total_inventory"]
+        
+        db.session.commit()
+        
+        return video.to_json(), 200
 
-        else:
-            return (f"None", 404)
 
+# DELETE video by id 
     elif request.method == "DELETE":
+        video = Video.query.get(id)
+        if video == None:
+            return Response("", status=404)
+    
         if video:
             db.session.delete(video)
             db.session.commit()
-            return {
-                "details": f"Video {video.id} \"{video.title}\" successfully deleted"
-            }, 200
-        else:
-            return (f"None", 404)
+            
+            return jsonify(id=int(id)), 200
 
-    else:
-        return (f"None", 404)
