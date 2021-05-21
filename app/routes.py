@@ -24,6 +24,18 @@ def get_due_date():
     due_date = date.today() + timedelta(days=7)
     return due_date
 
+def get_rental_by_customer(customer_id):
+    customer_info = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
+            .join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id == customer_id).all()
+
+    return customer_info
+
+def get_rental_by_video(video_id):
+    video_info = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
+            .join(Video, Video.video_id==Rental.video_id).filter(Video.video_id==video_id).all()
+
+    return video_info
+
 
 @customer_bp.route("", methods=["GET"])
 def get_all_customers():
@@ -103,24 +115,18 @@ def delete_single_customer(customer_id):
 @customer_bp.route("/<customer_id>/rentals", methods=["GET"])
 def get_customers_rentals(customer_id):
 
-    customer_info = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
-            .join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id == customer_id).all()
+    customer_info = get_rental_by_customer(customer_id)
     rental_list = []
     for tuple_set in customer_info:
         video = tuple_set[1]
         rental = tuple_set[2]
-        rental_list.append({"release_date": video.release_date, 
-                            "title": video.video_title, 
-                            "due_date": rental.due_date})
-
-
-
+        rental_list.append({
+            "release_date": video.release_date, 
+            "title": video.video_title, 
+            "due_date": rental.due_date
+            })
 
     return jsonify(rental_list), 200
-
-
-
-
 
 
 
@@ -132,12 +138,12 @@ def get_all_videos():
         video_response.append(video.to_json())
     return jsonify(video_response), 200
 
+
 @video_bp.route("", methods=["POST"])
 def create_new_video():
     request_body = request.get_json()
     try:
         new_video = Video(video_title=request_body["title"], release_date=request_body["release_date"], total_inventory=request_body["total_inventory"], available_inventory=request_body["total_inventory"])
-
     except KeyError:
         return make_response({"That didn't work.": "Invalid data or format."}, 400)
     
@@ -198,9 +204,7 @@ def delete_all_videos():
 
 @video_bp.route("/<video_id>/rentals", methods=["GET"])
 def get_customers_rentals_by_video(video_id):
-
-    video_info = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
-            .join(Video, Video.video_id==Rental.video_id).filter(Video.video_id==video_id).all()
+    video_info = get_rental_by_video(video_id)
     rental_list = []
     for tuple_set in video_info:
         customer = tuple_set[0]
@@ -210,8 +214,8 @@ def get_customers_rentals_by_video(video_id):
                             "postal_code": customer.customer_zip ,
                             "due_date": rental.due_date})
 
-
     return jsonify(rental_list), 200
+
 
 @rental_bp.route("", methods=["DELETE"])
 def delete_all_rentals():
@@ -240,10 +244,6 @@ def check_out_video():
 
     if video.available_inventory == 0:
         return make_response({"Error":"We don't have any of that video in stock."}, 400)
-
-    if type(customer_id) != int or type(video_id) != int:
-        return make_response({"Error":"We don't have any of that video in stock."}, 400)
-
     else:
         new_rental = Rental(customer_id=customer_id, video_id=video_id)
 
@@ -255,24 +255,13 @@ def check_out_video():
         db.session.add(new_rental)
         db.session.commit()
 
-    
-    
-    return make_response({"customer_id": customer.customer_id, 
-                        "video_id": video.video_id, 
-                        "due_date": new_rental.due_date,
-                        "videos_checked_out_count": customer.videos_checked_out_count, 
-                        "available_inventory": video.available_inventory}, 200)
-
-
-def get_rental_by_customer(customer_id):
-    customer_info = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
-            .join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id == customer_id).all()
-    print(customer_info)
-    rental_list = []
-    for tuple_set in customer_info:
-            rental_list.append(tuple_set[2])
-
-    return rental_list
+    return make_response({
+        "customer_id": customer.customer_id, 
+        "video_id": video.video_id, 
+        "due_date": new_rental.due_date,
+        "videos_checked_out_count": customer.videos_checked_out_count, 
+        "available_inventory": video.available_inventory
+                            }, 200)
 
 
 @rental_bp.route("/check-in", methods=["POST"])
@@ -289,15 +278,14 @@ def check_in_video():
         customer = Customer.query.get(customer_id)
         video = Video.query.get(video_id)
 
-    print(get_rental_by_customer(customer.customer_id))
     if customer is None or video is None:
         return make_404()
 
-
-
     else:
-        rental_list = get_rental_by_customer(customer_id)
-        print(rental_list)
+        customer_info = get_rental_by_customer(customer_id)
+        rental_list = []
+        for tuple_set in customer_info:
+            rental_list.append(tuple_set[2])
         if not rental_list:
             return make_response({"Error": "That movie isn't checked out to you"}, 400)
 
@@ -314,10 +302,12 @@ def check_in_video():
     db.session.delete(checked_in_rental)
     db.session.commit()
 
-    return make_response({"customer_id": customer.customer_id, 
-                        "video_id": video.video_id, 
-                        "videos_checked_out_count": customer.videos_checked_out_count, 
-                        "available_inventory": video.available_inventory}, 200)
+    return make_response({
+        "customer_id": customer.customer_id, 
+        "video_id": video.video_id, 
+        "videos_checked_out_count": customer.videos_checked_out_count, 
+        "available_inventory": video.available_inventory
+                        }, 200)
 
 
 
