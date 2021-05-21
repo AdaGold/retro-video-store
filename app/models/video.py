@@ -1,4 +1,5 @@
 from flask import current_app
+from flask.helpers import make_response
 from app import db
 from sqlalchemy import DateTime
 
@@ -17,3 +18,10 @@ class Video(db.Model):
             "total_inventory": self.total_inventory,
             "available_inventory": self.available_inventory
         }
+    
+    def decrease_inventory(self):
+        if self.available_inventory == 0:
+            return make_response("No inventory left!", 400)
+        else:
+            self.available_inventory -= 1
+            db.session.commit()

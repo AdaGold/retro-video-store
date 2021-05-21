@@ -29,10 +29,16 @@ def create_app(test_config=None):
     load_dotenv()
 
     # Register Blueprints
+    # wave 1 (customers & videos)
     from .routes import customers_bp
     app.register_blueprint(customers_bp)
 
     from .routes import videos_bp
     app.register_blueprint(videos_bp)
+
+    #  wave 2 (rentals)
+    from .routes import rentals_bp
+    app.register_blueprint(rentals_bp)
     
     return app
+

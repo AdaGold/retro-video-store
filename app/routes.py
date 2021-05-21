@@ -1,6 +1,7 @@
 from app import db
 from app.models.customer import Customer
 from app.models.video import Video
+from app.models.rental import Rental
 from datetime import datetime
 from flask import Blueprint, request, jsonify
 from flask.helpers import make_response
@@ -8,8 +9,11 @@ import os
 import requests
 
 # set up blueprints
+# wave 1 (customers & videos)
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
+# wave 2 (rentals)
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 # helper function to check that customer/video ids are integers
 def is_int(value):
@@ -81,7 +85,7 @@ def update_customer(customer_id):
         "postal_code" not in customer_data.keys() or
         "phone" not in customer_data.keys()):
             return make_response({"error": "Bad Request"}, 400)
-            
+
     elif customer:
 
         customer.name = customer_data["name"]
@@ -195,3 +199,20 @@ def delete_video(video_id):
             "id": video.video_id
         }), 200
 
+# Wave 2 routes
+@rentals_bp.route("", methods=["GET"], strict_slashes=False)
+def get_rental():
+    # customer_name_from_url = request.args.get("name")
+    # # get customer by name
+    # if customer_name_from_url:
+    #     customers = Customer.query.filter.by(name=customer_name_from_url)
+    # # get all customers
+    # else:
+    rentals = Rental.query.all()
+    
+    rentals_response = []
+
+    for rental in rentals:
+        rentals_response.append(rental.to_json())
+    
+    return jsonify(rentals_response), 200
