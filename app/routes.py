@@ -15,8 +15,8 @@ videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 
-def bad_request(): #add to error message
-    return ({"errors":["details here"]}, 400)
+def bad_request(text): 
+    return ({"errors":[text]}, 400)
 
 def customer_not_found(customer_id):
     return ({"errors":["Not Found"]}, 404)
@@ -35,11 +35,11 @@ def get_customers_details():
 def create_customers():
     request_body = request.get_json()
     if not "name" in request_body or not request_body.get("name"):
-        return bad_request()
+        return bad_request("name must be provided")
     if not "postal_code" in request_body or not request_body.get("postal_code"):
-        return bad_request()
+        return bad_request("postal code must be provided")
     if not "phone" in request_body or not request_body.get("phone"):
-        return bad_request()
+        return bad_request("phone must be provided")
     new_customer = Customer(name=request_body["name"],
             postal_code=request_body["postal_code"],
             phone=request_body["phone"])
@@ -62,11 +62,11 @@ def update_customer(customer_id):
     if customer:
         updated_info = request.get_json()
         if not "name" in updated_info or not updated_info.get("name"):
-            return bad_request()
+            return bad_request("name must be provided")
         if not "postal_code" in updated_info or not updated_info.get("postal_code"):
-            return bad_request()
+            return bad_request("postal code must be provided")
         if not "phone" in updated_info or not updated_info.get("phone"):
-            return bad_request()
+            return bad_request("phone must be provided")
         customer.name = updated_info["name"]
         customer.postal_code = updated_info["postal_code"]
         customer.phone = updated_info["phone"]
@@ -104,11 +104,11 @@ def get_videos_details():
 def create_videos():
     request_body = request.get_json()
     if not "title" in request_body or not request_body.get("title"):
-        return bad_request()
+        return bad_request("must have title")
     if not "release_date" in request_body or not request_body.get("release_date"):
-        return bad_request()
+        return bad_request("must have release date")
     if not "total_inventory" in request_body or not request_body.get("total_inventory"):
-        return bad_request()
+        return bad_request("must have total inventory")
     new_video = Video(title=request_body["title"],
         release_date=request_body["release_date"],
     total_inventory=request_body["total_inventory"],
@@ -132,11 +132,11 @@ def update_video(video_id):
     if video:
         updated_info = request.get_json()
         if not "title" in updated_info or not updated_info.get("title"): 
-            return bad_request()
+            return bad_request("must have title")
         if not "release_date" in updated_info or not updated_info.get("release_date"):
-            return bad_request()
+            return bad_request("must have release date")
         if not "total_inventory" in updated_info or not updated_info.get("total_inventory"):
-            return bad_request()   
+            return bad_request("must have total inventory")   
         video.title = updated_info["title"]
         video.release_date = updated_info["release_date"]
         video.total_inventory = updated_info["total_inventory"]
@@ -167,9 +167,9 @@ def is_int(value):
 def rental_checkout():
     request_body = request.get_json()
     if not "customer_id" in request_body or not request_body.get("customer_id") or not is_int(request_body["customer_id"]):
-        return bad_request()
+        return bad_request("must have cutomer id, and it must be an int")
     if not "video_id" in request_body or not request_body.get("video_id") or not is_int(request_body["video_id"]):
-        return bad_request()
+        return bad_request("must have video id and it must be an int")
 
     customer_id = request_body["customer_id"]
     customer = Customer.query.get(customer_id)
@@ -181,7 +181,7 @@ def rental_checkout():
         return no_video_found(video_id)
 
     if video.available_inventory == 0:
-        return bad_request() # add message for bad request
+        return bad_request("invalid data") 
     
     customer.videos_checked_out_count += 1
     video.available_inventory -= 1
@@ -205,9 +205,9 @@ def rental_checkout():
 def rental_checkin():
     request_body = request.get_json()
     if not "customer_id" in request_body or not request_body.get("customer_id"):
-        return bad_request()
+        return bad_request("must have customer id")
     if not "video_id" in request_body or not request_body.get("video_id"):
-        return bad_request()
+        return bad_request("must have video id")
     
     customer_id = request_body["customer_id"]
     customer = Customer.query.get(customer_id)
@@ -217,12 +217,12 @@ def rental_checkin():
     video = Video.query.get(video_id)
     if not video:
         return no_video_found(video_id)
-    #check for rental attribute 'checked_in' if there
+    
     rental = Rental.query.filter(Rental.check_in_date == None,
-                                    Rental.video_id == video_id,
-                                    Rental.customer_id == customer_id).one_or_none()
+                                Rental.video_id == video_id,
+                                Rental.customer_id == customer_id).one_or_none()
     if not rental:
-        return bad_request()
+        return bad_request("invalid data")
 
     customer.videos_checked_out_count -= 1
     video.available_inventory += 1
