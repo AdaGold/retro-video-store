@@ -42,7 +42,7 @@ def create_customer():
         customer_response = {"id": new_customer.customer_id}
         return jsonify(customer_response), 201
         # return jsonify(new_customer.to_json()), 201
-    return make_response({"details": "Invalid data: you must include a name, postal code, and phone number"}, 400)
+    return make_response({"details": "You must include a name, postal code, and phone number"}, 400)
 
 
 @customers_bp.route("/<customer_id>", methods=["GET"], strict_slashes=False)
@@ -106,7 +106,7 @@ def create_video():
         # video_response = {"id": new_video.video_id}
         return jsonify({"id": new_video.video_id}), 201
         # return jsonify(new_video.to_dict()), 201
-    return make_response({"details": "Invalid data: you must include a title, release date, and total inventory"}, 400)
+    return make_response({"details": "You must include a title, release date, and total inventory"}, 400)
 
 
 @videos_bp.route("/<video_id>", methods=["GET"], strict_slashes=False)
@@ -146,31 +146,59 @@ def delete_video(video_id):
 
 # -------------------
 
-# @rentals_bp.route("rentals/check-out", methods=["POST"], strict_slashes=False)
+
+@rentals_bp.route("/check-out", methods=["POST"], strict_slashes=False)
 def checking_out():
     request_body = request.get_json()
+    # INT ???
     video = Video.query.get(request_body["video_id"])
-    if video.available_inventory < 1:
-        return make_response({"details": "This video doesn't have any available inventory currently"}, 400)
-    elif "customer_id" in request_body and "video_id" in request_body:
-        date = Rental.date_due()
+    customer = Customer.query.get(request_body["customer_id"])
+    if "customer_id" in request_body and "video_id" in request_body:
+        # date = Rental.date_due()
         new_rental = Rental(
             customer_id=request_body["customer_id"],
             video_id=request_body["video_id"],
-            due_date=date
         )
-        db.session.add(new_rental)
-        # int
-        customer = Customer.query.get(request_body["customer_id"])
-        # video = Video.query.get(request_body["video_id"])
         customer.videos_checked_out_count += 1
         video.available_inventory -= 1
+        db.session.add_all([new_rental, video, customer])
         db.session.commit()
-        return jsonify({
+        return ({
             "customer_id": customer.customer_id,
             "video_id": video.video_id,
-            "due_date": date,
+            "due_date": new_rental.due_date,
             "videos_checked_out_count": customer.videos_checked_out_count,
             "available_inventory": video.available_inventory
-        })
-    return make_response({"details": "The customer or video does not exist"}, 404)
+        }, 200)
+    elif video is None or customer is None:
+        return make_response({"details": "The customer or video does not exist"}, 404)
+    elif video.available_inventory < 1:
+        return make_response({"details": "This video doesn't have any current available inventory"}, 400)
+    return make_response({"details": "Invalid required request body parameters"}, 400)
+
+
+@rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
+def checking_in():
+    request_body = request.get_json()
+    video = Video.query.get(request_body["video_id"])
+    customer = Customer.query.get(request_body["customer_id"])
+    if "customer_id" in request_body and "video_id" in request_body:
+        customer.videos_checked_out_count -= 1
+        video.available_inventory += 1
+        ###
+        rental = Rental.query.filter_by(
+            video_id=request_body["video_id"], customer_id=request_body["customer_id"]).one_or_none()
+        if rental is None:
+            return make_response({"details": "The video and customer do not match a current rental"}, 400)
+        db.session.delete(rental)
+        db.session.add_all([video, customer])
+        db.session.commit()
+        return ({
+            "customer_id": customer.customer_id,
+            "video_id": video.video_id,
+            "videos_checked_out_count": customer.videos_checked_out_count,
+            "available_inventory": video.available_inventory
+        }), 200
+    if video is None or customer is None:
+        return make_response({"details": "The customer or video does not exist"}, 404)
+    return make_response({"details": "Invalid required request body parameters"}, 400)

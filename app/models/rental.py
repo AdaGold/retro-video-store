@@ -14,12 +14,13 @@ class Rental(db.Model):
         db.Integer, db.ForeignKey("customers.customer_id"), nullable=True)
     video_id = db.Column(
         db.Integer, db.ForeignKey("videos.video_id"), nullable=True)
-    due_date = db.Column(db.DateTime)
+    due_date = db.Column(
+        db.DateTime, default=datetime.now() + timedelta(days=7))
 
-    def date_due():
-        today = datetime.date.today()
-        d1 = today.strftime("%Y-%m-%d") + datetime.timedelta(days=7)
-        return d1
+    # def date_due():
+    #     today = datetime.date.today()
+    #     d1 = today.strftime("%Y-%m-%d") + datetime.timedelta(days=7)
+    #     return d1
 
     # video = db.relationship('Video', back_populates='customers')
     # customer = db.relationship('Customer', back_populates='videos')
