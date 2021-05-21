@@ -15,11 +15,13 @@ class Rental(db.Model):
     video_id  = db.Column(db.Integer, db.ForeignKey('video.video_id'))
     
     
-    def checkout_detail(self):
+    def checkout_detail(self, customer, video):
         return {
                     "customer_id": self.customer_id,
                     "video_id": self.video_id,
                     "due_date": self.due_date,
+                    "videos_checked_out_count": customer.videos_checked_out_count,
+                    "available_inventory": video.available_inventory
                     #"videos_checked_out_count": self.calc_videos_checked_out(),
                     #"available_inventory": self.calculate_available_inventory()
                 }

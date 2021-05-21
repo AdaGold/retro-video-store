@@ -34,21 +34,24 @@ def checkout_video_to_customers():
     if (not video or video == None):
         return jsonify(details = "Video not found"), 404
    
-    if (video.total_inventory - len(video.rentals)) < 1:
+    if video.available_inventory == 0:
         return jsonify(details = " Video Not available"), 400
+    
+    video.available_inventory -= 1 # customer checked out video
+    customer.videos_checked_out_count += 1 # customer checked out a new video
         
     new_rental = Rental(customer_id=customer.customer_id,
                             video_id=video.video_id,
                             due_date= datetime.now() + timedelta(days=7))
     
     db.session.add(new_rental)
+    db.session.add(video)
+    db.session.add(customer)
     db.session.commit()
     
-    response_body = new_rental.checkout_detail()
-    response_body["videos_checked_out_count"] = len(customer.rentals)
-    response_body["available_inventory"] = video.total_inventory -len(video.rentals)
+    response_body = new_rental.checkout_detail(customer, video)
     
-    return Response(response_body), 200
+    return response_body, 200
 
 
 #WAVE 2 POST/rentals/check-in
