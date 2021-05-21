@@ -4,16 +4,17 @@ from app import db
 class Customer(db.Model):
     id = db.Column(db.Integer, primary_key=True,autoincrement=True)
     name = db.Column(db.String)
-    postal_code = db.Column(db.Integer)
-    phone = db.Column(db.Integer)
-    regristered_at = db.Column(db.DateTime)
-    #rental_counts = db.relationship('Videos', backref='customer')
+    postal_code = db.Column(db.String)
+    phone = db.Column(db.String)
+    registered_at = db.Column(db.DateTime)
+    videos_checked_out_count = db.Column(db.Integer, default=0)
+    rentals = db.relationship("Rental", back_populates="customer", lazy=True)
 
-def customer_to_json(self):
-    return {
-        "id" : self.id,
-        "name" : self.name,
-        "registered_at" : self.register_at,
-        "postal_code" : self.postal_code,
-        "phone" : self.phone,
-        "videos_checked_out_count" : 0}
+    def customer_to_json(self):
+        return {
+            "id" : self.id,
+            "name" : self.name,
+            "registered_at" : self.registered_at,
+            "postal_code" : self.postal_code,
+            "phone" : self.phone,
+            "videos_checked_out_count" : self.videos_checked_out_count}
