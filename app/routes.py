@@ -1,5 +1,5 @@
 from app import db
-from flask import Blueprint, request, make_response, jsonify
+from flask import Blueprint, request, make_response, jsonify, abort
 from app.models.customer import Customer
 from app.models.video import Video
 from app.models.rental import Rental
@@ -7,11 +7,34 @@ from datetime import datetime, timedelta, date
 import requests
 import os
 
+
+#blueprints
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 
+#helper functions
+def valid_customer_input(form_data):
+    if "name" not in form_data:
+        abort(make_response({"error": "Missing customer name"},400)) 
+    if "postal_code" not in form_data:
+        abort(make_response({"error": "Missing customer postal_code"},400))
+    if "phone" not in form_data:
+        abort(make_response({"error": "Missing customer phone"},400))
+    return True
+
+
+def valid_video_input(form_data):
+    if "title" not in form_data:
+        abort(make_response({"error": "Missing video title"},400))
+    if "release_date" not in form_data:
+        abort(make_response({"error": "Missing video release_date"},400))
+    if "total_inventory" not in form_data:
+        abort(make_response({"error": "Missing video total_inventory"},400))
+
+
+#routes
 @customers_bp.route("", methods=["GET"])
 def get_customers():
     customers = Customer.query.all()
@@ -30,15 +53,7 @@ def get_one_customer(customer_id):
 @customers_bp.route("", methods=["POST"])
 def create_customer():
     request_body = request.get_json()
-    
-    #CONSIDER REPLACING WITH valid_customer_input() if fixed
-    if "name" not in request_body:
-        return ({"error": "Missing customer name"}, 400)
-    if "postal_code" not in request_body:
-        return ({"error": "Missing customer postal_code"}, 400)
-    if "phone" not in request_body:
-        return ({"error": "Missing customer phone"}, 400)
-    
+    valid_customer_input(request_body)
     new_customer = Customer(name = request_body["name"],
                     postal_code = request_body["postal_code"],
                     phone = request_body["phone"])
@@ -50,43 +65,17 @@ def create_customer():
 
 @customers_bp.route("/<customer_id>", methods=["PUT"])
 def update_customer(customer_id):
-
     customer = Customer.query.get(customer_id)
     if not customer:
         return ({"error": f"No customer with ID #{customer_id}"}, 404)
-    
     form_data = request.get_json()
-
-    #CONSIDER REPLACING WITH valid_customer_input() if fixed
-    if "name" not in form_data:
-        return ({"error": "Missing customer name"}, 400)
-    if "postal_code" not in form_data:
-        return ({"error": "Missing customer postal_code"}, 400)
-    if "phone" not in form_data:
-        return ({"error": "Missing customer phone"}, 400)
-
+    valid_customer_input(form_data)
     customer.name = form_data["name"]
     customer.postal_code = form_data["postal_code"]
     customer.phone = form_data["phone"]
     db.session.commit()
     return customer.to_dict()
     
-
-# NOT CURRENTLY IN USE b/c not returning message
-# consider moving this to the Customer model...
-def valid_customer_input(form_data):
-    if "name" not in form_data:
-        return ({"error": "Missing customer name"}, 400)
-    if "postal_code" not in form_data:
-        return ({"error": "Missing customer postal_code"}, 400)
-    if "phone" not in form_data:
-        return ({"error": "Missing customer phone"}, 400)
-    return True
-    
-    # if "name" in form_data and "postal_code" in form_data and "phone" in form_data:
-    #     return True 
-    # return False
-
 
 @customers_bp.route("/<customer_id>", methods=["DELETE"])
 def delete_customer(customer_id):
@@ -116,15 +105,7 @@ def get_one_video(video_id):
 @videos_bp.route("", methods=["POST"])
 def create_video():
     request_body = request.get_json()
-
-    #CONSIDER REPLACING WITH valid_video_input() if fixed
-    if "title" not in request_body:
-        return ({"error": "Missing video title"}, 400)
-    if "release_date" not in request_body:
-        return ({"error": "Missing video release_date"}, 400)
-    if "total_inventory" not in request_body:
-        return ({"error": "Missing video total_inventory"}, 400)
-
+    valid_video_input(request_body)
     new_video = Video(title = request_body["title"],
                     release_date = request_body["release_date"],
                     total_inventory = request_body["total_inventory"])
@@ -134,38 +115,13 @@ def create_video():
     return ({"id": new_video.video_id}, 201) 
 
 
-# Similar question to valid_customer_input() .... 
-# condsider moving this to the Video model
-def valid_video_input(form_data):
-    if "title" in form_data and "release_date" in form_data and "total_inventory" in form_data:
-        return True 
-    return False
-
-    # if "title" not in request_body:
-    #     return ({"error": "Missing video title"}, 400)
-    # if "release_date" not in request_body:
-    #     return ({"error": "Missing video release_date"}, 400)
-    # if "total_inventory" not in request_body:
-    #     return ({"error": "Missing video total_inventory"}, 400)
-
-
 @videos_bp.route("/<video_id>", methods=["PUT"])
 def update_video(video_id):
-
     video = Video.query.get(video_id)
     if not video:
         return ({"error": f"No video with ID #{video_id}"}, 404)
-    
     form_data = request.get_json()
-    
-    #CONSIDER REPLACING WITH valid_video_input() if fixed
-    if "title" not in form_data:
-        return ({"error": "Missing video title"}, 400)
-    if "release_date" not in form_data:
-        return ({"error": "Missing video release_date"}, 400)
-    if "total_inventory" not in form_data:
-        return ({"error": "Missing video total_inventory"}, 400)
-
+    valid_video_input(form_data)
     video.title = form_data["title"]
     video.release_date = form_data["release_date"]
     video.total_inventory = form_data["total_inventory"]
@@ -217,15 +173,6 @@ def check_out_video_to_customer():
                 "videos_checked_out_count": customer.videos_checked_out_count,
                 "available_inventory": video.available_inventory}, 200)
 
-# Similar question to the other "valid" helper functions ... 
-# condsider moving this to the Rental model
-# not currently being used .... 
-def valid_rental_input(form_data):
-    if "customer_id" in form_data and "video_id" in form_data:
-        if type(form_data["customer_id"]) is int and type(form_data["video_id"]) is int:
-            return True 
-    return False
-
 
 @rentals_bp.route("/check-in", methods=["POST"]) 
 def check_in_video():
@@ -246,7 +193,6 @@ def check_in_video():
     if video == None:
         return ({"error": "Video not found."}, 404)
     
-    # check that customer has a video checked out
     # this function doesn't handle situations where a customer might 
     # try to return a video that isn't checked out to them ... 
     if customer.videos_checked_out_count == 0:
