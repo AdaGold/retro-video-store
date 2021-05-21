@@ -97,7 +97,8 @@ def new_video():
     try:
         video = Video(title=request_body["title"],
                         release_date=request_body["release_date"],
-                        total_inventory=request_body["total_inventory"])
+                        total_inventory=request_body["total_inventory"],
+                        available_inventory=request_body["total_inventory"])
 
     except KeyError:
         return make_response({
@@ -153,29 +154,32 @@ def check_out():
         customer = Customer.query.get(int(rental.customer_id))
         video = Video.query.get(int(rental.video_id))
 
+        if customer == None:
+            return make_response({
+                "details": f"Customer {customer.customer_id} not found"
+            }, 404)
+    
+        elif video == None:
+            return make_response({
+                "details": f"Video {video.video_id} not found"
+            }, 404)
+    
     except ValueError:
         return make_response({
             "details": "Invalid id"
-        }, 400)
-    
-    if customer == None:
-        return make_response({
-            "details": f"Customer {customer.customer_id} not found"
-        }, 404)
-    
-    elif video == None:
-        return make_response({
-            "details": f"Video {video.video_id} not found"
-        }, 404)
-    
-    if video.available_inventory == 0:
+        }, 400) 
+
+    if video.available_inventory < 1:
         return make_response({
             "details": f"{video.title}: No available inventory"
-        }, 400)
-
+        }, 400)  
+        
     else:
-        customer.videos_checked_out_count += 1
         video.available_inventory -= 1
+        customer.videos_checked_out_count += 1
+
+        db.session.add(rental)
+        db.session.commit()
 
         return make_response({
             "customer_id": rental.customer_id,
@@ -184,14 +188,77 @@ def check_out():
             "videos_checked_out_count": customer.videos_checked_out_count,
             "available_inventory": video.available_inventory
             }, 200)
-
+    
 @rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
 def check_in():
-    pass
+    request_body = request.get_json()
+
+    rental = Rental(customer_id=request_body["customer_id"],
+                        video_id=request_body["video_id"])
+                        
+    try:
+        customer = Customer.query.get(int(rental.customer_id))
+        video = Video.query.get(int(rental.video_id))
+
+        if customer == None:
+            return make_response({
+                "details": f"Customer {customer.customer_id} not found"
+            }, 404)
+    
+        elif video == None:
+            return make_response({
+                "details": f"Video {video.video_id} not found"
+            }, 404)
+    
+    except ValueError:
+        return make_response({
+            "details": "Invalid id"
+        }, 400) 
+
+    if customer.videos_checked_out_count < 1:
+        return make_response({
+            "details": f"Customer {customer.customer_id} has no checked-out videos"
+        }, 400)
+
+    else:
+        video.available_inventory += 1
+        customer.videos_checked_out_count -= 1
+
+        db.session.add(rental)
+        db.session.commit()
+
+        return make_response({
+            "customer_id": rental.customer_id,
+            "video_id": rental.video_id,
+            "videos_checked_out_count": customer.videos_checked_out_count,
+            "available_inventory": video.available_inventory
+            }, 200)
+    
 
 @customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
 def get_current_rentals_by_customer_id(customer_id):
-    pass
+    results = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
+            .join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id == customer_id).all()
+#results = [(<Customer 28>, <Video 28>, <Rental 23>)]
+    customer = results[0][0]
+    video = results[0][1]
+
+    if customer == None:
+        return make_response({
+                "details": f"Customer {customer.customer_id} not found"
+            }, 404)
+
+    rentals = customer.rentals
+    rentals_response = []
+
+    for rental in rentals:
+        rentals_response.append({
+        "release_date": video.release_date,
+        "title": video.title,
+        "due_date": rental.due_date,
+        })
+
+    return jsonify(rentals_response), 200
 
 @videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
 def get_customers_by_video_id(video_id):

@@ -1,4 +1,3 @@
-from operator import countOf
 from app import db
 from datetime import datetime
 
@@ -10,6 +9,7 @@ class Customer(db.Model):
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime, default=datetime.utcnow())
     videos_checked_out_count = db.Column(db.Integer, default=0)
+    rentals = db.relationship("Rental", backref="customers", lazy=True)
 
     def to_json(self):
         return {

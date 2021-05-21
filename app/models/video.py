@@ -1,15 +1,13 @@
 from app import db 
 
-def mydefault(context):
-    return context.get_current_parameters()['total_inventory']
 
 class Video(db.Model):
     __tablename__ = "videos"
     video_id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime)
-    total_inventory = db.Column(db.Integer, nullable=True)
-    available_inventory = db.Column(db.Integer, default=mydefault)
+    total_inventory = db.Column(db.Integer)
+    available_inventory = db.Column(db.Integer)
 
     def to_json(self):
         return {
