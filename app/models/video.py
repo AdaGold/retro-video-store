@@ -10,11 +10,14 @@ class Video(db.Model):
     title: str 
     release_date: str
     total_inventory: int 
+    available_inventory: int 
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String)
     release_date = db.Column(db.String)
     total_inventory = db.Column(db.Integer)
+    available_inventory = db.Column(db.Integer)
+
 
 
     def to_json(self):
@@ -24,7 +27,7 @@ class Video(db.Model):
             "title": self.title,
             "release_date": self.release_date,
             "total_inventory": self.total_inventory,
-            #"available_inventory": 0
+            # "available_inventory": 0
         }
         return result_dict
 
@@ -35,4 +38,4 @@ class Video(db.Model):
             title = video_dict["title"],
             release_date = video_dict["release_date"],
             total_inventory = video_dict["total_inventory"],
-    )
+            available_inventory = video_dict["total_inventory"])
