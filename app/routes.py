@@ -191,7 +191,7 @@ def video_by_id(id):
 # Wave 2 ==================================================================>
 
 # GET new rentals from customer 
-@customers_bp.route("/check-out",methods=["POST"], strict_slashes=False)
+@rentals_bp.route("/check-out",methods=["POST"], strict_slashes=False)
 def checkout_rental():
     request_body = request.get_json()
     video = Video.query.get(request_body["video_id"])
