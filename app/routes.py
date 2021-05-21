@@ -103,6 +103,7 @@ def create_video():
         new_video = Video(title = request_body["title"],
                         release_date = request_body["release_date"],
                         total_inventory = request_body["total_inventory"])
+        new_video.available_inventory = new_video.total_inventory
         db.session.add(new_video)
         db.session.commit()
         return ({"id": new_video.video_id}, 201) 
@@ -149,39 +150,74 @@ def delete_video(video_id):
 @rentals_bp.route("/check-out", methods=["POST"])
 def check_out_video_to_customer():
     request_body = request.get_json()
-    #if valid rental input is true:
-    if valid_rental_input(request_body):
-        #if customer_id and video_id and are valid and in the request:
-        customer = Customer.query.get(request_body["customer_id"])
-        video = Video.query.get(request_body["video_id"])
-        if customer and video:
-            # if inventory is available:
-            if video.available_inventory == 0:
-                return ({"details": "No available inventory."}, 400)
-            else:
-            # else video.available_inventory > 0:
-                # proceed with creating rental
-                new_rental = Rental(customer_id = request_body["customer_id"], 
-                                    video_id = request_body["video_id"])
-                new_rental.due_date = datetime.utcnow()+ timedelta(days=7)
-                db.session.add(new_rental)
-                customer.videos_checked_out_count += 1
-                # customer.check_out()
-                ### THIS ISN'T WORKING!!!!
-                video.available_inventory -= 1
-                # video.check_out()
-                db.session.commit()
-                # return success 200 with response body
-                # CONSIDER making a function that builds successful response body
-                return ({"customer_id": new_rental.customer_id,
-                            "video_id": new_rental.video_id,
-                            "due_date": new_rental.due_date,
-                            "videos_checked_out_count": customer.videos_checked_out_count,
-                            "available_inventory": video.available_inventory}, 200)
-        # else, return 404 error for not found
-        return ({"details": "Customer or video does not exist"}, 400)
-    # else, return 400
-    return ({"details": "Invalid data"}, 400)
+    customer_id = request_body["customer_id"]
+    video_id = request_body["video_id"]
+    # check for valid input of customer id and video id 
+    if customer_id == None or not type(customer_id) is int:
+        return ({"error": "Please provide a valid customer ID"}, 400)
+    if video_id == None or not type(video_id) is int:
+        return ({"error": "Please provide a valid video ID"}, 400)
+    
+    customer = Customer.query.get(customer_id)
+    video = Video.query.get(video_id)
+
+    if customer == None:
+        return ({"error": "Customer not found."}, 404)
+    if video == None:
+        return ({"error": "Video not found."}, 404)
+    if video.available_inventory == 0:
+        return ({"error": "No available inventory."}, 400)
+
+    new_rental = Rental(customer_id = customer_id, 
+                        video_id = video_id)
+    new_rental.due_date = datetime.utcnow()+ timedelta(days=7)
+    db.session.add(new_rental)
+    # customer.videos_checked_out_count += 1
+    customer.check_out()
+    ### THIS ISN'T WORKING!!!!
+    # video.available_inventory -= 1
+    video.check_out()
+    db.session.commit()
+    # return success 200 with response body
+    # CONSIDER making a function that builds successful response body
+    return ({"customer_id": new_rental.customer_id,
+                "video_id": new_rental.video_id,
+                "due_date": new_rental.due_date,
+                "videos_checked_out_count": customer.videos_checked_out_count,
+                "available_inventory": video.available_inventory}, 200)
+
+    # if valid_rental_input(request_body):
+    #     #if customer_id and video_id and are valid and in the request:
+    #     customer = Customer.query.get(customer_id)
+    #     video = Video.query.get(video_id)
+    #     if customer and video:
+    #         # if inventory is available:
+    #         if video.available_inventory == 0:
+    #             return ({"details": "No available inventory."}, 400)
+    #         else:
+    #         # else video.available_inventory > 0:
+    #             # proceed with creating rental
+    #             new_rental = Rental(customer_id = request_body["customer_id"], 
+    #                                 video_id = request_body["video_id"])
+    #             new_rental.due_date = datetime.utcnow()+ timedelta(days=7)
+    #             db.session.add(new_rental)
+    #             customer.videos_checked_out_count += 1
+    #             # customer.check_out()
+    #             ### THIS ISN'T WORKING!!!!
+    #             video.available_inventory -= 1
+    #             # video.check_out()
+    #             db.session.commit()
+    #             # return success 200 with response body
+    #             # CONSIDER making a function that builds successful response body
+    #             return ({"customer_id": new_rental.customer_id,
+    #                         "video_id": new_rental.video_id,
+    #                         "due_date": new_rental.due_date,
+    #                         "videos_checked_out_count": customer.videos_checked_out_count,
+    #                         "available_inventory": video.available_inventory}, 200)
+    #     # else, return 404 error for not found
+    #     return ({"details": "Customer or video does not exist"}, 404)
+    # # else, return 400
+    # return ({"details": "Invalid data"}, 400)
 
 
 # condsider moving this to the Rental model
