@@ -13,17 +13,8 @@ class Video(db.Model):
 
 
     def to_json(self):
-        if self.available_inventory == 0:
             return{
                 "id": self.video_id,
-                "title": self.title,
-                "release_date": self.release_date,
-                "total_inventory": self.total_inventory,
-                "available_inventory": self.available_inventory
-            }
-        else:
-            return{
-                 "id": self.video_id,
                 "title": self.title,
                 "release_date": self.release_date,
                 "total_inventory": self.total_inventory

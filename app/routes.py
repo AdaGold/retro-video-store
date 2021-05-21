@@ -187,9 +187,9 @@ def add_rental():
 def remove_rental():
     request_body = request.get_json()
     if "customer_id" not in request_body or "video_id" not in request_body:
-        return jsonify({
-        "details": "Invalid data"
-        }), 400
+                    return jsonify({
+                    "details": "Invalid data"
+                    }), 400
 
     customer_id_request = request_body["customer_id"]
     results = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
@@ -217,17 +217,6 @@ def remove_rental():
         "available_inventory": video.available_inventory
         }), 200
 
-
-
-def video_rental(rental, video):
-    return {
-        "release_date": video.release_date,
-        "title": video.title,
-        "due_date": rental.due_date
-        }
-
-
-
 @customer_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
 def get_rentals_by_id(customer_id):
 
@@ -241,7 +230,6 @@ def get_rentals_by_id(customer_id):
     video = rentals[0][1]
     rentals = rentals[0][2]
 
-
     rental_response = []
     #for rental in rentals:
     #rental_response.append(video_rental(rentals, video))
@@ -251,8 +239,29 @@ def get_rentals_by_id(customer_id):
             "due_date": rentals.due_date
             }]
 
-    print("**************")
-    print("**************")
-    print("**************")
+    return jsonify(rental_response), 200
+
+@video_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
+def get_rentals_by_video_id(video_id):
+
+    # rentals = db.session.query(Rental).join(Customer).filter\
+    # (Rental.customer_id == customer_id).all()
+
+    rentals = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
+        .join(Video, Video.video_id==Rental.video_id).filter(Video.video_id == video_id).all()
+
+    customer = rentals[0][0]
+    video = rentals[0][1]
+    rentals = rentals[0][2]
+
+    rental_response = []
+    #for rental in rentals:
+    #rental_response.append(video_rental(rentals, video))
+    rental_response = [{
+            "due_date": rentals.due_date,
+            "name": customer.name,
+            "phone": customer.phone,
+            "postal_code": customer.postal_code
+            }]
 
     return jsonify(rental_response), 200
