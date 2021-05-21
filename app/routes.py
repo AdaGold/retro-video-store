@@ -2,12 +2,14 @@ from flask import Blueprint
 from app import db
 from app.models.customer import Customer
 from app.models.video import Video
+from app.models.rentals import Rental
 from flask import request, Blueprint, make_response, jsonify
 from datetime import datetime
 import os
 
 customers_bp = Blueprint("customer", __name__, url_prefix="/customers")
-videos_bp = Blueprint("vidoe", __name__, url_prefix="/videos")
+videos_bp = Blueprint("video", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 
 ####################################################################
@@ -61,8 +63,6 @@ def delete_customer(id):
     db.session.commit() 
     return make_response({"id": customer.id, "success": True}, 200)
 
-
-# my_date = datetime.strptime(my_string, "%Y-%m-%d")
 ####################################################################
 #                              VIDEOS   ROUTES                     #
 ####################################################################
@@ -118,3 +118,16 @@ def delete_video(id):
     db.session.commit() 
     return make_response({"id": video.id, "success": True}, 200)
 
+####################################################################
+#                              RENTAL   ROUTES                     #
+####################################################################
+@rentals_bp.route("", methods=["POST"])
+def rental_videos():
+    try:
+        request_body = request.get_json()
+        rental = Rental(customer_id=request_body["customer_id"],
+                    video_id=request_body["customer_id"])
+
+        return make_response(jsonify([rental.customer_id]), 201)
+    except KeyError as err:
+        return make_response({"details":f"Invalid data: {err}"}, 400)
