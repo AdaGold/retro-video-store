@@ -5,7 +5,8 @@ from flask import request, Blueprint, make_response, jsonify
 from app import db
 from app.models.customer import Customer
 from app.models.video import Video
-from datetime import datetime
+from app.models.rental import Rental
+from datetime import datetime, timedelta 
 
 # <------------------------------------- CUSTOMER ENDPOINTS ------------------------------------->
 
@@ -167,7 +168,7 @@ def video_details():
                 "title": new_video.title
                 }, 201) 
 
-# endpoing retrieves, updates and deletes records of a specific video
+# endpoint retrieves, updates and deletes records of a specific video
 @videos_bp.route("/<video_id>", methods=["GET", "PUT", "DELETE"], strict_slashes=False)
 def specific_video(video_id):
 
@@ -224,5 +225,37 @@ def specific_video(video_id):
 
 
 
+# <------------------------------------- RENTAL ENDPOINTS ------------------------------------->
+
+rentals_bp = Blueprint("rentals", __name__, url_prefix= "/rentals")
+@rentals_bp.route("/check-out", methods=["POST"], strict_slashes=False)
+def rental_check_out():
+    request_body = request.get_json()
+
+    customer_id = request_body.get("customer_id")
+    video_id = request_body.get("video_id")
+
+    if type(customer_id) != int or type(video_id) != int:
+        return make_response(), 404
+    
+    customer = Customer.query.get(customer_id)
+    video = Video.query.get(video_id)
+
+    new_rental = Rental(
+        customer_id=customer_id,
+        video_id=video_id
+    )
 
 
+    
+
+# Checks out a video to a customer, and updates the data in the database as such.
+
+# When successful, this request should:
+
+# increase the customer's videos_checked_out_count by one
+    customer.videos_checked_out_count += 1
+# decrease the video's available_inventory by one
+    video.available_inventory -= 1
+# create a due date. The rental's due date is the seven days from the current date 
+    # due_date = datetime.now() + timedelta(days=7)
