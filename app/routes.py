@@ -194,16 +194,19 @@ def check_out():
         return  400
     if "video_id" not in request_body:
         return  400
+    if not isinstance(request_body["video_id"],int) or request_body['video_id'] == None: 
+        return jsonify(error="video id must be an integer"), 400
     
     customer_id = request_body["customer_id"]
     video_id = request_body["video_id"]
     video = Video.query.get(video_id)#checking database for Video instance
     if not video:
         return jsonify(details= "doesnt exist"), 400
+    if not isinstance(video.available_inventory,int):
+        return jsonify(details="video inventory must be an integer"), 400
     if video.available_inventory <= 0:
         return jsonify(details="video not available"), 400
     new_rental = Rental.checkout(customer_id, video_id)
-    
     return jsonify(new_rental.to_python_dict()), 200
 
 
@@ -214,16 +217,31 @@ def check_in():
         Output: python dictoinary of new Rental instance 
     """
     request_body = request.get_json()
-    try:
-        request_body["customer_id"]
-        request_body["video_id"]
-    except:
-        return make_response({"details": "Invalid data"}, 400)
-    customer_id = request_body["customer_id"]
-    video_id = request_body["customer_id"]
-    new_rental = Rental.check_in(customer_id,video_id)
+    if "customer_id" not in request_body:
+        return  400
+    if "video_id" not in request_body:
+        return  400
+    if not isinstance(request_body["video_id"],int) or request_body['video_id'] == None: 
+        return jsonify(error="video id must be an integer"), 400
     
-    return jsonify(new_rental.to_python_dict()), 200
+    customer = Customer.query.get(request_body["customer_id"])
+    if not isinstance(customer.videos_checked_out_count,int) or customer.videos_checked_out_count == None: 
+        return jsonify(error="checked out count must be an integer"), 400
+    
+    
+    customer.videos_checked_out_count = customer.decrease_checkout_count()
+    video = Video.query.get(request_body["video_id"])
+    video.available_inventory = video.increase_inventory()
+    db.session.commit()
+    
+    return jsonify(
+        {
+        "customer_id": customer.id,
+        "video_id": video.id,
+        "videos_checked_out_count": customer.videos_checked_out,
+        "available_inventory": video.available_inventory 
+    }
+    ), 200
 
 
 
