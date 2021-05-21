@@ -1,15 +1,21 @@
 from flask import Blueprint, request, jsonify, make_response
-from app.models import customer 
-from app.models.customer import Customer
+from app.models import customer
+from app.models import video 
 from app.models.video import Video
-# from app.models.rental import Rental 
+from app.models.customer import Customer
+from app.models.rental import Rental 
 from datetime import datetime, time, timedelta
 from app import db 
 
 #route for class Customer, Video, Rental 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
-# rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
+
+
+##################################################################################
+################ Wave_1 - CRUD for two models: Customer and Video ################
+##################################################################################
 
 #Post customers detail tests
 @customers_bp.route("", methods=["POST"], strict_slashes=False)
@@ -152,3 +158,149 @@ def handle_video(video_id):
 
         return jsonify({
             "id": video.id })
+
+##################################################################################
+######### Wave_2: Custom endpoints for Rental: Many to Many relationship #########
+##################################################################################
+
+#rental checkout 
+@rentals_bp.route("/check-out", methods=["POST"], strict_slashes=False)
+def rental_checkout():
+
+    rental = request.get_json()
+
+# The API should return back detailed errors and a status 400: Bad Request if the video does not have any available inventory before check out
+#check-out of invalid customer ID and video ID
+    if (rental["customer_id"]) is not int or (rental["rental_id"]) is not int:
+        return {
+            "detail": "Invaid Data. Must be an Integer."
+        }, 400
+
+    # rental_list = Rental(customer_id = rental["customer_id"],
+    #                     video_id = rental["video_id"],
+    #                     due_date = datetime.now() + timedelta(days=7))# adds 7 days to datetime.now(current_date)
+
+# customer checks out a video
+# when checks out successfully:
+# adds #customer's videos_checked_out by one
+# Descrease the #video's available_inventory by one
+# also create a due_date 7 days from current date
+
+#customer_id and video_id are integers
+
+#due_date = due_date is always 7 days from checked out date
+#videos_checked_out_count = videos_checked_out_count ++
+#available_inventory = available_inventory - videos_checked_out_count 
+
+# The API should return back detailed errors and a status 404: Not Found if the customer does not exist
+#     customer = Customer.query.get(rental_list.customer_id)
+#     if customer is None:
+#         return "Not Found", 404
+
+# # The API should return back detailed errors and a status 404: Not Found if the video does not exist
+#     video = Video.query.get(rental_list.video_id)
+#     if video is None:
+#         return "Not Found", 404
+
+#     # if video.available_inventory == 0:
+#     #     return {
+#     #         "message": "No inventory."
+#     #     }, 400
+
+    customer.videos_checked_out_count += 1
+    video.available_inventory -= 1
+
+    # db.session.add(rental_list)
+    db.session.commit()
+
+    return Rental.to_json_rental(), 200
+
+    # return {
+    #     "customer_id": rental_list.customer_id,
+    #     "video_id": rental_list.video_id,
+    #     "due_date": rental_list.due_date, #7 days from checked out date
+    #     "videos_checked_out_count": customer.videos_checked_out_count,
+    #     "available_inventory": video.available_inventory 
+    # }, 200
+
+
+@rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
+def rental_checkin():
+    checkin_list= request.get_json()
+
+    checkin_customer = checkin_list["customer_id"]
+    checkin_video = checkin_list["video_id"]
+
+    customer = Customer.query.get(checkin_customer)
+    video = Video.query.get(checkin_video)
+
+    rental = Rental.query.all()
+
+    if customer is None:
+        return "Customer not found.", 404
+
+    if video is None:
+        return "Video not found.", 404
+
+    customer.videos_checked_out_count -= 1
+    video.available_inventory += 1
+
+    db.session.commit()
+
+    return {
+        "customer_id": customer.id,
+        "video_id": video.id,
+        "videos_checked_out_count": customer.videos_checked_out_count,
+        "available_inventory": video.available_inventory
+    }
+
+
+@rentals_bp.route("/customers-id/rentals", methods=["GET"], strict_slashes=False)
+
+# List the videos a customer currently has checked out
+def get_video_by_customer_checkout(id):
+
+    customer = Customer.query.get(id)
+
+    if not customer:
+        return({"details":"Invalid data"},400)
+
+    video_list =[]
+
+    for rental in customer.rentals:
+
+        video = Video.query.get(rental.video_id)
+
+        video_list.append({
+            "release_date": video.release_date,
+            "title": video.title,
+            "due_date": rental.due_date
+
+        })
+
+    return jsonify(video_list)
+
+
+@rentals_bp.route("/<videos_id>/rentals", methods=["GET"], strict_slashes=False)
+# List the customers who currently have the video checked out
+def get_customer_by_video_checkout(id):
+
+    video= Video.query.get(id)
+
+    if not video:
+        return({"details":"Invalid data"},400)
+
+    customer_list = []
+
+    for rental in video.rentals:
+
+        customer = Customer.query.get(rental.customer_id)
+
+        customer_list.append({
+            "name":Customer.name,
+            "phone":video.phone,
+            "postal_code":Customer.postal_code,
+            "due_date":rental.due_date
+
+        })
+    return jsonify(customer_list)

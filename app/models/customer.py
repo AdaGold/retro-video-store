@@ -16,7 +16,7 @@ class Customer(db.Model):
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime, nullable = True)
     checkout_count = db.Column(db.Integer, default =0) #why do I need this here?
-    # rentals = db.relationship('Rental', backref = 'customer')
+    rentals = db.relationship('Rental', backref = 'customer')
     
 
     def registered_customer(self):
