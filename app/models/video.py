@@ -6,8 +6,8 @@ class Video(db.Model):
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime)
     total_copies = db.Column(db.Integer)
-    availible_inventory = db.Column(db.Integer)
-    # customers = db.relationship("Rental", back_populates="customers")
+    customers = db.relationship("Rental", back_populates="video")
+    
 
     def make_json(self):
         return {
@@ -15,23 +15,12 @@ class Video(db.Model):
             "title": self.title,
             "release_date": self.release_date,
             "total_inventory": self.total_copies,
-            "availible_inventory": self.availible_inventory
+            "available_inventory": self.get_available_inventory()
                     }
                     
     def return_id(self):
         return {"id":self.id}
-    
-    def check_out(self):
-        if self.availible_inventory == 0:
-            return None
 
-        else:
-            # self.availible_inventory = self.availible_inventory -1
-            self.availible_inventory -= 1
-    
-    def check_in(self):
-        self.availible_inventory += 1
-        # if self.availible_inventory is None:
-        #     self.availible_inventory = 1
-        # else:
-        #     self.availible_inventory = self.availible_inventory +1
+    def get_available_inventory(self):
+        return self.total_copies - len(self.customers)
+

@@ -8,17 +8,15 @@ class Customer(db.Model):
     phone_number = db.Column(db.String)
     register_at = db.Column(db.DateTime, nullable = False)
     videos_checked_out = db.Column(db.Integer, default=0)
-    # videos = db.relationship("Rental", back_populates="videos")
+    videos = db.relationship("Rental", back_populates="customer")
 
-    def convert_postal_code(self):
-        return str(self.postal_code)
 
     def make_json(self):
         return {
             "id": self.id,
             "name": self.name,
             "registered_at": self.register_at,
-            "postal_code": self.convert_postal_code(),
+            "postal_code": str(self.postal_code),
             "phone": self.phone_number,
             "videos_checked_out_count": self.videos_checked_out
         }
@@ -26,9 +24,8 @@ class Customer(db.Model):
         return {"id":self.id}
 
     def check_out(self):
-        self.videos_checked_out = self.videos_checked_out +1
-        # db.session.commit()
+        self.videos_checked_out += 1
 
     def check_in(self):
-        self.videos_checked_out = self.videos_checked_out -1
-        # db.session.commit()
+        self.videos_checked_out -= 1
+        
