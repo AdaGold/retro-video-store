@@ -13,10 +13,20 @@ class Video(db.Model):
 
     def v_json_response(self):
         return {
-            "id": self.video_id,
+           "id": self.video_id,
             "title": self.title_of_video,
-            "release_date": self.release_date,
-            "total_inventory": self.total_inventory,
+            "release_date": self.release_date.strftime("%Y-%m-%d"),
+            "total_inventory": int(self.total_inventory),
             "available_inventory": 0
+
+        }
+    
+    def new_vid_response(self): 
+
+        return {
+            "title": self.title_of_video,
+            "release_date": self.release_date.strftime("%Y-%m-%d"),
+            "total_inventory": int(self.total_inventory),
+
 
         }

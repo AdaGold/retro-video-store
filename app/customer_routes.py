@@ -3,34 +3,29 @@ from flask import request, Blueprint, make_response, jsonify, abort
 from app.models.customer import Customer
 from app import db
 
+
+
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
-
-
 
 @customers_bp.route("", methods=['GET', 'POST'])
 def handle_customers():
+    customers = Customer.query.all()
+    request_body = request.get_json()
+
+    if customers == None:
+        return("", 404)
 
     if request.method == 'GET':
-
-        customer = Customer.query.all()
-        
-        customers = []
-
-        for customer in customers:
-            customers.append(customer.to_json())
-        
-        db.session.commit()
-        return jsonify(customers), 200
+        customers_list = [customer.json_response() for customer in customers]
+        return jsonify(customers_list)
     
     
-    if request.method == 'POST':
-        #customer = Query.args.get('id')
-        request_body = request.get_json()
+    elif request.method == 'POST':
 
         if "name" not in request_body or \
             "postal_code" not in request_body or \
             "phone" not in request_body:
-                return ("", 400)
+                return {"error" : "Invalid data"}, 400
         
         else:
             new_customer = Customer(name = request_body["name"],
@@ -44,36 +39,44 @@ def handle_customers():
 
         
 
+
 @customers_bp.route("/<id>", methods=['GET', 'PUT', 'DELETE'])
+
 def handle_customer_by_id(id):
+    CUSTOMER_ID = Customer.query.get(id)
+    REQUEST_BODY = request.get_json()
 
-    customer = Customer.query.get(id)
 
-
-    if customer == None:
-            return ("", 404)
+    if CUSTOMER_ID == None:
+        return ("", 404)
 
     else:
     
         if request.method == 'GET':
-            return jsonify(customer.json_response()), 200
+            return jsonify(CUSTOMER_ID.json_response()), 200
 
 
         elif request.method == 'PUT':
-            update = request.get_json() 
 
-            customer.name = update["name"]
-            customer.postal_code = update["postal_code"]
-            customer.phone = update["phone"]
+            if "name" not in REQUEST_BODY or \
+            "postal_code" not in REQUEST_BODY or \
+            "phone" not in REQUEST_BODY:
+                return {"error" : "Invalid data"}, 400
+    
 
+            CUSTOMER_ID.name = REQUEST_BODY["name"]
+            CUSTOMER_ID.postal_code = REQUEST_BODY["postal_code"]
+            CUSTOMER_ID.phone = REQUEST_BODY["phone"]
+
+            db.session.add(CUSTOMER_ID)
             db.session.commit()
-            return jsonify(customer.json_response()), 200
+            return jsonify(CUSTOMER_ID.json_response()), 200
                 
 
             
 
         elif request.method == 'DELETE':
-            db.session.delete(customer)
+            db.session.delete(CUSTOMER_ID)
             db.session.commit()
-            return {"id": customer.id}
+            return {"id": CUSTOMER_ID.id}
             

@@ -26,7 +26,11 @@ class Customer(db.Model):
 
         }
 
-    
+    def form_checker(self):
+        if self.name == None or \
+            self.postal_code == None or \
+            self.phone == None:
+            return {"error" : "Invalid data"}, 400
 
 
     

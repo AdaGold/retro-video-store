@@ -21,9 +21,6 @@ def create_app(test_config=None):
         app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
             "SQLALCHEMY_TEST_DATABASE_URI")
     
-    @app.errorhandler(404)
-    def not_found(e):
-        return render_template("404.html")
 
 
     # Import models here for Alembic setup
