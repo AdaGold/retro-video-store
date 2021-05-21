@@ -1,6 +1,6 @@
 from flask import current_app
 from app import db
-from datetime import datetime, timedelta 
+# from datetime import datetime, timedelta 
 
 
 class Rental(db.Model):
