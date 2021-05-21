@@ -9,6 +9,7 @@ customer_bp = Blueprint("customers", __name__, url_prefix="/customers")
 video_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rental_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
+# 
 @customer_bp.route("", methods=["POST"], strict_slashes = False)
 def post_customer():
     request_body = request.get_json()
@@ -25,6 +26,7 @@ def post_customer():
 
     return jsonify({"id": new_customer.customer_id}), 201
 
+#
 @customer_bp.route("", methods=["GET"], strict_slashes = False)
 def get_customers():
     customers = Customer.read_all()
@@ -33,6 +35,7 @@ def get_customers():
         response_body.append(customer.to_dict())
     return jsonify(response_body), 200
 
+# 
 @customer_bp.route("/<customer_id>", methods=["GET"], strict_slashes = False)
 def get_customer(customer_id):
     customer = Customer.read(customer_id)
@@ -40,6 +43,7 @@ def get_customer(customer_id):
         return jsonify({"details": "customer is not found"}), 404
     return jsonify(customer.to_dict()), 200
 
+#
 @customer_bp.route("/<customer_id>", methods=["PUT"], strict_slashes = False)
 def update_customer(customer_id):
     customer = Customer.read(customer_id)

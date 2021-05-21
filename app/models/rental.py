@@ -1,5 +1,4 @@
 from app import db
-from flask import current_app
 from datetime import datetime
 from datetime import timedelta
 
@@ -10,7 +9,8 @@ class Rental(db.Model):
      video_id = db.Column(db.Integer, db.ForeignKey('video.video_id'))
      due_date = db.Column(db.DateTime, nullable=False)
      
-
+     # Need to return a JSON file in the response body
+     # This method is only used in the jsonify function
      def to_dict(self):
           format_string = "%Y-%m-%d"  # 2020-06-31
           from app.models.customer import Customer
@@ -26,7 +26,8 @@ class Rental(db.Model):
           }
 
 
-
+     # This method creates a new rental in the database - It associates a customer to a video - 
+     # in that association it creates a due date
      @classmethod
      def check_out(cls, customer, video):
           due_date = datetime.utcnow() + timedelta(days=7)
@@ -37,6 +38,8 @@ class Rental(db.Model):
           db.session.commit()
           return new_rental
 
+     # This method deletes a rental in the database  - 
+     # It also validates that a relationship between a customer and a video exists in the first place
      @classmethod
      def check_in(cls, customer, video):
           rental = Rental.query.filter(Rental.customer_id==customer.customer_id).filter(Rental.video_id==video.video_id).first()
@@ -49,7 +52,9 @@ class Rental(db.Model):
           return True
           
 
-     #Querying the database for the rental model where customer id is = to the customer id provided(input)
+     # Querying the database for the rental model where customer id is = to the customer id provided(input)
+     # Creates a join query between customer, video and rental
+     # Filter by customer id
      @classmethod
      def read_checked_out_by_customer(cls, customer_id):
           from app.models.customer import Customer
@@ -58,6 +63,10 @@ class Rental(db.Model):
             .join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id == customer_id).all()
           return rentals
 
+     # Querying the database for the rental model where customer id is = to the customer id provided(input)
+     # This method tells us who checks out a video
+     # Creates a join query between customer, video and rental
+     # Filters by video id
      @classmethod
      def read_checked_out_by_video(cls, video_id):
           from app.models.customer import Customer

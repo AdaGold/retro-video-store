@@ -1,5 +1,5 @@
 from app import db
-from app.models.rental import Rental
+
 
 class Video(db.Model):
     video_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -7,11 +7,16 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime, nullable=False)
     total_inventory = db.Column(db.Integer, nullable=False)
     available_inventory = db.Column(db.Integer, nullable=False)
-    #rentals = db.relationship('Rental', backref= 'rentals', lazy=True)
-
+   
+    # CRUD helper functions - The layer right on top of the database
     @classmethod
     def create(cls, title, release_date, total_inventory):
-        new_video = Video(title=title, release_date=release_date, total_inventory=total_inventory, available_inventory=total_inventory)
+        new_video = Video(
+            title=title, 
+            release_date=release_date, 
+            total_inventory=total_inventory, 
+            available_inventory=total_inventory
+        )
         db.session.add(new_video)
         db.session.commit()
         return new_video

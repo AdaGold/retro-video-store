@@ -1,6 +1,5 @@
 from app import db
 from datetime import datetime
-from app.models.rental import Rental
 
 class Customer(db.Model):
     customer_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -9,15 +8,16 @@ class Customer(db.Model):
     phone = db.Column(db.String, nullable=False)
     registered_at = db.Column(db.DateTime, default=datetime.utcnow)
     videos_checked_out_count = db.Column(db.Integer, default=0)
-    #rentals = db.relationship('Rental', backref= 'rentals', lazy=True)
+    
 
+    #CRUD helper functions - these methods are a layer to the database 
     @classmethod
     def create(cls, name, postal_code, phone):
         new_customer = Customer(name=name, postal_code=postal_code, phone=phone)
         db.session.add(new_customer)
         db.session.commit()
         return new_customer
-
+    
     @classmethod
     def read_all(cls):
         customers = Customer.query.all()
@@ -46,6 +46,8 @@ class Customer(db.Model):
         db.session.delete(customer)
         db.session.commit()
 
+    # Need to return a JSON file in the response body
+    # This method is only used in the jsonify function
     def to_dict(self):
         format_string = '%a, %-d %b %Y %H:%M:%S %z' # Wed, 16 Apr 2014 21:40:20 -0700
         return {
