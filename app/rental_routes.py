@@ -44,9 +44,13 @@ def return_rental():
     if ("customer_id" not in body.keys() or
         "video_id" not in body.keys()):
         return {"error" : "Not Found"}, 404
+    
+    rental = Rental.query.filter(Rental.customer_id == body["customer_id"], Rental.video_id == body["video_id"]).first()
+
+    if rental is None:
+        return ("", 400)
 
     customer = Customer.query.get(body["customer_id"])
-    
 
     list_videos = customer.videos
 
