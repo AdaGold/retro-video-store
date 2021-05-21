@@ -66,7 +66,7 @@
             "videos_checked_out_count": 0
         }
 
-- [ ] returns detailed errors and a status 404: Not Found if this customer does not exist.
+- [X] returns detailed errors and a status 404: Not Found if this customer does not exist.
 
 
 
@@ -119,7 +119,7 @@
             "videos_checked_out_count": 0
         }
 
-- [ ] returns detailed errors and a status 404: Not Found if this customer does not exist.
+- [X] returns detailed errors and a status 404: Not Found if this customer does not exist.
 - [X] if any of the required fields are missing from request, should get response with 400 and response body with some indication of what went wrong, such as { "details": "Invalid data"}
 - [ ] ⭐️ provide a more detailed response body for error handling, such as {"title must be provided and it must be a string","total_inventory must be provided and it must be a number"}
 
@@ -136,7 +136,7 @@
         "id": 2
         }
 
-- [ ] returns detailed errors and a status 404: Not Found if this customer does not exist.
+- [X] returns detailed errors and a status 404: Not Found if this customer does not exist.
 
 ---
 
@@ -181,7 +181,7 @@
         "available_inventory": 9
         }
 
-- [ ] returns detailed errors and a status 404: Not Found if this video does not exist.
+- [X] returns detailed errors and a status 404: Not Found if this video does not exist.
 
 
 
@@ -231,7 +231,7 @@
         "available_inventory": 9
         }
 
-- [ ] returns detailed errors and a status 404: Not Found if this video does not exist.
+- [X] returns detailed errors and a status 404: Not Found if this video does not exist.
 - [X] if any of the required fields are missing from request, should get response with 400 and response body with some indication of what went wrong, such as { "details": "Invalid data"}
 - [ ] ⭐️ provide a more detailed response body for error handling, such as {"title must be provided and it must be a string","total_inventory must be provided and it must be a number"}
 
@@ -248,4 +248,4 @@
         "id": 2
         }
 
-- [ ] returns detailed errors and a status 404: Not Found if this video does not exist.
+- [X] returns detailed errors and a status 404: Not Found if this video does not exist.

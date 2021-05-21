@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 74aaee0b22b9
+Revision ID: 6875c39c9a77
 Revises: 
-Create Date: 2021-05-20 01:02:24.562898
+Create Date: 2021-05-20 23:40:33.494881
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '74aaee0b22b9'
+revision = '6875c39c9a77'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,7 +21,7 @@ def upgrade():
     op.create_table('customer',
     sa.Column('cust_id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(), nullable=True),
-    sa.Column('postal_code', sa.String(), nullable=True),
+    sa.Column('postal_code', sa.Integer(), nullable=True),
     sa.Column('phone', sa.String(), nullable=True),
     sa.Column('registered_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('cust_id')
@@ -29,7 +29,7 @@ def upgrade():
     op.create_table('video',
     sa.Column('video_id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('title', sa.String(), nullable=True),
-    sa.Column('release_date', sa.String(), nullable=True),
+    sa.Column('release_date', sa.DateTime(), nullable=True),
     sa.Column('total_inventory', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('video_id')
     )
