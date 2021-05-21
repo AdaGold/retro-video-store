@@ -52,23 +52,23 @@ def handle_customer(customer_id):
 
     customer = Customer.query.get(customer_id)
 
-    if customer is None:
-        return "Missing customer.", 404
+    # if customer is None:
+    #     return make_response("", 404)
 
     if request.method == "GET":
         return customer.to_json_customer()
 
     if request.method == "PUT":
-        request_body_customer = request.get_json()
+        request_body = request.get_json()
 
-        if not "name" in request_body_customer or not "postal_code" in request_body_customer or not "phone" in request_body_customer:
+        if not "name" in request_body or not "postal_code" in request_body or not "phone" in request_body:
             return jsonify({
                 "errors": "Not Found"
                 }), 400
 
-        customer.name = request_body_customer["name"]
-        customer.postal_code = request_body_customer["postal_code"]
-        customer.phone = request_body_customer["phone"]
+        customer.name = request_body["name"]
+        customer.postal_code = request_body["postal_code"]
+        customer.phone = request_body["phone"]
 
         db.session.commit()
 
@@ -76,12 +76,11 @@ def handle_customer(customer_id):
 
     if request.method == "DELETE":
 
-        db.session.commit(customer)
         db.session.commit()
+        # db.session.commit()
 
         return jsonify({
-            "id": customer.id })
-            # "details": f'Customer {customer.id}, {customer.name}, successfully deleted.'})
+            "id": customer.id})
 
 #route for class Video
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
@@ -103,22 +102,30 @@ def create_videos():
     db.session.add(video)
     db.session.commit()
 
-    return customer.to_json_customer(), 201
+    return jsonify({
+        "id": video.id
+    }), 201
+
+    # return customer.to_json_customer(), 201
 
 @videos_bp.route("", methods=["GET"], strict_slashes=False)
 def get_video():
     videos = Video.query.all()
-    
+
+    list_of_video = []
+
     for video in videos:
-        return jsonify(video.to_json_video())
+        list_of_video.append(video.to_json_video())
+
+    return jsonify(list_of_video)
 
 
 @videos_bp.route("<video_id>", methods=["GET", "PUT", "DELETE"], strict_slashes=False)
 def handle_video(video_id):
     video = Video.query.get(video_id)
 
-    if video == None:
-        return "Missing video.", 404 
+    if video is None:
+        return make_response("", 404) 
 
     if request.method == "GET":
         return video.to_json_video()
@@ -136,7 +143,8 @@ def handle_video(video_id):
         db.session.delete(video)
         db.session.commit()
 
-    return video.to_json_video()
+        return jsonify({
+            "id": video.id })
 
 
 #route for class rental  
