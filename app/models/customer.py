@@ -16,7 +16,7 @@ class Customer(db.Model):
     postal_code = db.Column(db.Integer)
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime(), nullable=True)
-    videos_checked_out_count = db.Column(db.Integer)
+    videos_checked_out_count = db.Column(db.Integer, default =0)
 
     # relating to goal id by assigning new variable name for "id"
     # video_id = db.relationship('Video', secondary='video', lazy='subquery', backref=db.backref('customers', lazy=True))
@@ -28,9 +28,9 @@ class Customer(db.Model):
                 "id": self.customer_id,
                 "name": self.name,
                 "registered_at": self.registered_at,
-                "postal_code": self.postal_code,
+                "postal_code": str(self.postal_code),
                 "phone": self.phone,
-                "videos_checked_out_count": 0
+                "videos_checked_out_count": self.videos_checked_out_count
                 }  
 
 
