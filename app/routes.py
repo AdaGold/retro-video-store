@@ -166,9 +166,10 @@ def create_video():
         new_video = Video(
             title = request_body["title"],
             release_date = request_body["release_date"],
-            total_inventory = request_body["total_inventory"]
+            total_inventory = request_body["total_inventory"],
+            available_inventory = request_body["total_inventory"]
            )
-        
+
         # add this model to the database and commit the changes
         db.session.add(new_video)
         db.session.commit()
@@ -220,16 +221,20 @@ def delete_video(video_id):
 
 def checkout_video():
     request_body = request.get_json()
+ 
+    # Error if video_id or customer_id is not an integer
+    if not str(request_body["video_id"]).isnumeric() or not str(request_body["customer_id"]).isnumeric():
+        return make_response({"Invalid data": "Not an integer"}, 400)
 
     customer = Customer.query.get(request_body["customer_id"])
     checked_out_video = Video.query.get(request_body["video_id"])
-        
-    # 404: Not Found if missing customer, video, or no available inventory    
-    if "customer_id" not in request_body or "video_id" not in request_body:
+
+    # Error if missing customer, video, or no available inventory    
+    if customer is None or checked_out_video is None:
         return jsonify({"details": "Invalid data"}), 404
 
-    if checked_out_video.available_inventory < 1:
-        return jsonify({"details" : "inventory out of stock"}, 400)         
+    if checked_out_video.available_inventory == 0:
+        return {"details": "inventory out of stock"}, 400        
    
     # increase the customer's videos_checked_out_count by one
     customer.videos_checked_out_count += 1
@@ -238,22 +243,20 @@ def checkout_video():
 
     new_rental = Rental(
         customer_id = request_body["customer_id"],
-        video_id = request_body["video_id"],
-        # due_date = datetime.date.today() + timedelta(days=7))
-        due_date = datetime.datetime.now() + datetime.timedelta(days=7))
+        video_id = request_body["video_id"])
     
     db.session.add(new_rental)
     db.session.commit()
 
-    rental_result = dict(
-        customer_id = new_rental.customer_id,
-        video_id = new_rental.video_id,
-        due_date = new_rental.due_date,
-        videos_checked_out_count = len(customer.videos_checked_out_count),
-        available_inventory = checked_out_video.available_inventory
-        )
+    # rental_result = dict(
+    #     customer_id = new_rental.customer_id,
+    #     video_id = new_rental.video_id,
+    #     due_date = new_rental.due_date,
+    #     videos_checked_out_count = len(customer.videos_checked_out_count),
+    #     available_inventory = checked_out_video.available_inventory
+    #     )
 
-    return rental_result, 200
+    return new_rental.rental_to_dict(), 200
 
 ### Checks in a video to a customer and update the database ###
 @rentals_bp.route("/check-in", methods=["POST"])
@@ -261,11 +264,15 @@ def checkout_video():
 def checkin_video():
     request_body = request.get_json()
 
+    # Error if video_id or customer_id is not an integer
+    if not str(request_body["video_id"]).isnumeric() or not str(request_body["customer_id"]).isnumeric():
+        return make_response("", 400)
+
     customer = Customer.query.get(request_body["customer_id"])
     checked_in_video = Video.query.get(request_body["video_id"])
         
     # 404: Not Found if missing customer, video   
-    if "customer_id" not in request_body or "video_id" not in request_body:
+    if customer is None or checked_in_video is None:
         return jsonify({"details": "Invalid data"}), 404
     
     # 400: Bad Request if the video and customer do not match a current rental
@@ -273,29 +280,21 @@ def checkin_video():
             customer_id=request_body["customer_id"], 
             video_id=request_body["video_id"]
             ).first()
-    print("====Testing====")
-    print(request_body)
-    print(rental)
+
     if not rental:
         return jsonify({"details": "Invalid data"}), 400         
    
     # decrease the customer's videos_checked_out_count by one
     customer.videos_checked_out_count -= 1
     # increase the video's available_inventory by one
-    checked_out_video.available_inventory += 1
+    checked_in_video.available_inventory += 1
 
     db.session.delete(rental)
     db.session.commit()
 
-    rental_result = dict(
-        customer_id = request_body["customer_id"],
-        video_id = request_body["video_id"],
-        videos_checked_out_count = len(customer.videos_checked_out_count),
-        available_inventory = checked_out_video.available_inventory
-        # available_inventory = checked_out_video.total_inventory - len(checked_out_video.video_rentals)
-        )
-
-    return rental_result, 200
+    response = rental.rental_to_dict()
+    del response["due_date"]
+    return response, 200
 
 ### List the videos a customer currently has checked out ###
 
@@ -337,3 +336,4 @@ def list_customers(video_id):
         # .filter(Video.video_id==video_id).all()
 
     return video.to_dict(), 200
+

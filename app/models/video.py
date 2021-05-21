@@ -17,7 +17,7 @@ class Video(db.Model):
             "title": self.title,
             "release_date": self.release_date,
             "total_inventory": self.total_inventory,
-            "available_inventory": self.total_inventory - len(self.video_rentals)
+            "available_inventory": self.total_inventory
         }
 
       
