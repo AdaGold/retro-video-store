@@ -55,40 +55,51 @@ def checkout_video_to_customers():
 
 
 #WAVE 2 POST/rentals/check-in
-@rental_bp.route("/check-out", methods=["POST"], strict_slashes=False)
+@rental_bp.route("/check-in", methods=["POST"], strict_slashes=False)
 def checkin_video_to_customers():
     
     request_body = request.get_json()
     
+    # check if the required request parameters are present in request body
     if ("customer_id" not in request_body or
         "video_id" not in request_body):
         return jsonify(details = "Invalid data"), 400
     
-    if (type(request_body["customer_id"]) is not int or 
-        type(request_body["video_id"]) is not int):
+    if not helper.is_int(request_body["customer_id"]) or not helper.is_int(request_body["video_id"]):
         return jsonify(details = "Invalid data"), 400    
     
-    rental = Rental.query.filter_by(customer_id=request_body["customer_id"], 
-             video_id=request_body["video_id"]).first()
-    if not rental or rental == None:
-        return jsonify(details = "Invalid data"), 400
-    
-    db.session.delete(rental)
-    db.session.commit()
-    
-    customer = Customer.query.get(rental.customer_id)
-    video = Video.query.get(rental.video_id)
+    # use the request params to get the customer and video records from the DB
+    customer = Customer.query.get(request_body["customer_id"])
+    video = Video.query.get(request_body["video_id"])
     
     if (not customer  or customer == None) or (not video or video == None):
         return jsonify(details = ""), 404
     
-    response_body = {"customer_id" : rental.customer_id,
-         "video_id" : rental.video_id,
-         "videos_checked_out_count" : len(customer.rentals) - 1,
-         "available_inventory" : video.total_inventory - len(video.rentals)
+    # get the corresponding rental record for the customer who is checked in the video
+    rental = Rental.query.filter_by(customer_id=request_body["customer_id"], 
+            video_id=request_body["video_id"]).first()
+    
+    if not rental or rental == None:
+        return jsonify(details = "Invalid data"), 400
+
+    # update the counts for the customer and video records in the DB
+    customer.videos_checked_out_count -= 1
+    video.available_inventory += 1
+    
+    db.session.add(customer)
+    db.session.add(video)
+    # delete the rental record for customer who checked in the video
+    db.session.delete(rental)
+    db.session.commit()
+    
+    response_body = {
+            "customer_id" : rental.customer_id,
+            "video_id" : rental.video_id,
+            "videos_checked_out_count" : customer.videos_checked_out_count,
+            "available_inventory" : video.available_inventory
          }
     
-    return Response(response_body, 200)
+    return response_body, 200
     
  
 
