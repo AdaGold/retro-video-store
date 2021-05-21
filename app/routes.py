@@ -5,6 +5,7 @@ from flask import request, Blueprint, jsonify
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 def is_valid_data(request_body):
     if len(request_body) != 3:

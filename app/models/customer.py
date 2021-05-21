@@ -1,13 +1,16 @@
 from app import db
-# from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship
 
 class Customer(db.Model):
+    __tablename__ = "customer"
     customer_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String)
     registered_at = db.Column(db.DateTime(), nullable=True)
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
     videos_checked_out_count = db.Column(db.Integer, default=0)
+
+    video = relationship("rental", back_populates="customer")
 
     def to_dict(self): 
         return {

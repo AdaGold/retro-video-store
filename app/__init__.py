@@ -22,12 +22,14 @@ def create_app(test_config=None):
 
     from app.models.customer import Customer
     from app.models.video import Video
+    from app.models.rental import Rental
 
     db.init_app(app)
     migrate.init_app(app, db)
 
-    from app.routes import customers_bp, videos_bp
+    from app.routes import customers_bp, videos_bp, rentals_bp
     app.register_blueprint(customers_bp)
     app.register_blueprint(videos_bp)
+    app.register_blueprint(rentals_bp)
     
     return app
