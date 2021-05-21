@@ -72,10 +72,10 @@ def update_customer(customer_id):
         or "phone" not in request_body:
         return make_response({}, 400)
         
-    # elif type(request_body["name"]) is not str or request_body["name"] == "" \
-    #     or type(request_body["phone"]) is not str or request_body["phone"] == "" \
-    #     or type(request_body["postal_code"]) is not int or request_body["postal_code"] == "":
-    #     return make_response({}, 400)
+    elif type(request_body["name"]) is not str or request_body["name"] == "" \
+        or type(request_body["phone"]) is not str or request_body["phone"] == "" \
+        or type(request_body["postal_code"]) is not int or request_body["postal_code"] == "":
+        return make_response({}, 400)
 
     else:
         customer.name = request_body["name"]
@@ -158,11 +158,10 @@ def update_video(video_id):
         or "total_inventory" not in request_body:
         return make_response({}, 400)
 
-#how do you make "release_date" DateTime? it looks like a string in smoke test
-    # elif type(request_body["title"]) is not str or request_body["title"] == "" \
-    #     or type(request_body["total_inventory"]) is not int or request_body["total_inventory"] == "" \
-    #     or type(request_body["release_date"]) is not str or request_body["release_date"] == "":
-    #     return make_response({}, 400)
+    elif type(request_body["title"]) is not str or request_body["title"] == "" \
+        or type(request_body["total_inventory"]) is not int \
+        or type(request_body["release_date"]) is not str or request_body["release_date"] == "":
+        return make_response({}, 400)
 
     else:
         video.title = request_body["title"]
@@ -219,8 +218,6 @@ def rental_checkout():
 
         return(make_response(response), 200)
 
-
-
 @rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
 def rental_check_in():
     request_body = request.get_json()
@@ -245,7 +242,6 @@ def rental_check_in():
         else:
             customer.videos_checked_out_count -= 1
             video.available_inventory += 1
-
 
             response = {
                     "customer_id": customer.id,
