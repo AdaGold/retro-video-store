@@ -24,6 +24,11 @@ def customer_not_found(customer_id):
 
 @customers_bp.route("", methods=["GET"])
 def get_customers_details():
+    #optinonal part sort ascending by id
+    query_sort = request.args.get("sort") 
+    if query_sort == "asc":
+        customers = Customer.query.order_by(Customer.id.asc()).all() 
+    #optional part ends
     customers = Customer.query.all()
     customers_details = []
     for customer in customers:
@@ -34,15 +39,19 @@ def get_customers_details():
 @customers_bp.route("", methods=["POST"])
 def create_customers():
     request_body = request.get_json()
+
     if not "name" in request_body or not request_body.get("name"):
         return bad_request("name must be provided")
     if not "postal_code" in request_body or not request_body.get("postal_code"):
         return bad_request("postal code must be provided")
     if not "phone" in request_body or not request_body.get("phone"):
         return bad_request("phone must be provided")
-    new_customer = Customer(name=request_body["name"],
+
+    new_customer = Customer(
+            name=request_body["name"],
             postal_code=request_body["postal_code"],
-            phone=request_body["phone"])
+            phone=request_body["phone"]
+        )
     db.session.add(new_customer)
     db.session.commit()
     return ({"id":new_customer.id}, 201) 
@@ -61,12 +70,14 @@ def update_customer(customer_id):
     customer = Customer.query.get(customer_id)
     if customer:
         updated_info = request.get_json()
+
         if not "name" in updated_info or not updated_info.get("name"):
             return bad_request("name must be provided")
         if not "postal_code" in updated_info or not updated_info.get("postal_code"):
             return bad_request("postal code must be provided")
         if not "phone" in updated_info or not updated_info.get("phone"):
             return bad_request("phone must be provided")
+
         customer.name = updated_info["name"]
         customer.postal_code = updated_info["postal_code"]
         customer.phone = updated_info["phone"]
@@ -103,16 +114,20 @@ def get_videos_details():
 @videos_bp.route("", methods=["POST"])
 def create_videos():
     request_body = request.get_json()
+
     if not "title" in request_body or not request_body.get("title"):
         return bad_request("must have title")
     if not "release_date" in request_body or not request_body.get("release_date"):
         return bad_request("must have release date")
     if not "total_inventory" in request_body or not request_body.get("total_inventory"):
         return bad_request("must have total inventory")
-    new_video = Video(title=request_body["title"],
-        release_date=request_body["release_date"],
-    total_inventory=request_body["total_inventory"],
-    available_inventory=request_body["total_inventory"])
+
+    new_video = Video(
+            title=request_body["title"],
+            release_date=request_body["release_date"],
+            total_inventory=request_body["total_inventory"],
+            available_inventory=request_body["total_inventory"]
+        )
     db.session.add(new_video)
     db.session.commit()
     return ({"id":new_video.id}, 201) 
@@ -131,12 +146,14 @@ def update_video(video_id):
     video = Video.query.get(video_id)
     if video:
         updated_info = request.get_json()
+
         if not "title" in updated_info or not updated_info.get("title"): 
             return bad_request("must have title")
         if not "release_date" in updated_info or not updated_info.get("release_date"):
             return bad_request("must have release date")
         if not "total_inventory" in updated_info or not updated_info.get("total_inventory"):
             return bad_request("must have total inventory")   
+
         video.title = updated_info["title"]
         video.release_date = updated_info["release_date"]
         video.total_inventory = updated_info["total_inventory"]
@@ -166,6 +183,7 @@ def is_int(value):
 @rentals_bp.route("/check-out", methods=["POST"])
 def rental_checkout():
     request_body = request.get_json()
+
     if not "customer_id" in request_body or not request_body.get("customer_id") or not is_int(request_body["customer_id"]):
         return bad_request("must have cutomer id, and it must be an int")
     if not "video_id" in request_body or not request_body.get("video_id") or not is_int(request_body["video_id"]):
@@ -185,10 +203,11 @@ def rental_checkout():
     
     customer.videos_checked_out_count += 1
     video.available_inventory -= 1
-    
-    record = Rental(customer_id=customer_id,
-                    video_id=video_id,
-                    due_date=datetime.now() + timedelta(days=7))
+    record = Rental(
+            customer_id=customer_id,
+            video_id=video_id,
+            due_date=datetime.now() + timedelta(days=7)
+        )
     db.session.add(record)
     db.session.commit()
     response = {
@@ -204,6 +223,7 @@ def rental_checkout():
 @rentals_bp.route("/check-in", methods=["POST"])
 def rental_checkin():
     request_body = request.get_json()
+
     if not "customer_id" in request_body or not request_body.get("customer_id"):
         return bad_request("must have customer id")
     if not "video_id" in request_body or not request_body.get("video_id"):
