@@ -26,7 +26,7 @@ def get_all_customers():
 def customer_by_id(id):
     customer = Customer.query.get(id)
     if customer == None:
-        return (f"Customer not found"), 404
+        return jsonify({"details": "customer not found"}), 404
 
     else:
         return jsonify(customer.to_json()), 200
@@ -36,7 +36,7 @@ def update_customer(id):
     customer = Customer.query.get(id)
     request_body = request.get_json()
     if customer == None:
-        return (f"Customer not found"), 404
+        return jsonify({"details": "customer not found"}), 404
 
     else:
         errors = ""
@@ -85,7 +85,7 @@ def create_customer():
 def delete_customer(id):
     customer = Customer.query.get(id)
     if customer == None:
-        return (f"Customer not found"), 404
+        return jsonify({"details": "customer not found"}), 404
 
     else: 
         db.session.delete(customer)
@@ -104,14 +104,19 @@ def get_all_videos():
     return jsonify(all_videos), 200
 
 
-@video_bp.route("/<video_id>", methods = ["GET"])
-def video_by_id(video_id):
-    video = Video.query.get(video_id)
+@video_bp.route("/<id>", methods = ["GET"])
+def video_by_id(id):
+    video = Video.query.get(id)
     if video == None:
-        return (f"Video not found"), 404
+        return jsonify({"details": "video not found"}), 404
 
     else:
-        return jsonify(video.to_json()), 200
+        return jsonify({
+            "id": video.id,
+            "title": video.title,
+            "release_date": video.release_date,
+            "total_inventory": video.total_inventory
+        }), 200
 
 
 @video_bp.route("", methods = ["POST"])
@@ -124,23 +129,24 @@ def create_video():
             errors = errors + info 
             if errors != "":
                 return jsonify({"details": errors}), 400
+    
 
     else:
         new_video = Video(title = request_body["title"],
-                release_date = request_body["release_date"],
-                total_inventory = request_body["total_inventory"])
+            release_date = request_body["release_date"],
+            total_inventory = request_body["total_inventory"])
 
         db.session.add(new_video)
         db.session.commit()
 
-        return jsonify(new_video.to_json()), 201
+        return jsonify({"id": new_video.id}), 201
 
-@video_bp.route("/<video_id>", methods = ["PUT"])
-def update_video(video_id):
-    video = Video.query.get(video_id)
+@video_bp.route("/<id>", methods = ["PUT"])
+def update_video(id):
+    video = Video.query.get(id)
     request_body = request.get_json()
     if video == None:
-        return (f"Video not found"), 404
+        return jsonify({"details": "video not found"}), 404
 
     else:
         errors = ""
@@ -156,15 +162,20 @@ def update_video(video_id):
     video.total_inventory = request_body["total_inventory"]
 
     db.session.commit()
-    return jsonify(video.to_json()), 200
+    return jsonify({
+        "id": video.id,
+        "title": video.title,
+        "release_date": video.release_date,
+        "total_inventory": video.total_inventory
+    }), 200
 
-@video_bp.route("/<video_id>", methods = ["DELETE"])
-def delete_video(video_id):
-    video = Video.query.get(video_id)
+@video_bp.route("/<id>", methods = ["DELETE"])
+def delete_video(id):
+    video = Video.query.get(id)
     if video == None:
-        return (f"Video not found"), 404
+        return jsonify({"details": "video not found"}), 404
 
     else: 
         db.session.delete(video)
         db.session.commit()
-        return jsonify({"id": video.video_id})
+        return jsonify({"id": video.id})
