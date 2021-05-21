@@ -139,7 +139,6 @@ def delete_video(video_id):
 @rental_bp.route("/check-out", methods=["POST"], strict_slashes=False)
 def add_rental():
     request_body = request.get_json()
-
     if "customer_id" not in request_body or "video_id" not in request_body:
         return jsonify({
         "details": "Invalid data"
@@ -147,14 +146,15 @@ def add_rental():
 
     customer_id = request_body["customer_id"]
     video_id = request_body["video_id"]
-
-    customer = Customer.query.get(customer_id)
-    if not customer:
+    try:
+        customer = Customer.query.get(customer_id)
+    except:
         return jsonify({
         "details": "no such customer exists"
         }), 400
-    video = Video.query.get(video_id)
-    if not video:
+    try:
+        video = Video.query.get(video_id)
+    except:
         return jsonify({
         "details": "no such video exists"
         }), 400
@@ -180,3 +180,31 @@ def add_rental():
         "videos_checked_out_count": customer.videos_checked_out_count,
         "available_inventory": video.available_inventory
         }), 200
+
+
+@rental_bp.route("/check-in", methods=["POST"], strict_slashes=False)
+def remove_rental():
+    request_body = request.get_json()
+    if "customer_id" not in request_body or "video_id" not in request_body:
+        return jsonify({
+        "details": "Invalid data"
+        }), 400
+    customer_id_request = request_body["customer_id"]
+    print(request_body)
+
+    #TODO need to specify the video and customer id
+
+
+    results = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
+            .join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id == customer_id_request).all()
+
+    response_arr =[]
+    # print(type(results))
+    print(results[0][0].to_json())
+    # for result in results[0]:
+    #     print(type(result))
+    
+    print("***************")
+    print("***************")
+    print("***************")
+    return(response_arr), 200
