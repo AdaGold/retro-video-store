@@ -188,3 +188,5 @@ def video_by_id(id):
             return jsonify(id=int(id)), 200
 
 
+# Wave 2 GET rentals from customer 
+@customers_bp.route("/<id>/rentals", methods=["GET"], strict_slashes=False)
