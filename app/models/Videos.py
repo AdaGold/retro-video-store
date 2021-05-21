@@ -25,4 +25,7 @@ class Video(db.Model):
         return video_dictionary
 
 
-
+    @classmethod
+    def video_from_json(cls, request_body):
+        new_video = Video(video_title=request_body["title"], release_date=request_body["release_date"], total_inventory=request_body["total_inventory"])
+        return new_video
