@@ -8,7 +8,8 @@ from datetime import datetime
 customer_bp = Blueprint("customers", __name__, url_prefix="/customers")
 # route for videos
 videos_bp = Blueprint("videos",__name__, url_prefix="/videos")
-
+# route for rentals
+rental_bp = Blueprint("rentals",__name__, url_prefix="/rentals")
 
 @customer_bp.route("", methods=["GET", "POST"])
 def all_customers():
@@ -135,4 +136,16 @@ def get_one_video(video_id):
         else:
             db.session.delete(video)
             db.session.commit()
-            return make_response ({"id": video.customer_id}), 200
+            return make_response ({"id": video.video_id}), 200
+
+
+#@rental_bp.route("/check-out", methods=["POST"])
+#if request_body is != num: 
+#    404 error 
+
+#@rental_bp.route("/check-in", methods=["POST"])
+
+
+#@customer_bp.route("/<customer_id>/rentals", methods=["GET"])
+
+#@videos_bp.route("/<video_id>/rentals", methods=["GET"])
