@@ -39,7 +39,7 @@ class Rental(db.Model):
         return {
             "customer_id": self.customer_id,
             "video_id": self.video_id,
-            "videos_checked_out_count": self.customer.check_in_video_count(),#decrease by one
+            "videos_checked_out_count": self.customer.videos_checked_out_count(),#decrease by one
             "available_inventory": self.video.check_in_inventory() #increase by one
 
         }

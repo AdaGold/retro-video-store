@@ -26,8 +26,8 @@ class Customer(db.Model):
         #increases customer's video checked out count by 1 for check out
         return len(self.videos)
 
-    def check_in_video_count(self):
-        return len(self.videos)-1
+    # def check_in_video_count(self):
+    #     return len(self.videos)-1
 
     def customer_json(self):
         return {
