@@ -15,9 +15,11 @@ class Customer(db.Model):
     videos_checked_out = db.relationship('Rental', backref= 'rentals', lazy=True)
 
     def count_videos(self):
+        #counts videos in videos_checked_out
         return len([vid for vid in self.videos_checked_out])
 
     def build_dict(self):
+        #builds customer dictionary
         customer_dict = {
             "id" : self.id,
             "name" : self.name,
@@ -28,19 +30,4 @@ class Customer(db.Model):
         } 
         return customer_dict
     
-    # def rent_video(self, video):
-    #     return {
-    #         "customer_id" :  self.id,
-    #         "video_id" : video.id,
-    #         "due_date" : date.today() + timedelta(7),
-    #         # "videos_checked_out_count" : len(self.get_videos()),
-    #         "available_inventory" : (video.available_inventory) - 1
-    #     }
-    # def return_video(self, video):
-    #     return {
-    #         "customer_id" :  self.id,
-    #         "video_id" : video.id,
-    #         # "videos_checked_out_count" : len(self.get_videos()),
-    #         "available_inventory" : video.available_inventory
-    #     }
-    
+

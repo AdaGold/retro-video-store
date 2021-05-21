@@ -12,20 +12,21 @@ videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 
 @videos_bp.route("", methods = ["GET"])
 def get_videos():
-    '''gets all videos from database'''
+    #gets all videos from database
     videos_query = Video.query.all()
 
     return make_response(jsonify([video.build_dict() for video in videos_query]), 200)
 
 @videos_bp.route("/<id>", methods = ["GET"])
 def get_video(id):
-    '''gets one video'''
+    #gets one video
     video = Video.query.get_or_404(id)
 
     return make_response(video.build_dict(), 200)
 
 @videos_bp.route("", methods = ["POST"])
 def add_videos():
+    #adds videos
     request_body = request.get_json()
     if "title" not in request_body.keys() or "release_date" not in request_body.keys() or "total_inventory" not in request_body.keys():
         return make_response({"details": "insufficient data"}, 400)
@@ -42,7 +43,7 @@ def add_videos():
 
 @videos_bp.route("/<id>", methods = ["PUT"])
 def update_videos(id):
-    '''updates a video '''
+    #updates fideos
     video = Video.query.get_or_404(id)
     form_data = request.get_json()
     if "title" not in form_data.keys() or "release_date" not in form_data.keys() or "total_inventory" not in form_data.keys() or type("total_inventory") != str:
@@ -58,6 +59,7 @@ def update_videos(id):
 
 @videos_bp.route("/<id>", methods = ["DELETE"])
 def delete_video(id):
+    #deletes a video
 
     video = Video.query.get_or_404(id)
     db.session.delete(video)
@@ -67,6 +69,8 @@ def delete_video(id):
 
 @videos_bp.route("/<id>/rentals", methods = ["GET"])
 def get_customers_with_video(id):
+    #gets each customer who have rented a video by video
+    
     video = Video.query.get_or_404(id)
     rentals = video.customers_rented_to
     results = [customer.customers_dict() for customer in rentals]

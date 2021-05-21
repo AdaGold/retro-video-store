@@ -13,20 +13,20 @@ customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 
 @customers_bp.route("", methods = ["GET"])
 def get_customers():
-    '''gets all customers from database'''
+    #gets customers
     customers_query = Customer.query.all()
 
     return make_response(jsonify([customer.build_dict() for customer in customers_query]), 200)
 @customers_bp.route("/<id>", methods = ["GET"])
 def get_customer(id):
-    '''gets one customer'''
+    #gets one customer
     customer = Customer.query.get_or_404(id)
 
     return make_response(customer.build_dict(), 200)
 
 @customers_bp.route("", methods = ["POST"])
 def add_customers():
-    '''adds customers'''
+    #adds customers
     request_body = request.get_json()
     if "name" not in request_body.keys() or "postal_code" not in request_body.keys() or "phone" not in request_body.keys():
         return make_response({"details" : "Insufficient data"}, 400) 
@@ -43,7 +43,7 @@ def add_customers():
 
 @customers_bp.route("/<id>", methods = ["PUT"])
 def update_customers(id):
-    '''updates a customer '''
+    #updates a customer
     customer = Customer.query.get_or_404(id)
     form_data = request.get_json()
     if "name" not in form_data.keys() or "postal_code" not in form_data.keys() or "phone" not in form_data.keys():
@@ -58,7 +58,7 @@ def update_customers(id):
 
 @customers_bp.route("/<id>", methods = ["DELETE"])
 def delete_customer(id):
-
+    #deletes a customer
     customer = Customer.query.get_or_404(id)
     db.session.delete(customer)
     db.session.commit()
@@ -67,6 +67,7 @@ def delete_customer(id):
 
 @customers_bp.route("/<id>/rentals", methods = ["GET"])
 def list_rentals(id):
+    #lists all rentals for customer
     customer = Customer.query.get_or_404(id)
     rentals = customer.videos_checked_out
     results = [video.rentals_by_cust() for video in rentals]

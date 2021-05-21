@@ -11,9 +11,9 @@ class Rental(db.Model):
     due_date = db.Column(db.Date(), default = date.today() + timedelta(7), nullable=True)
 
     def build_dict(self):
+        #builds primary rental dictionary
         video = Video.query.get(self.video_id)
         customer = Customer.query.get(self.customer_id)
-
         rental = {
             "customer_id" : self.customer_id,
             "video_id" : self.video_id,
@@ -25,6 +25,7 @@ class Rental(db.Model):
         return rental
     
     def customers_dict(self):
+        #builds dictionary for customer rentals
         customer = Customer.query.get(self.customer_id)
 
         return {
@@ -37,6 +38,7 @@ class Rental(db.Model):
         }
     
     def rentals_by_cust(self):
+        #builds dictionary for videos by customer
         video = Video.query.get(self.video_id)
 
         return {
@@ -44,3 +46,27 @@ class Rental(db.Model):
             "release_date" : video.release_date,
             "due_date" : self.due_date
         } 
+    
+    def check_in_dict(self):
+        #builds dictionary for check in
+        video = Video.query.get(self.video_id)
+        customer = Customer.query.get(self.customer_id)
+
+        return {
+            "customer_id" : self.customer_id,
+            "video_id" : self.video_id,
+            "videos_checked_out_count" : customer.count_videos(),
+            "available_inventory" : video.calculate_inventory()
+        }
+    def check_out_dict(self):
+        video = Video.query.get(self.video_id)
+        customer = Customer.query.get(self.customer_id)
+
+        return {
+            "customer_id" : self.customer_id,
+            "video_id" : self.video_id,
+            "videos_checked_out_count" : customer.count_videos(),
+            "available_inventory" : video.calculate_inventory(), 
+            "due_date" : self.due_date
+        }
+    
