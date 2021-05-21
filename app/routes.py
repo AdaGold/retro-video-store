@@ -5,10 +5,7 @@ from datetime import datetime, timedelta
 
 from app import db
 from flask import request, Blueprint, make_response, jsonify
-import os
-import requests
 
-# Create blueprints
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
@@ -22,8 +19,8 @@ def get_all_customers():
     customers_list = []
     for customer in customers:
         customers_list.append(customer.get_response())
-
-    return jsonify(customers_list), 200
+    sorted_customers_list = sorted(customers_list, key = lambda i: i['id'])
+    return jsonify(sorted_customers_list), 200
 
 @customers_bp.route("/<id>", methods=["GET"])
 def get_customer_id(id):
@@ -176,18 +173,13 @@ def check_out_rental():
     if customer == None or video == None:
         return {"error":"Not found!"}, 404
         
-    # this is not capturing videos with 0 available.
     if video.total_inventory < 1 or (video.total_inventory - len(video.active_rentals)) < 1:
         return {"error":"No available inventory"},400
 
-    # video.available_inventory = video.available_inventory - 1
     due_date = ((datetime.today()) + (timedelta(days=7)))
-    # create new rental
     new_rental = Rental(customer_id=customer_id, video_id=video_id, due_date=due_date)
     db.session.add(new_rental)
     db.session.commit()
-    # create class method that is the check
-    # new_rental = Rental.checkout(customer_id, video_id)
     return new_rental.get_rental_response(), 200
 
 
@@ -223,14 +215,11 @@ def check_in_rental():
 @customers_bp.route("/<int:id>/rentals", methods=["GET"])
 def get_customer_check_outs(id):
     customer = Customer.query.get(id)
-    # not being captured
     
     rental_list = []
     for rental in customer.rentals:
-        # Video not jsonified
         rented_video = Video.query.get(rental.video_id)
 
-        # rental_list.append(rented_video.get_response())
         rental_list.append({
             "title":rented_video.title,
             "release_date":rented_video.release_date,
@@ -242,14 +231,11 @@ def get_customer_check_outs(id):
 @videos_bp.route("/<int:id>/rentals", methods=["GET"])
 def get_customers_who_checked_out_video(id):
     video = Video.query.get(id)
-    # not being captured
     
     customer_list = []
     for rental in video.active_rentals:
-        # Video not jsonified
         renting_customer = Customer.query.get(rental.customer_id)
 
-        # rental_list.append(rented_video.get_response())
         customer_list.append({
             "name":renting_customer.name,
             "phone":renting_customer.phone,

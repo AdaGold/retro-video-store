@@ -8,8 +8,8 @@ class Rental(db.Model):
     video_id = db.Column(db.Integer, db.ForeignKey('video.id'), primary_key=True)
     due_date = db.Column(db.DateTime)
     # Why do we need these tw`o lines below if we have the video/customer keys? 
-    customer = db.relationship('Customer', backref='customer_with_video',lazy=True)
-    video = db.relationship('Video', backref='rented_video', lazy=True)
+    # customer = db.relationship('Customer', backref='customer_with_video',lazy=True)
+    # video = db.relationship('Video', backref='rented_video', lazy=True)
 
     def get_rental_response(self):
         return {
