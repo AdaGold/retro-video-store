@@ -10,8 +10,8 @@ class Rental(db.Model):
     video_id = db.Column(db.Integer, db.ForeignKey("videos.video_id"))
     due_date = db.Column(db.DateTime)
 
-    customer = relationship("Customer", back_populates="videos")
-    video = relationship("Video", back_populates="customers")
+    # customer = relationship("Customer", back_populates="videos")
+    # video = relationship("Video", back_populates="customers")
 
 
     def to_json(self):

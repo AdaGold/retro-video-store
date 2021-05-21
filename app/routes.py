@@ -14,7 +14,7 @@ video_bp = Blueprint("videos", __name__, url_prefix="/videos")
 
 rental_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
-def return_404():
+def make_404():
     return make_response("Whatever you are looking for, we didn't find it.", 404)
 
 def update_customer_from_json(body):
@@ -47,7 +47,7 @@ def delete_all_customers():
 def get_single_customer(customer_id):
     customer = Customer.query.get(customer_id)
     if customer is None:
-        return return_404()
+        return make_404()
     else:
         return make_response(customer.to_json(), 200)
 
@@ -55,7 +55,7 @@ def get_single_customer(customer_id):
 def update_single_customer(customer_id):
     customer = Customer.query.get(customer_id)
     if customer is None:
-        return return_404()
+        return make_404()
     else:
         request_body = request.get_json()
         try:
@@ -94,7 +94,7 @@ def delete_single_customer(customer_id):
         db.session.delete(customer)
         db.session.commit()
     else:
-        return return_404()
+        return make_404()
 
     return make_response({"id": customer.customer_id}, 200)
 
@@ -105,7 +105,6 @@ def get_customers_rentals(customer_id):
 
     customer_info = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
             .join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id == customer_id).all()
-    print(customer_info)
     rental_list = []
     for tuple_set in customer_info:
         video = tuple_set[1]
@@ -151,7 +150,7 @@ def create_new_video():
 def get_single_video(video_id):
     video = Video.query.get(video_id)
     if video is None:
-        return return_404()
+        return make_404()
     
     return make_response(video.to_json(), 200)
 
@@ -159,7 +158,7 @@ def get_single_video(video_id):
 def update_single_video(video_id):
     video = Video.query.get(video_id)
     if video is None:
-        return return_404()
+        return make_404()
     else:
         request_body = request.get_json()
         try:
@@ -180,7 +179,7 @@ def update_single_video(video_id):
 def delete_single_video(video_id):
     video = Video.query.get(video_id)
     if video is None:
-        return return_404()
+        return make_404()
 
     db.session.delete(video)
     db.session.commit()
@@ -229,26 +228,29 @@ def check_out_video():
     customer_id = request_body["customer_id"]
     video_id = request_body["video_id"]
     
-    customer = Customer.query.get(customer_id)
-    video = Video.query.get(video_id)
+    if type(customer_id) != int or type(video_id) != int: 
+        return make_response({"Error":"Invalid input. "}, 400)
+    else:
+        customer = Customer.query.get(customer_id)
+        video = Video.query.get(video_id)
 
-    # if customer is None:
-    #     return return_404()
-    
-    # if video is None:
-    #     return return_404()
 
-    print(video.available_inventory)
+    if customer is None or video is None:
+        return make_404()
+
     if video.available_inventory == 0:
         return make_response({"Error":"We don't have any of that video in stock."}, 400)
+
+    if type(customer_id) != int or type(video_id) != int:
+        return make_response({"Error":"We don't have any of that video in stock."}, 400)
+
     else:
-        new_rental = Rental(customer_id=customer.customer_id, video_id=video.video_id)
+        new_rental = Rental(customer_id=customer_id, video_id=video_id)
 
 
         customer.videos_checked_out_count += 1
         video.available_inventory -= 1
         new_rental.due_date = get_due_date()
-        print(video.available_inventory)
 
         db.session.add(new_rental)
         db.session.commit()
@@ -262,16 +264,67 @@ def check_out_video():
                         "available_inventory": video.available_inventory}, 200)
 
 
-# @rental_bp.route("/check-in", methods=["POST"])
-# def check_in_video():
+def get_rental_by_customer(customer_id):
+    customer_info = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
+            .join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id == customer_id).all()
+    print(customer_info)
+    rental_list = []
+    for tuple_set in customer_info:
+            rental_list.append(tuple_set[2])
 
-#     request_body = request.get_json
-#     customer_id = request_body["customer_id"]
+    return rental_list
 
-#     customer = Customer.query.get(customer_id)
 
-#     if customer is None:
-#         return return_404()
+@rental_bp.route("/check-in", methods=["POST"])
+def check_in_video():
+
+    request_body = request.get_json()
+    print(request_body)
+    customer_id = request_body["customer_id"]
+    video_id = request_body["video_id"]
+    
+    if type(customer_id) != int or type(video_id) != int: 
+        return make_response({"Error":"Invalid input. "}, 400)
+    else:
+        customer = Customer.query.get(customer_id)
+        video = Video.query.get(video_id)
+
+    print(get_rental_by_customer(customer.customer_id))
+    if customer is None or video is None:
+        return make_404()
+
+
+
+    else:
+        rental_list = get_rental_by_customer(customer_id)
+        print(rental_list)
+        if not rental_list:
+            return make_response({"Error": "That movie isn't checked out to you"}, 400)
+
+        for rental in rental_list:
+            if video.video_id == rental.video_id:
+                checked_in_rental = rental
+            else:
+                return make_response({"That movie isn't checked out to you"}, 400)
+
+    customer.videos_checked_out_count -= 1
+    video.available_inventory += 1 
+
+
+    db.session.delete(checked_in_rental)
+    db.session.commit()
+
+    return make_response({"customer_id": customer.customer_id, 
+                        "video_id": video.video_id, 
+                        "videos_checked_out_count": customer.videos_checked_out_count, 
+                        "available_inventory": video.available_inventory}, 200)
+
+
+
+    
+
+
+    
     
     
     

@@ -12,7 +12,7 @@ class Customer(db.Model):
     customer_phone = db.Column(db.String(14))
     register_at = db.Column(db.DateTime)
     videos_checked_out_count = db.Column(db.Integer)
-    videos = relationship("Rental", back_populates="customer")
+    # videos = relationship("Rental", back_populates="customer")
     
 
 
