@@ -18,7 +18,8 @@ def create_app(test_config=None):
     if test_config is None:
         app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
             "SQLALCHEMY_DATABASE_URI")
-    else:
+# Need lines22-25???
+    # else:
         app.config["TESTING"] = True
         app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
             "SQLALCHEMY_TEST_DATABASE_URI")
@@ -29,14 +30,14 @@ def create_app(test_config=None):
     # Import models here for Alembic setup
     from app.models.customer import Customer
     from app.models.video import Video
-
-    db.init_app(app)
-    migrate.init_app(app, db)
+    from app.models.rental import Rental
 
 # Register Blueprints here
-    from app.routes_customers import customer_bp
-    from app.routes_videos import video_bp
+    from app.customer_routes import customer_bp
+    from app.video_routes import video_bp
+    from app.rental_routes import rental_bp
     app.register_blueprint(customer_bp)
     app.register_blueprint(video_bp)
+    app.register_blueprint(rental_bp)
 
     return app
