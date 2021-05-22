@@ -22,6 +22,10 @@ class Video(db.Model):
             'total_inventory': self.total_inventory
         }
 
+    @property
+    def available_inventory(self):
+        return self.total_inventory - len(self.rentals)
+
 
 
 

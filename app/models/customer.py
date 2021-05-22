@@ -1,4 +1,3 @@
-from sqlalchemy.orm import relationship
 from datetime import datetime
 from app import db
 
@@ -13,7 +12,7 @@ class Customer(db.Model):
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
     
-    videos_checked_out = db.relationship('Rental', backref='customer', lazy=True)
+    rentals = db.relationship('Rental', backref='customer', lazy=True)
 
     def to_json(self):
         return {
@@ -22,5 +21,9 @@ class Customer(db.Model):
             'phone': self.phone,
             'postal_code': self.postal_code,
             'registered_at': self.registered_at,
-            'videos_checked_out_count': len(self.videos_checked_out)
+            'videos_checked_out_count': self.videos_checked_out_count,
         }
+
+    @property
+    def videos_checked_out_count(self):
+        return len(self.rentals)
