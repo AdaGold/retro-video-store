@@ -81,12 +81,31 @@ def delete_customer(customer_id):
         "id": f"Customer {customer.customer_id} has been erased from the universe!"
     }, 200
 
+
+                                              ### Crud Customers ###
+
 @videos_bp.route("", methods=["GET"])
 def get_videos():
     videos = Video.query.all()
     return jsonify([video.get_video_info() for video in videos])
 
-# @videos_bp.route("", methods=["POST"])
-# def 
+@videos_bp.route("", methods=["POST"])
+def post_new_video():
+    request_body = request.get_json()
 
+    if invalid_data(request_body):
+        return make_response({"details": "invalid data"}, 400)
 
+    video = Video(
+        title= request_body["title"],
+        release_date = request_body["release_date"],
+        total_inventory = request_body["total_inventory"]
+        )
+    db.session.add(video)
+    db.session.commit()
+
+    return make_response({"id": video.video_id}, 201)
+
+@videos_bp.route("/<video_id>", methods=["GET"])
+def get_one_video(video_id):
+    pass
