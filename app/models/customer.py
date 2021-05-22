@@ -17,7 +17,7 @@ class Customer(db.Model):
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
     videos_checked_out_count = db.Column(db.Integer, default=0, nullable = True)
-
+    rentals = db.relationship('Rental', backref='customer', lazy=True)
 
     def to_dictionary(self):
         '''
@@ -32,22 +32,13 @@ class Customer(db.Model):
             "registered_at": self.registered_at
             }
 
-        # if self.video_id:
-        #     return {
-        #         "id": self.id,
-        #         "name": self.name,
-        #         "postal_code": self.postal_code,
-        #         "phone": self.phone,
-        #         "videos_checked_out_count": self.videos_checked_out_count,
-        #         # "video_id": self.video_id,
-        #         "is_registered": self.registered_at != None
-        #         }
-        # else:
-        #     return {
-        #         "id": self.id,
-        #         "name": self.name,
-        #         "postal_code": self.postal_code,
-        #         "phone": self.phone,
-        #         "videos_checked_out_count": self.videos_checked_out_count,
-        #         "is_registered": self.registered_at != None
-        #         }
+    def customers_w_video_to_dict(self):
+        '''
+        Outputs a dictionary format of the customer object, with only the details requires for the 
+        list_all_customers_who_currently_have_video() view
+        '''
+        return {
+            "name": self.name,
+            "postal_code": self.postal_code,
+            "phone": self.phone,
+            }

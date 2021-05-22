@@ -8,7 +8,6 @@ db = SQLAlchemy()
 migrate = Migrate()
 load_dotenv() # The python-dotenv package specifies to call this method, which loads the values from our .env file so that the os module is able to see them.
 
-
 def create_app(test_config=None):
     app = Flask(__name__)
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -24,16 +23,19 @@ def create_app(test_config=None):
     db.init_app(app)
     migrate.init_app(app, db)
     
-    # Import models here for Alembic setup
     from app.models.customer import Customer
     from app.models.video import Video
-    # ^^Make new_model_1 and new_model_2 visible to flask migration helper
+    from app.models.rental import Rental
+    # ^^Make new models visible to flask migration helper
     
     from app.routes import customers_bp
     app.register_blueprint(customers_bp)
 
-    from .routes import videos_bp
+    from app.routes import videos_bp
     app.register_blueprint(videos_bp)
+
+    from app.routes import rentals_bp
+    app.register_blueprint(rentals_bp)
     # ^^ Register Blueprints here
 
     return app
