@@ -17,7 +17,7 @@ class Customer(db.Model):
         customer = {
             "id": self.id,
             "name": self.name,
-            "postal_code": self.postal_code,
+            "postal_code": int(self.postal_code),
             "phone": self.phone,
             "registered_at": self.registered_at,
             "videos_checked_out_count": self.current_videos()

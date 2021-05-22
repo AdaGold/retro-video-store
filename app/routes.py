@@ -287,13 +287,15 @@ def get_video_customers(video_id):
 
     for rental in rentals:
         customer = Customer.query.get(rental.id)
-        list_of_rentals.append(
-        {"due_date": rental.due_date,
-        "name": customer.name,
-        "phone": customer.phone,
-        "postal_code": customer.postal_code}
-        )
-    
+        if customer:
+            list_of_rentals.append(
+            {"due_date": rental.due_date,
+            "name": customer.name,
+            "phone": customer.phone,
+            "postal_code": int(customer.postal_code)}
+            )
+    if len(list_of_rentals) == 0:
+        return ("", 200)
     return jsonify(list_of_rentals), 200
 
 # GET rental by customer
