@@ -237,6 +237,12 @@ def check_in():
 
 @customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
 def get_current_rentals_by_customer_id(customer_id):
+    customer = Customer.query.get(customer_id)
+    if customer == None:
+        return make_response({
+                "details": f"Customer {customer.customer_id} not found"
+            }, 404)
+
     rentals = Rental.query.filter_by(customer_id=customer_id).all()
     
     rentals_response = []
@@ -252,6 +258,12 @@ def get_current_rentals_by_customer_id(customer_id):
 
 @videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
 def get_customers_by_video_id(video_id):
+    video = Video.query.get(video_id)
+    if video == None:
+        return make_response({
+                "details": f"Video {video.video_id} not found"
+            }, 404)
+
     rentals = Rental.query.filter_by(video_id=video_id).all()
     
     rentals_response = []
@@ -265,5 +277,3 @@ def get_customers_by_video_id(video_id):
     })
         
     return jsonify(rentals_response), 200
-
-#https://docs.sqlalchemy.org/en/14/orm/backref.html
