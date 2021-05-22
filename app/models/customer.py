@@ -4,14 +4,18 @@ from flask_sqlalchemy import SQLAlchemy
 
 
 class Customer(db.Model):
-    id = db.Column(db.Integer, primary_key = True, autoincrement = True)
+    customer_id = db.Column(db.Integer, primary_key = True, autoincrement = True)
     name = db.Column(db.String)
     postal_code = db.Column(db.String)
-    phone_num = db.Column(db.String)
-    register_at = db.Column(db.Datetime)
+    phone = db.Column(db.String)
+    registered_at = db.Column(db.DateTime())
 
-
-# - name of the customer
-# - postal code of the customer
-# - phone number of the customer
-# - register_at datetime of when the customer was added to the system.
+    def resp_json(self):
+        return {
+            "id": self.customer_id,
+            "name": self.name,
+            "registered_at": self.registered_at,
+            "postal_code": self.postal_code,
+            "phone": self.phone,
+            "videos_checked_out_count": 0
+        }
