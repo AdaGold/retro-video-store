@@ -14,11 +14,11 @@ class Customer(db.Model):
     """
     id = db.Column(db.Integer,primary_key=True,autoincrement=True)
     name = db.Column(db.String, nullable=False)
-    postal_code = db.Column(db.String,nullable=False)
+    postal_code = db.Column(db.Integer,nullable=False)
     phone = db.Column(db.String,nullable=False)
-    registered_at = db.Column(db.DateTime,default=datetime.utcnow())
+    registered_at = db.Column(db.DateTime,default=datetime.utcnow())#registers when customer is entered into the sytstem
     videos_checked_out_count = db.Column(db.Integer,default=0)
-    rentals = db.relationship("Rental", backref='customer',lazy=True)
+    rentals = db.relationship("Rental", backref='customer',lazy=True)#creates ghost column with a list of video_ids each customer has checked out gathered through the Rental table 
   
     
     def to_python_dict(self):

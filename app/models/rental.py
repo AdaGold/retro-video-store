@@ -13,20 +13,20 @@ class Rental(db.Model):
 
     id = db.Column(db.Integer,primary_key=True,autoincrement=True)
     customer_id = db.Column(db.Integer,db.ForeignKey('customer.id'))
-    video_id = db.Column(db.Integer,db.ForeignKey('video.id'))
+    video_id = db.Column(db.Integer,db.ForeignKey('video.id'))#Rental table joins Customer and Video table by FK to their PK's
     due_date = db.Column(db.DateTime)
 
    
-    @classmethod#built in python method that allows you to pass a class as an argument, rather than an instance
-    def checkout(cls,customer_id,video_id): 
+    @classmethod
+    def checkout(cls,customer_id,video_id):#increase the customer's videos_checked_out_count by one, decrease the video's available_inventory by one, and create a due date
         """
             Input:  customer_id, video_id
             Output: new instance of Rental with customer_id, video_id, due_date
         """
-        from .customer import Customer#gets access to Customer Class
-        from .video import Video#gets access to Video Class
-        customer = Customer.query.get(customer_id)#querying Customer using customer_id
-        video = Video.query.get(video_id)#querying Video for video_id
+        from .customer import Customer
+        from .video import Video
+        customer = Customer.query.get(customer_id)#querying Customer with customer_id
+        video = Video.query.get(video_id)#querying Video with video_id
         due_date = datetime.datetime.now() + datetime.timedelta(days=7)
         
         new_rental = Rental(
@@ -34,6 +34,7 @@ class Rental(db.Model):
                     video_id = video.id,
                     due_date = due_date
                     )
+        
         db.session.add(new_rental)
         db.session.commit()
         customer.increase_checkout_count()#calling Customer instance helper function on instance of Customer

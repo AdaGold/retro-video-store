@@ -32,8 +32,7 @@ def create_customer():
             name = request_body['name'],
             postal_code = request_body['postal_code'],
             phone = request_body['phone']
-            
-        )
+            )
         
         db.session.add(new_customer)
         db.session.commit()
@@ -169,6 +168,7 @@ def update_video(id):
     db.session.commit()
     return jsonify(video.to_python_dict()), 200
 
+
 @video_bp.route("/<id>",methods=["DELETE"],strict_slashes=False)
 def delete_video(id):
     """
@@ -178,18 +178,17 @@ def delete_video(id):
     video = Video.query.get(id)
     if not video:
         return jsonify(errors=["video id not found"]), 404
-    
     db.session.delete(video)
     db.session.commit()
     return jsonify(id=int(id)), 200
 
 
-#database manipulation is handled by the Rental model
-@rental_bp.route("/check-out", methods=["POST"],strict_slashes=False)  
+
+@rental_bp.route("/check-out", methods=["POST"],strict_slashes=False)#Checks out a video to a customer, and updates the db data
 def check_out():
     """
-        Input:  request to make a new instance of Rental, customer_id video_id are required body params
-        Output: python dictoinary of new Rental instance 
+        Input:  request to make a new instance of Rental, valid customer_id video_id are required body params
+        Output: python dictionary of new Rental instance 
 
     """
     request_body = request.get_json()
@@ -197,50 +196,45 @@ def check_out():
         return  400
     if "video_id" not in request_body:
         return  400
-    if not isinstance(request_body["video_id"],int) or request_body['video_id'] == None: 
+    if not isinstance(request_body["video_id"],int) or request_body['video_id'] == None:#validating datatype in request
         return jsonify(error="video id must be an integer"), 400
     
-    if not isinstance(request_body["customer_id"],int) or request_body['customer_id'] == None: 
+    if not isinstance(request_body["customer_id"],int) or request_body['customer_id'] == None: #validating datatype in request
         return jsonify(error="video id must be an integer"), 400
     
-    customer_id = request_body["customer_id"]
-    video_id = request_body["video_id"]
-    video = Video.query.get(video_id)#checking database for Video instance
+    customer_id = request_body["customer_id"]#setting variables that will be used when Rental class method checkout is called
+    video_id = request_body["video_id"]#setting variables that will be used when Rental class method checkout is called
+    video = Video.query.get(video_id)
     if not video:
         return jsonify(details= "doesnt exist"), 400
-    if not isinstance(video.available_inventory,int):
-        return jsonify(details="video inventory must be an integer"), 400
     if video.available_inventory <= 0:
         return jsonify(details="video not available"), 400
     new_rental = Rental.checkout(customer_id, video_id)
     return jsonify(new_rental.to_python_dict()), 200
 
 
-@rental_bp.route("/check-in", methods=['POST'],strict_slashes=False)
+@rental_bp.route("/check-in", methods=['POST'],strict_slashes=False)#Checks in a video to a customer, and updates the db data
 def check_in():
     """
-        Input:  request to make a new instance of Rental, customer_id video_id are required body params
-        Output: python dictoinary of new Rental instance 
+        Input:  request to edit instance of Rental, customer_id video_id are required body params
+        Output: python dictionary of new Rental instance 
     """
     request_body = request.get_json()
     if "customer_id" not in request_body:
         return  400
     if "video_id" not in request_body:
         return  400
-    
-    
     if not isinstance(request_body["video_id"],int) or request_body['video_id'] == None: 
         return jsonify(error="video id must be an integer"), 400
-    video = Video.query.get(request_body["video_id"])
     if not isinstance(request_body["customer_id"],int) or request_body['customer_id'] == None: 
         return jsonify(error="customer id must be an integer"), 400
+    
     customer = Customer.query.get(request_body["customer_id"])
-    
-    
+    video = Video.query.get(request_body["video_id"])
     rental = Rental.query.filter_by(video_id=video.id, customer_id=customer.id).first()
     if not rental:
         return jsonify(error="video id and customer id have no relationship"), 400
-    db.session.delete(rental)
+    db.session.delete(rental)#successful check-in, delete instance of Rental
     customer.decrease_checkout_count()
     video.increase_inventory()
     db.session.commit()
@@ -255,7 +249,7 @@ def check_in():
     ), 200
 
 
-@customer_bp.route("/<id>/rentals",methods=["GET"],strict_slashes=False)
+@customer_bp.route("/<id>/rentals",methods=["GET"],strict_slashes=False)#List the videos a customer currently has checked out
 def videos_of_customer(id):
     """
         Input:  Request to read a list of videos by customer id 
@@ -265,8 +259,8 @@ def videos_of_customer(id):
     if not customer:
         return jsonify(error="no matches found"), 404
     video_list = []
-    for rental in customer.rentals:# relationship between customer and rental| list of instances of Rental class
-        video = Video.query.get(rental.video_id)
+    for rental in customer.rentals:#looping through rental attribute for customer instance and grabbing the video_ids. 
+        video = Video.query.get(rental.video_id)#querying rental table for video_id that was found in customer.rental column
         video_dict = {
         "title" : video.title,
         "release_date" : video.release_date,
@@ -276,7 +270,7 @@ def videos_of_customer(id):
     return jsonify(video_list), 200
         
          
-@video_bp.route("/<id>/rentals",methods=["GET"],strict_slashes=False)#customers by video id
+@video_bp.route("/<id>/rentals",methods=["GET"],strict_slashes=False)#List the customers who currently have the video checked out
 def customer_by_videos(id):
     """
         Input:  Request to read a list of customers who have a specific video checked out
@@ -286,7 +280,7 @@ def customer_by_videos(id):
     if not video:
         return jsonify(error="no matches found"), 404
     checkout_list = []
-    for rental in video.rentals:# list of rentals by attribute
+    for rental in video.rentals:# list of rentals by attribute rentals in video
         customer = Customer.query.get(rental.customer_id)
         checkout = {
             "due_date": rental.due_date,
@@ -296,3 +290,4 @@ def customer_by_videos(id):
         }
         checkout_list.append(checkout)
     return jsonify(checkout_list), 200
+
