@@ -44,20 +44,43 @@ def delete_customer(customer_id):
 # DELETE /videos/<id>
 @videos_bp.route("", methods=["GET"], strict_slashes=False)
 def get_videos():
+    videos = Video.query.all()
+    response_body = []
+    for video in videos:
+        response_body.append(video.video_info())
+    return jsonify(response_body), 200
 
 @videos_bp.route("/<int:video_id>", methods=["GET"], strict_slashes=False)
 def get_video(video_id):
+    video = Video.query.get_or_404(video_id)
+    return jsonify(video.video_info()), 200
 
 @videos_bp.route("", methods=["POST"], strict_slashes=False)
 def post_video():
+    request_body = request.get_json()
+     if "title", "release_date", "total_inventory" in request_body: #probs wrong syntax tho
+        video = Video(**request_body) #dict witchcraft
+        db.session.add(video)
+        db.session.commit()
+        return jsonify(video.video_info()), 201
+    return jsonify({"details": "Invalid data"}), 400
 
 @videos_bp.route("/<int:video_id>", methods=["PUT"], strict_slashes=False)
 def update_video(video_id):
+    request_body = request.get_json()
+    video = Video.query.get_or_404(video_id)
+    if "title", "release_date", "total_inventory" in request_body: #probs wrong syntax tho
+        video.title = request_body["title"]
+        video.release_date = request_body["release_date"]
+        video.total_inventory = request_body["total_inventory"]
+        db.session.commit()
+        return jsonify(video.video_info()), 200
+    else:
+        return jsonify({"details": "Invalid data"}), 400
 
 @video_bp.route("/<video_id>", methods=["DELETE"], strict_slashes=False)
 def delete_video(video_id):
-    vid = Video.query.get(video_id)
-
+    vid = Video.query.get_or_404(video_id)
     db.session.delete(vid)
     db.session.commit()
     return make_response({"id": vid.video_id}, 200)
@@ -82,7 +105,7 @@ def rent_video():
 
     customer = Customer.query.get_or_404(checkem_out)
     video = Video.query.get_or_404(video_check)
-    this_rental = Rental(**request_body) #wtf**********************************************************
+    this_rental = Rental(**request_body) #witchcraft, make sure can use outside of function headers again
     if video.available_inventory > 0:
         video.available_inventory -= 1 #use method in class 
         customer.videos_rented += 1 #use method in class 
