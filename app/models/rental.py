@@ -32,7 +32,7 @@ class Rental(db.Model):
         new_rental = Rental(
                     customer_id = customer.id,
                     video_id = video.id,
-                    due_date = due_date.strftime("%a,%d %b %Y,%H:%M:%S %Z")
+                    due_date = due_date
                     )
         db.session.add(new_rental)
         db.session.commit()
@@ -57,7 +57,7 @@ class Rental(db.Model):
                 
                 "customer_id": self.customer_id,
                 "video_id": self.video_id,
-                "due_date": str(self.due_date),
+                "due_date": self.due_date,
                 "videos_checked_out_count": customer.videos_checked_out_count,
                 "available_inventory": video.available_inventory
             }
