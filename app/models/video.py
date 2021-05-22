@@ -1,6 +1,4 @@
-from flask import current_app
 from app import db
-from sqlalchemy.orm import relationship
 
 
 
@@ -19,10 +17,4 @@ class Video(db.Model):
         }
 
     
-    # def inventory_checkout(self):        
-    #     if self.available_inventory:
-    #         self.available_inventory = self.available_inventory - 1
-    #     # else:
-    #     #     self.available_inventory = 1  
-    #     db.session.commit()
 

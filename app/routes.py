@@ -11,23 +11,25 @@ videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 
-def error_handling(request_body):
-    if "name" or "postal_code" or "phone" not in request_body:
+def customer_error_handling(request_body):
+    if "name" not in request_body or "postal_code" not in request_body or "phone" not in request_body:
         return True
-    
-    # if "title" not in request_body or "description" not in request_body or "completed_at" not in request_body:
-    #     return make_response({"details": "Invalid data"}, 400)
+
+def object_is_none(object):
+    if object is None:
+        return True    
     
 
 @customers_bp.route("", methods=["POST"])
-def create_customer():
-    
-    form_data = request.get_json()
-    if "name" not in form_data or "postal_code" not in form_data or "phone" not in form_data:
+def create_customer():    
+    request_body = request.get_json()
+
+    if customer_error_handling(request_body):
         return make_response({"details": "Invalid data"}), 400
-    customer = Customer(customer_name=form_data["name"],
-                    postal_code=form_data["postal_code"],
-                    phone_number=form_data["phone"],
+
+    customer = Customer(customer_name=request_body["name"],
+                    postal_code=request_body["postal_code"],
+                    phone_number=request_body["phone"],
                     )
 
     db.session.add(customer)
@@ -44,11 +46,13 @@ def get_customers():
 
     return jsonify(customer_list), 200
 
+
+
 @customers_bp.route("/<customer_id>", methods=["GET"])
 def get_single_customer(customer_id):
     customer = Customer.query.get(customer_id)
-    #form_data = request.get_json()
-    if customer is None:
+
+    if object_is_none(customer):
         return make_response({"details": "invalid data"}, 404)
 
     return make_response(customer.return_customer_info(), 200)
@@ -57,16 +61,16 @@ def get_single_customer(customer_id):
 def update_customer_info(customer_id):
     customer = Customer.query.get(customer_id)
 
-    if customer is None:
+    if object_is_none(customer):
         return make_response({"details": "invalid data"}, 404)
 
-    form_data = request.get_json()
-    if "name" not in form_data or "postal_code" not in form_data or "phone" not in form_data:
-        return make_response({"details": "Invalid data"}, 400)
+    request_body = request.get_json()
+    if customer_error_handling(request_body):
+        return make_response({"details": "Invalid data"}), 400
 
-    customer.customer_name = form_data["name"]
-    customer.postal_code = form_data["postal_code"]
-    customer.phone_number = form_data["phone"]
+    customer.customer_name = request_body["name"]
+    customer.postal_code = request_body["postal_code"]
+    customer.phone_number = request_body["phone"]
 
     db.session.commit()
 
@@ -75,10 +79,10 @@ def update_customer_info(customer_id):
 @customers_bp.route("/<customer_id>", methods=["DELETE"])
 def delete_customer(customer_id):
     customer = Customer.query.get(customer_id)
-    if customer is None:
+    
+    if object_is_none(customer):
         return make_response({"details": "id does not exist"}, 404)
 
-    # Customer.query.filter_by(customer_id=customer_id).delete()
     db.session.delete(customer) 
     db.session.commit()
 
@@ -87,17 +91,16 @@ def delete_customer(customer_id):
 @videos_bp.route("", methods=["POST"])
 def create_video():
     
-    form_data = request.get_json()
-    if "title" not in form_data or "release_date" not in form_data or "total_inventory" not in form_data:
+    request_body = request.get_json()
+    if "title" not in request_body or "release_date" not in request_body or "total_inventory" not in request_body:
         return make_response({"details": "Invalid data"}, 400)
 
-    video = Video(title=form_data["title"],
-                    release_date=form_data["release_date"],
-                    inventory=form_data["total_inventory"],
-                    available_inventory=form_data["total_inventory"]
+    video = Video(title=request_body["title"],
+                    release_date=request_body["release_date"],
+                    inventory=request_body["total_inventory"],
+                    available_inventory=request_body["total_inventory"]
                     )
     
-
     db.session.add(video)
     db.session.commit()
 
@@ -116,7 +119,8 @@ def get_videos():
 @videos_bp.route("/<video_id>", methods=["DELETE"])
 def delete_video(video_id):
     video = Video.query.get(video_id)
-    if video is None:
+
+    if object_is_none(video):
         return make_response({"details": "id does not exist"}, 404)
 
     db.session.delete(video) 
@@ -128,16 +132,16 @@ def delete_video(video_id):
 def update_video_info(video_id):
     video = Video.query.get(video_id)
 
-    if video is None:
+    if object_is_none(video):
         return make_response({"details": "video not found"}, 404)
 
-    form_data = request.get_json()
-    if "title" not in form_data or "release_date" not in form_data or "total_inventory" not in form_data:
+    request_body = request.get_json()
+    if "title" not in request_body or "release_date" not in request_body or "total_inventory" not in request_body:
         return make_response({"details": "Invalid/Missing data"}, 400)
 
-    video.title = form_data["title"]
-    video.release_date = form_data["release_date"]
-    video.inventory = form_data["total_inventory"]
+    video.title = request_body["title"]
+    video.release_date = request_body["release_date"]
+    video.inventory = request_body["total_inventory"]
 
     db.session.commit()
 
@@ -147,19 +151,19 @@ def update_video_info(video_id):
 @videos_bp.route("/<video_id>", methods=["GET"])
 def get_single_video(video_id):
     video = Video.query.get(video_id)
-    #form_data = request.get_json()
-    if video is None:
+
+    if object_is_none(video):
         return make_response({"details": "invalid data"}, 404)
 
     return make_response(video.return_video_info(), 200)
 
 @rentals_bp.route("/check-out", methods=["POST"])
 def check_out_video():
-    form_data = request.get_json()
-    customer_id = form_data["customer_id"]
-    video_id = form_data["video_id"]
+    request_body = request.get_json()
+    customer_id = request_body["customer_id"]
+    video_id = request_body["video_id"]
 
-    if "customer_id" not in form_data or "video_id" not in form_data:
+    if "customer_id" not in request_body or "video_id" not in request_body:
         return make_response({"details": "Invalid data"}), 400
 
 
@@ -176,12 +180,12 @@ def check_out_video():
 
 @rentals_bp.route("/check-in", methods=["POST"])
 def check_in_video():
-    form_data = request.get_json()
-    customer_id = form_data["customer_id"]
-    video_id = form_data["video_id"]
-    if "customer_id" not in form_data or "video_id" not in form_data:
+    request_body = request.get_json()
+    customer_id = request_body["customer_id"]
+    video_id = request_body["video_id"]
+
+    if "customer_id" not in request_body or "video_id" not in request_body:
         return make_response({"details": "Invalid data"}, 400)
-    
     if isinstance(customer_id, str) or isinstance(video_id, str):
         return make_response(({"details": "Invalid data type"}), 400)
 
@@ -199,7 +203,8 @@ def check_in_video():
 @customers_bp.route("/<customer_id>/rentals", methods=["GET"])
 def get_customer_checkedout_info(customer_id):
     customer = Customer.query.get(customer_id)
-    if customer is None:
+
+    if object_is_none(customer):
         return make_response({"details": "invalid data"}, 404)
 
     rentals = Rental.query.filter_by(customer_id=customer_id).all()
@@ -217,7 +222,8 @@ def get_customer_checkedout_info(customer_id):
 @videos_bp.route("/<video_id>/rentals", methods=["GET"])
 def get_video_checkedout_info(video_id):
     video = Video.query.get(video_id)
-    if video is None:
+
+    if object_is_none(video):
         return make_response({"details": "invalid data"}, 404)
     
     rentals = Rental.query.filter_by(video_id=video_id).all()
