@@ -5,9 +5,7 @@ from app.models.customer import Customer
 from app.models.video import Video
 from app.models.rental import Rental
 from flask import request, Blueprint, make_response, jsonify
-from datetime import datetime, timedelta
-import os 
-import requests 
+
 
 #==== Customers ====#
 customers_bp = Blueprint("customers",__name__,url_prefix="/customers")
@@ -61,6 +59,7 @@ def handle_one_customer(customer_id):
         db.session.commit()
         return ({"id" : int(customer_id)}, 200)
 
+
 @customers_bp.route("/<customer_id>/rentals", methods=["GET"])
 def get_rentals_by_customer(customer_id):
     customer = Customer.query.get_or_404(customer_id)
@@ -74,6 +73,8 @@ def get_rentals_by_customer(customer_id):
             })
 
     return jsonify(rental_list),200
+
+
 
 # ==== Videos ==== 
 videos_bp = Blueprint("videos",__name__,url_prefix="/videos")
@@ -143,11 +144,12 @@ def get_rentals_by_customer(video_id):
 
     return jsonify(rental_list),200
 
-# ==== Rentals ==== 
 
+
+# ==== Rentals ==== 
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
-@rentals_bp.route("/check-out", methods=["POST"], strict_slashes=False)
+@rentals_bp.route("/check-out", methods=["POST"])
 def check_out_rental():
 
     request_body = request.get_json()
@@ -177,7 +179,7 @@ def check_out_rental():
     return make_response("", 404)
 
 
-@rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
+@rentals_bp.route("/check-in", methods=["POST"])
 def check_in_rental():
     
     request_body = request.get_json()
@@ -200,9 +202,9 @@ def check_in_rental():
                 db.session.delete(rental)
             db.session.commit()
 
-            to_json = rental.rental_to_json()
-            del to_json["due_date"]
-            return jsonify(to_json), 200
+            new_rental_to_json = rental.rental_to_json()
+            del new_rental_to_json["due_date"]
+            return jsonify(new_rental_to_json), 200
 
-        return {"details": "this rental record does not exist"}, 400
+        return {"details": "this rental does not exist"}, 400
     return make_response("", 404) 
