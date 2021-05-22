@@ -181,7 +181,6 @@ def update_video(video_id):
     old_video.title = video_to_update["title"]
     old_video.release_date = video_to_update["release_date"]
     old_video.total_inventory = video_to_update["total_inventory"]
-    # old_video.available_inventory = video_to_update["available_inventory"]
 
     db.session.commit()
 
@@ -202,8 +201,6 @@ def discard_video(video_id):
 
 
 #===========================RELATIONSHIPS===========================#
-
-# def bad_request_checkin_and_out(request, customer, video):
 
 @rentals_bp.route("/check-out", methods=["POST"], strict_slashes=False)
 def rentals_check_out():
@@ -269,3 +266,32 @@ def rentals_check_in():
 
 
 #==========================================================================
+
+@customers_bp.route("/<client_id>/rentals", methods=["GET"], strict_slashes=False)
+def get_customer_rentals(client_id):
+    customer = Customer.query.get(client_id)
+    if customer is None:
+        return err_404()
+    rentals = Rental.query.filter(Rental.customer_id == customer.client_id).all()
+
+    if rentals is None or len(rentals) == 0:
+        return {}
+
+    rental_list = [r.get_customer_rental_json() for r in rentals]
+
+    return jsonify(rental_list)
+
+
+@videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
+def get_video_rentals(video_id):
+    video = Video.query.get(video_id)
+    if video is None:
+        return err_404()
+    rentals = Rental.query.filter(Rental.vhs_id == video.video_id).all()
+
+    if rentals is None or len(rentals) == 0:
+        return {}
+
+    rental_list = [r.get_video_rental_json() for r in rentals]
+
+    return jsonify(rental_list)
