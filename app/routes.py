@@ -154,16 +154,24 @@ def get_single_video(video_id):
 @rentals_bp.route("/check-out", methods=["POST"])
 def check_out_video():
     form_data = request.get_json()
+    customer_id = form_data["customer_id"]
+    video_id = form_data["video_id"]
 
     if "customer_id" not in form_data or "video_id" not in form_data:
         return make_response({"details": "Invalid data"}), 400
 
-    customer_id = form_data["customer_id"]
-    video_id = form_data["video_id"]
+
     if isinstance(customer_id, str) or isinstance(video_id, str):
-        return make_response(({"details": "Invalid data type"}), 400)
+        return make_response(({"details": "Bad request"}), 400)
+    
+    # video = Video.query.get(video_id)
+    # if video.available_inventory < 1:
+    #     return make_response(({"details": "bad request"}), 400)
 
     new_rental = Rental.checkout(customer_id, video_id)
+
+    if new_rental == False:
+        return make_response(({"details": "Bad request"}), 400)
     
     return make_response(new_rental.return_rental_info(), 200)
 
@@ -190,12 +198,33 @@ def get_customer_checkedout_info(customer_id):
     if customer is None:
         return make_response({"details": "invalid data"}, 404)
 
-    return make_response(customer.return_customer_info(), 200)
+    rentals = Rental.query.filter_by(customer_id=customer_id).all()
+    rental_list = []
+    for rental in rentals: 
+        rental_list.append({
+            "release_date": rental.video.release_date,
+            "title": rental.video.title,
+            "due_date": rental.due_date
+        })
+
+
+    return make_response(jsonify(rental_list), 200)
 
 @videos_bp.route("/<video_id>/rentals", methods=["GET"])
 def get_video_checkedout_info(video_id):
     video = Video.query.get(video_id)
     if video is None:
         return make_response({"details": "invalid data"}, 404)
+    
+    rentals = Rental.query.filter_by(video_id=video_id).all()
+    customer_list = []
+    for rental in rentals: 
+        customer_list.append({
+            "due_date": rental.due_date,
+            "name": rental.customer.customer_name,
+            "phone": rental.customer.phone_number,
+            "postal_code": rental.customer.postal_code
+            
+        })
 
-    return make_response(video.return_video_info(), 200)
+    return make_response(jsonify(customer_list), 200)

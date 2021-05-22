@@ -21,6 +21,8 @@ class Rental(db.Model):
  
         customer = Customer.query.get(customer_id)
         video = Video.query.get(video_id)
+        # if video.available_inventory < 1:
+        #     return False
 
         due_date = datetime.now() + timedelta(days=7)
         new_rental = Rental(
@@ -59,8 +61,14 @@ class Rental(db.Model):
             "available_inventory": video.available_inventory
         }
 
-
-        #return checkin
+    
+    def customer_id_rentals(self):
+        
+        return {
+            "release_date": self.video.release_date,
+            "title": self.video.title,
+            "due_date": self.video.due_date
+        }
 
     def return_rental_info(self):
         return {"customer_id" : self.customer_id,
