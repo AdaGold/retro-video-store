@@ -5,11 +5,11 @@ from datetime import timedelta
 
 
 # Establishing many-to-many relationships between Customer and Video 
-# CustomerVideojoin Model/Table
+# CustomerVideojoin Model (not Table)
 class Rental(db.Model):
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True) ##??
-    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False) # how about nullable= True or False?
-    video_id = db.Column(db.Integer, db.ForeignKey('video.id'), nullable=False)# how about nullable= True or False?, do I add lazy?
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True) 
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'), nullable=False) 
+    video_id = db.Column(db.Integer, db.ForeignKey('video.id'), nullable=False) # lazy?
     rental_date = db.Column(db.DateTime, default=datetime.utcnow(),  
         nullable=False) # maybe
     # due_date = # current date + 7 use delta
@@ -28,25 +28,27 @@ class Rental(db.Model):
                 video_id=request_body["video_id"])
         return new_rental
     
-    # def rental_to_json_response(self):
-    #     '''
-    #     Converts a Rental instance into JSON format
-    #     Output: Returns a Python dictionary in the shape of JSON response 
-    #     that the API returns in the route that is called (GET route).
-    #     '''
-    #     return  {"release_date": self.release_date.strftime("%Y-%m-%d"), 
-    #             "title": title,
-    #             "due_date": self.due_date}
-    
     @staticmethod
     def customer_rentals_response(rental, video):
+        '''
+        Creates response with both Rental and Video instances
+        input: Takes in a rental instance and a video instance  
+        output: dictionary containing info of instances of video combined 
+        with rental due date details
+        '''
         return {"release_date": video.release_date.strftime("%Y-%m-%d"),
                 "title": video.title,
                 "due_date": rental.due_date.strftime("%a, %d %b %Y %X %z %Z")}
 
-    # @staticmethod
-    # def customer_with_due_date_response(rental, customer):
-    #     return {"due_date": rental.due_date.strftime("%a, %d %b %Y %X %z %Z"),
-    #             "name": customer.name,
-    #             "phone": customer.phone,
-    #             "postal_code": str(customer.postal_code)}
+    @staticmethod
+    def customer_due_date_response(rental, customer):
+        '''
+        Creates response with both Rental and Customer instances
+        input: Takes in a rental and a customer instance  
+        output: dictionary containing info of instances of rental combined 
+        with customer details
+        '''
+        return {"due_date": rental.due_date.strftime("%a, %d %b %Y %X %z %Z"),
+                "name": customer.name,
+                "phone": customer.phone,
+                "postal_code": str(customer.postal_code)}

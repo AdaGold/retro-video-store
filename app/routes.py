@@ -112,7 +112,7 @@ def retrieve_single_video(video_id):
 #Update a video
 @video_bp.route("/<video_id>", methods=["PUT"], strict_slashes = False)  
 def update_video(video_id):
-    video = Video.query.get(video_id) #SQL ALCHEMY QUERY?
+    video = Video.query.get(video_id) 
     form_data = request.get_json()
     # if quering video with given video_id not succesful, send error
     if not video:
@@ -127,8 +127,8 @@ def update_video(video_id):
     video.release_date = form_data["release_date"]
     video.total_inventory = form_data["total_inventory"]
     
-    db.session.commit() # commiting changes to db
-    return video.video_to_json_response(), 200 # send ok response
+    db.session.commit() 
+    return video.video_to_json_response(), 200 
 
 # Delete a video
 @video_bp.route("/<video_id>", methods=["DELETE"], strict_slashes = False)
@@ -162,8 +162,8 @@ def check_out_video():
             customer.videos_checked_out_count += 1
             video.available_inventory -= 1
 
-            db.session.add(new_rental) # "adds model to the db"
-            db.session.commit() # commits the action above
+            db.session.add(new_rental) 
+            db.session.commit() 
 
             return {"customer_id": customer.id,
                     "video_id": video.id,
@@ -177,20 +177,21 @@ def check_out_video():
 @rental_bp.route("/check-in", methods = ["POST"], strict_slashes = False)
 def check_in_video():
     try:
-        request_body = request.get_json() # customer_id and video_id
+        request_body = request.get_json() 
+        # Querying by customer_id and video_id with given info
         video = Video.query.get(request_body["video_id"])
         customer = Customer.query.get(request_body["customer_id"])
-        # filters first video that matches customer id and video id
+        # filters first video  by video id, that matches customer id query
         rental = Rental.query.filter(Customer.id == customer.id)\
             .filter(Video.id == video.id).first()
-        print(rental)
-        # if  customer or video don't not exist, 404
+        # print(rental)
+        # if  customer or video don't exist, 404
         if not video or not customer: 
             return {"details": "Not Found"}, 404
+        # need to check if video id is in rental
         elif not "video_id" in request_body or \
-            not "customer_id" in request_body: # need to check if video id is in rental
+            not "customer_id" in request_body: 
             return {"details": "Bad Request"}, 400
-
         elif not rental:
             return {"details": "Bad Request"}, 400
         elif customer.videos_checked_out_count < 1:
@@ -200,7 +201,6 @@ def check_in_video():
             new_rental = Rental.from_json_to_check_out(request_body)
             customer.videos_checked_out_count -= 1
             video.available_inventory += 1
-
             db.session.add(new_rental) 
             db.session.commit() 
 
@@ -219,15 +219,13 @@ def retrieve_videos_checked_out_by_customer(customer_id):
     customer = Customer.query.get(customer_id) # querying customer by given id
     if customer == None:
         return jsonify('Not Found'), 404
-
     # an instance of rentals including (rental id, customer_id, video_id, 
     # rental_date and due_date), queried by customer id. 
     rentals = Rental.query.filter(Rental.customer_id==customer_id).all()
-    print(rentals)
-
+    # print(rentals)
     videos_checked_out = []
     for rental in rentals:
-    # to query (instead of joining) with its instance of all the videos 
+    # to query (instead of joining tables) with its instance of all the videos 
     # for that customer including (id, title, release date, total inventory,
     # available inventory)
         video = Video.query.get(rental.video_id)
@@ -236,27 +234,19 @@ def retrieve_videos_checked_out_by_customer(customer_id):
 
 @video_bp.route("/<video_id>/rentals", methods = ["GET"], \
     strict_slashes = False)
+
+### list customer details with due date for video checked out
 def retrieve_customers_that_checked_out_video(video_id):
-    video = Video.query.get(video_id) # querying customer by given id
+    video = Video.query.get(video_id) # querying video by given id
     if video == None:
         return jsonify('Not Found'), 404
-
-    # an instance of rentals including (rental id, customer_id, video_id, 
-    # rental_date and due_date), queried by vendor id,
-    # HOW DO I  join it  with its
-    # instance of all the videos for that customer including (id, title, 
-    # release date, total inventory,available inventory)
+    # instance of rentals with (rental id, customer_id, video_id, 
+    # rental_date and due_date), queried by video_id
     rentals = Rental.query.filter(Rental.video_id==video_id).all()
-
-    customers = []
+    customers_due_date = []
     for rental in rentals:
         customer = Customer.query.get(rental.customer_id)
-        customer = {
-            "due_date": rental.due_date.strftime("%a, %d %b %Y %X %z %Z"),
-            "name": customer.name,
-            "phone": customer.phone,
-            "postal_code": str(customer.postal_code)
-        }
-        customers.append(customer) 
-    return jsonify(customers), 200
-##  -----------------End of Wave2----------------------------
+        customers_due_date.append(Rental.customer_due_date_response(rental, \
+            customer)) 
+    return jsonify(customers_due_date), 200
+
