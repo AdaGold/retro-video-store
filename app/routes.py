@@ -279,3 +279,50 @@ def return_rental():
         "videos_checked_out_count": customer.index_checked_out(),
         "available_inventory": video.index_available_inventory()
     }, 200
+
+#  Wave 2 GET routes
+@customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
+def get_rental_customers(customer_id):
+
+    if not is_int(customer_id):
+        return ("Customer ID needs to be an integer!", 400)
+    
+    rentals = Rental.query.filter(Rental.customer_id == customer_id)
+
+    if rentals is None:
+        return make_response("Rental does not exist", 404)
+    
+    rental_list = []
+
+    for rental in rentals:
+        video = Video.query.get(rental.video_id)
+        rental_list.append(
+            {"release_date": video.release_date,
+            "title": video.title,
+            "due_date":rental.due_date}
+        )
+    return jsonify(rental_list), 200
+
+@videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
+def get_video_customers(video_id):
+
+    if not is_int(video_id):
+        return ("Video ID needs to be an integer!", 400)
+    
+    rentals = Rental.query.filter(Rental.video_id == video_id)
+
+    if rentals is None:
+        return make_response("Rental does not exist", 404)
+
+    rental_list = []
+
+    for rental in rentals:
+        customer = Customer.query.get(rental.customer_id)
+        rental_list.append(
+            {"due_date": rental.due_date,
+            "name": customer.name,
+            "phone": customer.phone,
+            "postal_code": customer.postal_code}
+        )
+    
+    return jsonify(rental_list), 200
