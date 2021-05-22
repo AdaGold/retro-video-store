@@ -52,15 +52,6 @@ def customer_details():
             db.session.add(new_customer)
             db.session.commit()
 
-            # return make_response({
-            #     "id": new_customer.id,
-            #     "name": new_customer.name,
-            #     "postal_code": new_customer.postal_code,
-            #     "phone": new_customer.phone,
-            #     "register_at": new_customer.registered_at,
-            #     "videos_checked_out_count": new_customer.videos_checked_out_count
-            #     }, 201)
-
             return new_customer.to_json(), 201
         
 # endpoint retrieves, updates and deletes records of a specific customer
@@ -75,15 +66,6 @@ def specific_customer(customer_id):
         return make_response(), 404
     
     elif request.method == "GET":
-        # return jsonify({
-        #     "id": customer.id,
-        #     "name": customer.name,
-        #     "registered_at": customer.registered_at,
-        #     "postal_code": customer.postal_code,
-        #     "phone": customer.phone,
-        #     "videos_checked_out_count": customer.videos_checked_out_count
-        # }), 200
-
         return customer.to_json(), 200
 
     # UPDATE (PUT) & return details about specific customer
@@ -100,16 +82,6 @@ def specific_customer(customer_id):
             customer.phone = form_data["phone"]
 
             db.session.commit()
-
-            # return jsonify({
-            #     "id": customer.id,
-            #     "name": customer.name,
-            #     "registered_at": customer.registered_at,
-            #     "postal_code": customer.postal_code,
-            #     "phone": customer.phone,
-            #     "videos_checked_out_count": customer.videos_checked_out_count
-            # }), 200
-
             return customer.to_json(), 200
     
     # DELETE a specific customer
@@ -181,17 +153,9 @@ def specific_video(video_id):
         return make_response(), 404
     
     elif request.method == "GET":
-        # return jsonify({
-        #     "id": video.id,
-        #     "title": video.title,
-        #     "release_date": video.release_date,
-        #     "total_inventory": video.total_inventory,
-        #     # "available_inventory": 0
-        # }), 200
-
         return video.to_json(), 200
 
-#     # UPDATE (PUT) & return details about specific video
+    # UPDATE (PUT) & return details about specific video
 
     elif request.method == "PUT":
         form_data = request.get_json()
@@ -204,15 +168,6 @@ def specific_video(video_id):
             video.release_date = form_data["release_date"]
             video.total_inventory = form_data["total_inventory"]
             db.session.commit()
-
-            # return jsonify({
-            #     "id": video.id,
-            #     "title": video.title,
-            #     "release_date": video.release_date,
-            #     "total_inventory": video.total_inventory,
-            #     # "available_inventory": 0
-            # }), 200
-
             return video.to_json(), 200
     
     # DELETE a specific video
@@ -237,27 +192,19 @@ def rental_check_out():
     customer_id = request_body.get("customer_id")
     video_id = request_body.get("video_id")
 
-# The API should return back detailed errors and a status 404: Not Found if the customer does not exist
-# The API should return back detailed errors and a status 404: Not Found if the video does not exist
     if type(customer_id) != int or type(video_id) != int:
-        return make_response("ids aren't integers"), 404
+        return make_response({"details": "Invalid data"}), 400
     
-    # retrieves customer from db that has the same customer id as the request body
     customer = Customer.query.get(customer_id)
-    # retrieves video from db that has the same video is as the request body 
     video = Video.query.get(video_id)
 
     if customer is None and video is None:
-        return make_response("ids don't exist"), 404
+        return make_response(), 404
 
-# The API should return back detailed errors and a status 400: Bad Request if the video does not have any available inventory before check out
     if video.available_inventory < 1:
-        # return make_response(), 400
         return jsonify({"details": "Invalid data"}), 400
 
-    # increase the customer's videos_checked_out_count by one
     customer.videos_checked_out_count += 1
-    # decrease the video's available_inventory by one
     video.available_inventory -= 1
 
     new_rental = Rental(
@@ -285,57 +232,37 @@ def rental_check_in():
     customer_id = request_body.get("customer_id")
     video_id = request_body.get("video_id")
 
-    # The API should return back detailed errors and a status 404: Not Found if the customer does not exist
-    # The API should return back detailed errors and a status 404: Not Found if the video does not exist
-    if type(customer_id) != int or type(video_id) != int:
-        return make_response("ids aren't integers"), 404
-
-    # retrieves customer from db that has the same customer id as the request body
     customer = Customer.query.get(customer_id)
-    # retrieves video from db that has the same video is as the request body 
     video = Video.query.get(video_id)
-
-    # The API should return back detailed errors and a status 400: Bad Request if the video and customer do not match a current rental
-    if customer is None and video is None:
-        return make_response("ids don't exist"), 400
-    
-    
 
     for rental in customer.video:
         if rental.video_id == video_id:
-            # decrease the customer's videos_checked_out_count by one
             customer.videos_checked_out_count -= 1
-            # increase the video's available_inventory by one
             video.available_inventory += 1
             db.session.delete(rental)
-    
             db.session.commit()
-    
-    # if customer_id is video_id:
-    #     return jsonify({"details": "Invalid data"}), 400
+        
+            return jsonify({
+                "customer_id": customer_id,
+                "video_id": video_id,
+                "videos_checked_out_count": customer.videos_checked_out_count,
+                "available_inventory": video.available_inventory
+            }), 200
 
-    return jsonify({
-        "customer_id": customer_id,
-        "video_id": video_id,
-        "videos_checked_out_count": customer.videos_checked_out_count,
-        "available_inventory": video.available_inventory
-    }), 200
-
+    else:
+        return jsonify({"details": "Invalid data"}), 400
 
 # GET /customers/<id>/rentals -> list the videos a customer currently has checked out 
 @customers_bp.route("<int:id>/rentals", methods=["GET"], strict_slashes=False)
 def customer_rentals(id):
     customer = Customer.query.get(id)
 
-    # The API should return back detailed errors and a status 404: Not Found if the customer does not exist
     if customer is None:
         return jsonify({"details": "Invalid data"}), 404
 
-    # The API should return an empty list if the customer does not have any videos checked out.
 
     customer_rentals = []
     for rental in customer.video:
-        # retrieves video id from the Rental db that matches with the video id in the Video db 
         video = Video.query.get(rental.video_id)
 
         customer_rentals.append({
@@ -351,15 +278,12 @@ def customer_rentals(id):
 def video_rentals(id):
     video = Video.query.get(id)
 
-    # The API should return back detailed errors and a status 404: Not Found if the video does not exist
     if video is None:
         return jsonify({"details": "Invalid data"}), 404
 
-    # The API should return an empty list if the video is not checked out to any customers.
 
     customer_details = []
     for rental in video.customer:
-        # retrieves the customer id from the Rental db that matches with the customer id in the Customer db
         customer = Customer.query.get(rental.customer_id)
 
         customer_details.append({
@@ -370,19 +294,3 @@ def video_rentals(id):
         })
 
         return jsonify(customer_details), 200
-
-
-# [
-#     {
-#         "due_date": "Thu, 13 May 2021 21:36:38 GMT",
-#         "name": "Edith Wong",
-#         "phone": "(555) 555-5555",
-#         "postal_code": "99999",
-#     },
-#     {
-#         "due_date": "Thu, 13 May 2021 21:36:47 GMT",
-#         "name": "Ricarda Mowery",
-#         "phone": "(555) 555-5555",
-#         "postal_code": "99999",
-#     }
-
