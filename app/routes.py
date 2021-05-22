@@ -1,12 +1,15 @@
 from app import db
 from app.models.customer import Customer
 from app.models.video import Video
+from app.models.rental import Rental
 from flask import request, Blueprint, make_response, jsonify
 from datetime import datetime
 import requests
 
+
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 @customers_bp.route("", methods = ["GET"])
 def get_customers():
@@ -52,7 +55,7 @@ def post_customers():
             "id": new_customer.customer_id,
             "name": new_customer.name,
             "postal_code": new_customer.postal_code,
-            "phone": new_customer.phone_number,
+            "phone": new_customer.phone_number
         }, 201)
 
 @customers_bp.route("/<customer_id>", methods = ["PUT"])
@@ -155,3 +158,80 @@ def delete_video(video_id):
         db.session.delete(video)
         db.session.commit()
         return make_response(jsonify({"id": video.video_id})) 
+
+@rentals_bp.route("/check-out", methods = ["POST"])
+def post_rentals_check_out():
+    request_body = request.get_json()
+    if "customer_id" not in request_body or "video_id" not in request_body:
+        return make_response({"details": "Invalid data"}, 404)
+    elif type(request_body["customer_id"]) is not int :
+        return make_response({"details": "Invalid customer_id"}, 400)
+    elif type(request_body["video_id"]) is not int :
+        return make_response({"details": "Invalid video_id"}, 400)
+    new_rental = Rental(customer_id=request_body["customer_id"], video_id=request_body["video_id"])
+    customer = Customer.query.get(new_rental.customer_id)
+
+    video = Video.query.get(new_rental.video_id)
+    # customer.videos_checked_out_count += 1
+    # video.available_inventory +=1
+    db.session.add(new_rental)
+    db.session.commit()
+    if video.available_inventory == 0:
+        return ({"details": "No available inventory"}, 400)
+    else:
+            return make_response({
+                "customer_id": new_rental.customer_id,
+                "video_id": new_rental.video_id,
+                "due_date": new_rental.due_date,
+                "videos_checked_out_count": customer.videos_checked_out_count,
+                "available_inventory": video.available_inventory
+            })
+
+@rentals_bp.route("/check-in", methods = ["POST"])
+def post_rentals_check_in():
+    request_body = request.get_json()
+    if "customer_id" not in request_body or "video_id" not in request_body:
+        return make_response({"details": "Invalid data"}, 404)
+    else:
+        new_rental = Rental(customer_id=request_body["customer_id"], video_id=request_body["video_id"])
+        customer = Customer.query.get(new_rental.customer_id)
+        video = Video.query.get(new_rental.video_id)
+        db.session.add(new_rental)
+        db.session.commit()
+        return make_response({
+            "customer_id": new_rental.customer_id,
+            "video_id": new_rental.video_id,
+            "due_date": new_rental.due_date,
+            "videos_checked_out_count": customer.videos_checked_out_count,
+            "available_inventory": video.available_inventory
+        })
+
+@customers_bp.route("<customer_id>/rentals", methods = ["GET"])
+def get_customer_checked_out_videos(customer_id):
+    customer = Customer.query.get(customer_id)
+    rental = Rental.query.filter_by(customer_id= customer.customer_id)
+    list_of_rentals = []
+    for each_rental in rental:
+        video = Video.query.get(each_rental.video_id)
+        list_of_rentals.append({
+            "release_date": video.release_date,
+            "title": video.title,
+            "due_date": each_rental.due_date     
+            })
+    return jsonify(list_of_rentals)
+
+
+@videos_bp.route("<video_id>/rentals", methods = ["GET"])
+def get_customer_checked_out_videos(video_id):
+    video = Video.query.get(video_id)
+    rental = Rental.query.filter_by(video_id= video.video_id)
+    list_of_rentals = []
+    for each_rental in rental:
+        customer = Customer.query.get(each_rental.customer_id)
+        list_of_rentals.append({
+            "due_date": each_rental.due_date, 
+            "name": customer.name,
+            "phone": customer.phone_number,
+            "postal_code": customer.postal_code   
+            })
+    return jsonify(list_of_rentals)

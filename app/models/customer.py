@@ -8,3 +8,4 @@ class Customer(db.Model):
     postal_code = db.Column(db.Text)
     phone_number = db.Column(db.Text)
     register_at = db.Column(db.DateTime, nullable = True)
+    videos_checked_out_count = db.Column(db.Integer, nullable = True) 
