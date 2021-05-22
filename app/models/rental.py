@@ -46,8 +46,8 @@ class Rental(db.Model):
         customer = Customer.query.get(customer_id)
         video = Video.query.get(video_id)
         
-        customer.videos_checked_out_count = customer.decrease_checkout()
-        video.available_inventory = video.inventory_checkin()
+        customer.decrease_checkout()
+        video.inventory_checkin()
 
         
         db.session.commit()

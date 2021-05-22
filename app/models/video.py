@@ -19,13 +19,13 @@ class Video(db.Model):
     def inventory_checkin(self):
         if self.available_inventory:
             self.available_inventory = self.available_inventory + 1
-        else:
-            self.available_inventory = 0
+        # else:
+        #     self.available_inventory = 0
     
     def inventory_checkout(self):        
         if self.available_inventory:
             self.available_inventory = self.available_inventory - 1
-        else:
-            self.available_inventory = 1  
+        # else:
+        #     self.available_inventory = 1  
         db.session.commit()
 
