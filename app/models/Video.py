@@ -15,7 +15,8 @@ class Video(db.Model):
             "id": self.video_id,
             "title": self.title,
             "release_date": self.release_date,
-            "total_inventory": self.total_inventory
+            "total_inventory": self.total_inventory,
+            "available_inventory": self.available_inventory
         }
 
     def check_in(self):

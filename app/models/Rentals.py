@@ -13,7 +13,10 @@ class Rental(db.Model):
     check_out_date = db.Column(db.DateTime)
     due_date = db.Column(db.DateTime, default= ((datetime.date.now())+datetime.timedelta(days=7)))
     renter = db.relationship("Customer" backref="customer", lazy=True)
-    video = db,relationship("Video" backref="video", lazy=True)
+    video = db.relationship("Video" backref="video", lazy=True)
+    #maybe use back populates instead 
+    #renter = db.relationship("Customer", back_populates="rentals", lazy=True)
+    #video = db.relationship("Video", back_populates="rentals", lazy=True)
 
     def rental_info(self):
         return {

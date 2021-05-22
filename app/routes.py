@@ -7,8 +7,9 @@ from app import db
 
 #2do2night:
 #need to make .env file again
-#need to register blueprints etc
-#install pip? flask, postgres
+#run migrations, smoke test?
+#write tests? I can dream
+#sleep
 #results = db.session.query(Foo, Bar, FooBarJoin).join(Foo, Foo.id==FooBarJoin.foo_id)\
 #            .join(Bar, Bar.id==FooBarJoin.bar_id).filter(Foo.id == X).all()
 #https://docs.python.org/3/tutorial/controlflow.html#keyword-arguments reference again if not used right
@@ -18,11 +19,6 @@ videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 
-# GET /customers
-# GET /customers/<id>
-# POST /customers
-# PUT /customers/<id>
-# DELETE /customers/<id>
 @customers_bp.route("", methods=["GET"], strict_slashes=False)
 def get_customers():
     movie_buffs = Customer.query.all()
@@ -67,11 +63,6 @@ def delete_customer(customer_id):
     db.session.commit()
     return make_response({"id": keep_your_money.customer_id}, 200)
 
-# GET /videos
-# GET /vidoes/<id>
-# POST /videos
-# PUT /videos/<id>
-# DELETE /videos/<id>
 @videos_bp.route("", methods=["GET"], strict_slashes=False)
 def get_videos():
     videos = Video.query.all()
@@ -115,10 +106,6 @@ def delete_video(video_id):
     db.session.commit()
     return make_response({"id": vid.video_id}, 200)
 
-#POST /rentals/check-out
-#POST /rentals/check-in
-#GET /customers/<id>/rentals foobar?
-#GET /videos/<id>/rentals foobar?
 def is_int(value):
     try:
         return int(value)

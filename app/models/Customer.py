@@ -10,10 +10,11 @@ class Customer(db.Model):
     name = db.Column(db.String)
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
-    registered_at = db.Column(db.DateTime, nullable=True)
+    registered_at = db.Column(db.DateTime, nullable=True, default=datetime.utcnow())
     videos_rented = db.Column(db.Integer, default=0)
 
     videos = db.relationship("Video", secondary= "rentals", back_populates="customers")
+    #rentals = db.relationship("Rental", back_populates="customer", lazy=True)
 
     def customer_info(self):
         if self.registered_at:
