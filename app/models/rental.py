@@ -1,14 +1,3 @@
-# Checks out a video to a customer, and updates the data in the database as such.
-
-# When successful, this request should:
-
-# increase the customer's videos_checked_out_count by one
-# decrease the video's available_inventory by one
-# create a due date. The rental's due date is the seven days from the current date.
-# Required Request Body Parameters
-# Request Body Param	Type	Details
-# customer_id	integer	ID of the customer attempting to check out this video
-# video_id	integer	ID of the video to be checked out
 from sqlalchemy.orm import relationship, backref
 from app.models import customer
 from app.models import video 
@@ -24,9 +13,6 @@ class Rental(db.Model):
     customer = relationship('Customer', backref = 'rentals')
     video = relationship('Video', backref = 'rentals')
 
-
-    # def due_date(self):
-    #     if 
 
     def to_json_rental(self):
         return {

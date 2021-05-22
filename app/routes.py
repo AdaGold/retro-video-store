@@ -182,17 +182,6 @@ def rental_checkout():
                         video_id = rental["video_id"],
                         due_date = datetime.now() + timedelta(days=7))# adds 7 days to datetime.now(current_date)
 
-# customer checks out a video
-# when checks out successfully:
-# adds #customer's videos_checked_out by one
-# Descrease the #video's available_inventory by one
-# also create a due_date 7 days from current date
-
-#customer_id and video_id are integers
-
-#due_date = due_date is always 7 days from checked out date
-#videos_checked_out_count = videos_checked_out_count ++
-#available_inventory = available_inventory - videos_checked_out_count 
 
 # The API should return back detailed errors and a status 404: Not Found if the customer does not exist
     customer = Customer.query.get(rental_list.customer_id)
@@ -216,8 +205,6 @@ def rental_checkout():
     db.session.add(rental_list)
     db.session.commit()
 
-    # return rental_list.to_json_rental(), 200
-
     return jsonify({
         "customer_id": rental_list.customer_id,
         "video_id": rental_list.video_id,
@@ -230,6 +217,10 @@ def rental_checkout():
 @rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
 def rental_checkin():
 
+# The API should return back detailed errors 
+# and a status 400: Bad Request 
+# if the video does not have any available inventory before check out
+
     checkin_list= request.get_json()
 
     checkin_customer = checkin_list["customer_id"]
@@ -237,6 +228,11 @@ def rental_checkin():
 
     customer = Customer.query.get(checkin_customer)
     video = Video.query.get(checkin_video)
+
+    # if Customer.customer_id == checkin_customer and Video.video_id == checkin_video:
+    #     return {
+    #         "details": "Rental not found."
+    #     }, 400
 
     # rental = Rental.query.all()
 

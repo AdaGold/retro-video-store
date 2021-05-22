@@ -1,10 +1,3 @@
-# Customers are entities that describe a customer at the video store. 
-# They contain:
-
-# name of the customer
-# postal code of the customer
-# phone number of the customer
-# register_at datetime of when the customer was added to the system.
 from sqlalchemy.orm import relationship, backref
 from flask import current_app
 from app import db
@@ -15,17 +8,9 @@ class Customer(db.Model):
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime, nullable = True)
-    checkout_count = db.Column(db.Integer, default =0) #why do I need this here?
-    # rentals = db.relationship('Rental', backref = 'customer')
-    
+    checkout_count = db.Column(db.Integer, default =0) 
 
-    def registered_customer(self):
-        if self.register_at == None:
-            return False
-        else: 
-            return True
-
-#helper function 
+    #helper function 
     def to_json_customer(self):
         return {
         "id": self.id,
