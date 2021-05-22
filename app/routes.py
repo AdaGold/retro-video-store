@@ -190,7 +190,8 @@ def handle_rentals_out():
 
     new_rental = Rental(customer_id=customer_id, 
                         video_id=video_id,
-                        due_date = date.today() + timedelta(days=7))
+                        due_date = date.today() + timedelta(days=7),
+                        status = "checked-out")
     
     customer.videos_checked_out_count += 1
     video.available_inventory -= 1
@@ -221,20 +222,21 @@ def handle_rentals_in():
     # results = db.session.query(Customer, Video, Rental).join(Customer, Customer.id==Rental.customer_id)\
     #     .join(Video, Video.id==Rental.video_id).filter(Customer.id == customer_id).all()
     # print("*** results ", results)
-    # print("*** joins", results.rental.video_id)
 
     if not customer or not video:
         return make_response({404: "Not Found"}, 404)
     
-    if not customer.video:
-        return make_response({400: "Bad Request"}, 400)
-
+    # if not customer.video:
+    #     return make_response({400: "Bad Request"}, 400)
 
     for rental in customer.video:
+        if rental.status == "checked-in":
+            return make_response({400: "Bad Request"}, 400)
         if rental.video_id == video_id:
             customer.videos_checked_out_count -= 1
             video.available_inventory += 1
-            db.session.delete(rental)
+            rental.status = "checked-in"
+            # db.session.delete(rental)
 
     db.session.commit()
     
