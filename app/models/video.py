@@ -15,7 +15,7 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime,nullable=False)
     total_inventory = db.Column(db.Integer,default=0)
     available_inventory = db.Column(db.Integer,default=0)
-    
+    rentals = db.relationship("Rental", backref='video',lazy=True)
 
     def to_python_dict(self):
         """

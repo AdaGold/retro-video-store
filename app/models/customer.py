@@ -12,12 +12,12 @@ class Customer(db.Model):
         videos_checked_out_count
     """
     id = db.Column(db.Integer,primary_key=True,autoincrement=True)
-    name = db.Column(db.String, nullable=False)#required attributes
-    postal_code = db.Column(db.String,nullable=False)#required attributes
-    phone = db.Column(db.String,nullable=False)#required attributes
+    name = db.Column(db.String, nullable=False)
+    postal_code = db.Column(db.String,nullable=False)
+    phone = db.Column(db.String,nullable=False)
     registered_at = db.Column(db.DateTime,nullable=True)
     videos_checked_out_count = db.Column(db.Integer,default=0)
-    
+    rentals = db.relationship("Rental", backref='customer',lazy=True)
   
     
     def to_python_dict(self):

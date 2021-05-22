@@ -61,6 +61,8 @@ def get_customer(id):
     customer = Customer.query.get(id)
     if not customer:
         return jsonify(message="customer id not found"), 404
+    if not isinstance(customer.id,int):
+        return jsonify(message="customer id must be integer"), 404
     return jsonify(customer.to_python_dict()), 200
 
 
@@ -197,6 +199,9 @@ def check_out():
     if not isinstance(request_body["video_id"],int) or request_body['video_id'] == None: 
         return jsonify(error="video id must be an integer"), 400
     
+    if not isinstance(request_body["customer_id"],int) or request_body['customer_id'] == None: 
+        return jsonify(error="video id must be an integer"), 400
+    
     customer_id = request_body["customer_id"]
     video_id = request_body["video_id"]
     video = Video.query.get(video_id)#checking database for Video instance
@@ -221,33 +226,72 @@ def check_in():
         return  400
     if "video_id" not in request_body:
         return  400
+    
+    
     if not isinstance(request_body["video_id"],int) or request_body['video_id'] == None: 
         return jsonify(error="video id must be an integer"), 400
-    
-    customer = Customer.query.get(request_body["customer_id"])
-    if not isinstance(customer.videos_checked_out_count,int) or customer.videos_checked_out_count == None: 
-        return jsonify(error="checked out count must be an integer"), 400
-    
-    
-    customer.videos_checked_out_count = customer.decrease_checkout_count()
     video = Video.query.get(request_body["video_id"])
-    video.available_inventory = video.increase_inventory()
+    if not isinstance(request_body["customer_id"],int) or request_body['customer_id'] == None: 
+        return jsonify(error="customer id must be an integer"), 400
+    customer = Customer.query.get(request_body["customer_id"])
+    
+    
+    rental = Rental.query.filter_by(video_id=video.id, customer_id=customer.id).first()
+    if not rental:
+        return jsonify(error="video id and customer id have no relationship"), 400
+    db.session.delete(rental)
+    customer.decrease_checkout_count()
+    video.increase_inventory()
     db.session.commit()
     
     return jsonify(
         {
         "customer_id": customer.id,
         "video_id": video.id,
-        "videos_checked_out_count": customer.videos_checked_out,
+        "videos_checked_out_count": customer.videos_checked_out_count,
         "available_inventory": video.available_inventory 
     }
     ), 200
 
 
-
-
-    try:
-        request_body["customer_id"]
-        request_body["video_id"]
-    except:
-        return make_response({"details": "Invalid data"}, 400)
+@customer_bp.route("/<id>/rentals",methods=["GET"],strict_slashes=False)
+def videos_of_customer(id):
+    """
+        Input:  Request to read a list of videos by customer id 
+        Output: Returns error if no match is found, returns list of dicts of videos checkout out to one customer
+    """
+    customer = Customer.query.get(id)
+    if not customer:
+        return jsonify(error="no matches found"), 404
+    video_list = []
+    for rental in customer.rentals:# relationship between customer and rental| list of instances of Rental class
+        video = Video.query.get(rental.video_id)
+        video_dict = {
+        "title" : video.title,
+        "release_date" : video.release_date,
+        "due_date": rental.due_date.strftime("%a,%d %b %Y,%H:%M:%S %Z")
+        }
+        video_list.append(video_dict)
+    return jsonify(video_list), 200
+        
+         
+@video_bp.route("/<id>/rentals",methods=["GET"],strict_slashes=False)#customers by video id
+def customer_by_videos(id):
+    """
+        Input:  Request to read a list of customers who have a specific video checked out
+        Output: Returns error if no match is found, returns list of dicts 
+    """
+    video = Video.query.get(id)
+    if not video:
+        return jsonify(error="no matches found"), 404
+    checkout_list = []
+    for rental in video.rentals:# list of rentals by attribute
+        customer = Customer.query.get(rental.customer_id)
+        checkout = {
+            "due_date": rental.due_date,
+            "name": customer.name,
+            "phone": customer.phone,
+            "postal_code": customer.postal_code
+        }
+        checkout_list.append(checkout)
+    return jsonify(checkout_list), 200
