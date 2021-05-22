@@ -2,9 +2,11 @@ from flask import Blueprint, request, jsonify
 from app import db
 from app.models.customer import Customer
 from app.models.video import Video
+from app.models.rental import Rental
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 ######################## HELPER FUNCTIONS ######################## 
 
@@ -22,6 +24,14 @@ def invalid_video_request(request_body):
             or "total_inventory" not in request_body):
         return True
 
+def invalid_checkout_checkin(request_body):
+    if (not request_body
+            or "customer_id" not in request_body
+            or "video_id" not in request_body
+            or not isinstance(request_body["customer_id"], int)
+            or not isinstance(request_body["video_id"], int)):
+        return True
+        
 ######################## CUSTOMER ENDPOINTS ######################## 
 
 @customers_bp.route("/", methods = ["POST"], strict_slashes=False)
@@ -66,6 +76,18 @@ def update_customer(customer_id):
     db.session.commit()
     return jsonify(customer.to_json())
 
+@customers_bp.route("/<int:customer_id>/rentals", methods = ["GET"], strict_slashes=False)
+def view_customer_rentals(customer_id):
+    customer = Customer.query.get_or_404(customer_id)
+    customer_rentals = []
+    for rental in customer.videos:
+        video = Video.query.get(rental.video_id)
+        movie_details = {"release_date":video.release_date,
+                "title": video.title,
+                "due_date": rental.due_date}
+        customer_rentals.append(movie_details)
+    return jsonify(customer_rentals), 200
+
 ######################## VIDEO ENDPOINTS ######################## 
 
 @videos_bp.route("/", methods = ["POST"], strict_slashes=False)
@@ -75,7 +97,8 @@ def register_video():
         return jsonify(details=f"Invalid data"), 400
     new_video = Video(title=request_body["title"],
                         release_date=request_body["release_date"],
-                        total_inventory=request_body["total_inventory"]) 
+                        total_inventory=request_body["total_inventory"],
+                        available_inventory=request_body["total_inventory"])
     db.session.add(new_video)
     db.session.commit()
     return jsonify(id=new_video.id), 201
@@ -109,3 +132,53 @@ def update_video(video_id):
     video.total_inventory=request_body["total_inventory"]
     db.session.commit()
     return jsonify(video.to_json())
+
+@videos_bp.route("/<int:video_id>/rentals", methods = ["GET"], strict_slashes=False)
+def view_customer_rentals(video_id):
+    video = Video.query.get_or_404(video_id)
+    video_rentals = []
+    for rental in video.customers:
+        customer = Customer.query.get(rental.customer_id)
+        customer_details = {"due_date": rental.due_date,
+                            "name": customer.name,
+                            "phone": customer.phone,
+                            "postal_code": customer.postal_code}
+        video_rentals.append(customer_details)
+    return jsonify(video_rentals)
+
+######################## RENTAL ENDPOINTS ######################## 
+
+@rentals_bp.route("/check-out", methods = ["POST"], strict_slashes=False)
+def checkout():
+    request_body = request.get_json()
+    if invalid_checkout_checkin(request_body):
+        return jsonify(details=f"Invalid data"), 400
+    new_rental = Rental(customer_id = request_body["customer_id"],
+                        video_id = request_body["video_id"])
+    customer = Customer.query.get(request_body["customer_id"])
+    customer.videos_checked_out_count += 1
+    video = Video.query.get(request_body["video_id"])
+    if not video.available_inventory:
+        return jsonify(details=f"Video not available"), 400
+    video.available_inventory -= 1
+    db.session.add(new_rental)
+    db.session.commit()
+    rental_response = new_rental.to_json()
+    rental_response["due_date"] = new_rental.due_date
+    return jsonify(rental_response)
+
+@rentals_bp.route("/check-in", methods = ["POST"], strict_slashes=False)
+def checkin():
+    request_body = request.get_json()    
+    if invalid_checkout_checkin(request_body):
+        return jsonify(details=f"Invalid data"), 400
+    customer = Customer.query.get(request_body["customer_id"])
+    video = Video.query.get(request_body["video_id"])
+    rental = Rental.query.filter_by(video_id=video.id, customer_id=customer.id).first()
+    if rental:
+        customer.videos_checked_out_count -= 1
+        video.available_inventory += 1
+        db.session.delete(rental)
+        db.session.commit()
+        return jsonify(rental.to_json())
+    return jsonify(details=f"Invalid data"), 400

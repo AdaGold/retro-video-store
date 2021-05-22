@@ -1,11 +1,13 @@
 from app import db
+from sqlalchemy.orm import relationship
 
 class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     title = db.Column(db.String, nullable=False)
-    release_date = db.Column(db.DateTime)
-    total_inventory = db.Column(db.Integer)
-    available_inventory = db.Column(db.Integer, default = 0)
+    release_date = db.Column(db.DateTime())
+    total_inventory = db.Column(db.Integer, default = 0)
+    available_inventory = db.Column(db.Integer)
+    customers = relationship("Rental", back_populates="video")
 
     def to_json(self):
         return {
