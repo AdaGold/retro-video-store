@@ -15,13 +15,8 @@ customers_bp = Blueprint("customer", __name__, url_prefix="/customers")
 
 @customers_bp.route("", methods=["GET"])
 def get_customers():
-    query_params = request.args.get()
-    if query_params.get("sort"):
-        customers = Customer.query.order_by(query_params.get("sort"))\
-            .paginate(page=query_params["p"], per_page=query_params["n"])
-    else:
-        customers = Customer.query.all()
-    return jsonify([customer.to_dict() for customer in customers], 200)
+    customers = Customer.query.all()
+    return jsonify([customer.to_dict() for customer in customers])
 
 @customers_bp.route("", methods=["POST"])
 def post_customers():
@@ -190,7 +185,7 @@ def check_in_rental():
         rental = Rental.query.filter_by(
             customer_id=request_body["customer_id"], 
             video_id=request_body["video_id"]
-            ).first()
+            ).first_or_404(description="No active rental for this customer and video")
     except KeyError:
         return make_response({"details" : "Invalid data"}, 400)
 
