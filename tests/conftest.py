@@ -68,26 +68,6 @@ def four_videos(app):
     ])
     db.session.commit()
 
-@pytest.fixture
-def one_rental(app, one_customer, one_video):
-    customer = Customer.query.first()
-    video = Video.query.first()
-    new_rental = Rental(customer_id=customer.id, video_id=video.id, due_date=datetime(2021, 4, 23, 17, 30, 29))
-    customer.videos_checked_out_count += 1
-    video.available_inventory -= 1
-    db.session.add(new_rental)
-    db.session.commit()
-
-# @pytest.fixture
-# def three_rentals(app, three_customers, four_videos):
-#     for i in range(1, 4):
-#         customer = Customer.query.get(i)
-#         video = Video.query.get(i)
-#         new_rental = Rental(customer_id=customer.id, video_id=video.id, due_date=datetime(2021, (7-i), 20, 17, 30, 29))
-#         customer.videos_checked_out_count += 1
-#         video.available_inventory -= 1
-#         db.session.add(new_rental)
-#         db.session.commit()
 
 @pytest.fixture
 def six_rentals(app, three_customers, four_videos):
@@ -96,8 +76,16 @@ def six_rentals(app, three_customers, four_videos):
     for customer in customers:
         video = Video.query.get(i)
         video2 = Video.query.get(i+1)
-        new_rental = Rental(customer_id=customer.id, video_id=video.id, due_date=datetime(2021, (7-i), 20, 17, 30, 29))
-        new_rental2 = Rental(customer_id=customer.id, video_id=video2.id, due_date=datetime(2021, (8-i), 15, 17, 30, 29))
+        new_rental = Rental(customer_id=customer.id, 
+                        video_id=video.id,
+                        checkout_date=datetime(2021, (4-i), 13, 17, 30, 29),
+                        due_date=datetime(2021, (4-i), 20, 17, 30, 29),
+                        check_in_date=None)
+        new_rental2 = Rental(customer_id=customer.id, 
+                        video_id=video2.id,
+                        checkout_date=datetime(2021, (6-i), 8, 17, 30, 29),
+                        due_date=datetime(2021, (6-i), 15, 17, 30, 29),
+                        check_in_date=datetime(2021, (6-i), 11, 17, 30, 29))
         customer.videos_checked_out_count += 2
         video.available_inventory -= 1
         video2.available_inventory -=1

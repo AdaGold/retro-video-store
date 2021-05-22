@@ -221,8 +221,13 @@ def overdue_rentals_index():
 def video_history(video_id):
     video = Video.query.get(video_id)
     rentals = video.customers
-    video_history = []
-    for rental in rentals:
-        if rental.due_date < datetime.now():
-            video_history.append(rental.video_history_to_json())
+    video_history = [rental.video_history_to_json() for rental in rentals if rental.check_in_date]
     return jsonify(video_history), 200
+
+@customers_bp.route("/<customer_id>/history", methods=["GET"], strict_slashes=False)
+@customer_not_found
+def customer_history(customer_id):
+    customer = Customer.query.get(customer_id)
+    rentals = customer.videos
+    customer_history = [rental.customer_history_to_json() for rental in rentals if rental.check_in_date]
+    return jsonify(customer_history), 200
