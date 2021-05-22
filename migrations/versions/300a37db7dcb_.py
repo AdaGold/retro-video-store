@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: b7ac970a2971
+Revision ID: 300a37db7dcb
 Revises: 
-Create Date: 2021-05-21 10:30:30.911551
+Create Date: 2021-05-21 16:32:34.961976
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'b7ac970a2971'
+revision = '300a37db7dcb'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,7 +21,7 @@ def upgrade():
     op.create_table('customer',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(), nullable=True),
-    sa.Column('postal_code', sa.Integer(), nullable=True),
+    sa.Column('postal_code', sa.String(), nullable=True),
     sa.Column('phone', sa.String(), nullable=True),
     sa.Column('registered_at', sa.DateTime(), nullable=True),
     sa.Column('videos_checked_out_count', sa.Integer(), server_default=sa.text('0'), nullable=True),
@@ -32,12 +32,12 @@ def upgrade():
     sa.Column('title', sa.String(), nullable=True),
     sa.Column('release_date', sa.DateTime(), nullable=True),
     sa.Column('total_inventory', sa.Integer(), nullable=True),
-    sa.Column('available_inventory', sa.Integer(), nullable=True),
+    sa.Column('available_inventory', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('rental',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('due_date', sa.Integer(), nullable=True),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('due_date', sa.DateTime(), nullable=False),
     sa.Column('video_id', sa.Integer(), nullable=False),
     sa.Column('customer_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['customer_id'], ['customer.id'], ),
