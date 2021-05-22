@@ -9,13 +9,14 @@ class Customer(db.Model):
     postal_code = db.Column(db.Integer)
     phone = db.Column(db.String)
     videos_checked_out_count = db.Column(db.Integer, default=0)
+    rentals = db.relationship('Rental', back_populates='customer', lazy=True)
     
 
     def customer_to_json(self):
         return {
             "id": self.task_id,
             "name": self.name,
-            "registered_at": (False if self.completed_at == None else True),
+            "registered_at": self.registered_at,
             "postal_code": self.postal_code,
             "phone": self.phone,
             "videos_checked_out_count": self.videos_checked_out_count
