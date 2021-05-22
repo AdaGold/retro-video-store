@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 700b1819e2c9
+Revision ID: 0f86a9d1c5b4
 Revises: 
-Create Date: 2021-05-21 10:42:55.020938
+Create Date: 2021-05-22 11:01:47.252715
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '700b1819e2c9'
+revision = '0f86a9d1c5b4'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -22,17 +22,17 @@ def upgrade():
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('postal_code', sa.Integer(), nullable=False),
-    sa.Column('phone_number', sa.String(), nullable=False),
+    sa.Column('phone', sa.String(), nullable=False),
     sa.Column('registered_at', sa.DateTime(), nullable=False),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
+    sa.Column('videos_checked_out_count', sa.Integer(), nullable=True),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('videos',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('title', sa.String(), nullable=False),
     sa.Column('release_date', sa.String(), nullable=False),
     sa.Column('total_inventory', sa.Integer(), nullable=True),
-    sa.Column('avail_inventory', sa.Integer(), nullable=True),
+    sa.Column('available_inventory', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('rentals',

@@ -2,8 +2,6 @@ from app import db
 from flask import request, Blueprint, jsonify
 from .models import Customer, Video, Rental
 from datetime import datetime, timedelta
-from flask import make_response
-
 
 
 # create Blueprints:
@@ -222,8 +220,6 @@ def delete_single_video(video_id):
     video_dict = video.to_dict()
 
     return jsonify(video_dict), 200
-    # return jsonify({"details": f'Video {video.id} "{video.title}" successfully deleted'}), 200
-
 
 
 
@@ -234,6 +230,9 @@ def delete_single_video(video_id):
 def create_rental():  
     # Customer (with customer_id) rents out a specific video (with video_id), then a rental is created with an id and due date (today+7)
     request_body = request.get_json()
+
+    if not is_int(request_body.get("customer_id")) or not is_int(request_body.get("video_id")):        
+        return {"message": f"Please input an integer"}, 400
 
     # if request body is missing customer or video field:
     if not request_body.get("customer_id") or not request_body.get("video_id"):
@@ -272,34 +271,47 @@ def create_rental():
 @rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
 def return_rental():
     request_body = request.get_json()
-    # customer_id = request_body.get("customer_id")
-    # video_id = request_body.get("video_id")
+    customer_id = request_body.get("customer_id")
+    video_id = request_body.get("video_id")
+
+    if not is_int(customer_id):        
+        return {"message": f"Please input an integer"}, 400
 
     # if request body is missing customer or video field:
-    if not request_body.get("customer_id") or not request_body.get("video_id"):
+    if not customer_id or not video_id:
         return jsonify({"details": "Invalid data"}), 400 
     
     # if customer or video does not exist:
-    if request_body.get("customer_id") is None or request_body.get("video_id") is None:
+    if customer_id is None or video_id is None:
         return jsonify(None), 404
 
     ### If video and customer do not match a current rental - 400
     
     # get both customer_id and video_id
-    customer = Customer.query.get(request_body["customer_id"])
+    customer = Customer.query.get(request_body["customer_id"])  
+    print(customer.customers)
     video = Video.query.get(request_body["video_id"])
 
-    
-    # rental = Rental.query.get(request_body["rental_id"])
+    rental_id_to_upgrade = 0
 
-    # if rental is None:
-    #     return jsonify(None), 400
+    for rental in customer.customers:
+        if rental.video_id == video_id:
+            video.available_inventory += 1
+            customer.videos_checked_out_count -= 1
+            rental_id_to_upgrade = rental.id
 
-    video.available_inventory += 1
-    customer.videos_checked_out_count -= 1
+    rental = Rental.query.get(rental_id_to_upgrade)
+    # rental = Rental.query.get(request_body["video_id"])
 
-    db.session.add(customer)
-    db.session.add(video)  
+    # rental = Rental.query.filter(Rental.id==customer_id).filter(Rental.id==video_id).filter(Rental.status=="Checked_out").first()
+    # query.filter(Rental.customer_id==customer_id).filter(Rental.video_id==video_id).filter(Rental.status=="Checked_out").first()
+
+    if rental is None:
+        return jsonify(None), 400
+
+    # db.session.add(customer)
+    # db.session.add(video) 
+    db.session.delete(rental) 
     db.session.commit()  
 
     return_dict = {
@@ -331,8 +343,8 @@ def videos_rented_by_customer(customer_id):
     all_videos_response = []
     for video in all_videos:
         all_videos_response.append({
-            "title": Video.query.get(video.video_id).title,
-            "release_date": Video.query.get(video.video_id).release_date,
+            "title": Video.query.get(video.id).title,
+            "release_date": Video.query.get(video.id).release_date,
             "due_date": video.due_date + timedelta(days=7)
         })
     
@@ -352,14 +364,21 @@ def customers_rented_video(video_id):
         return jsonify(None), 404
     
     # Get all customers associated with a Video at id video_id
-    all_customers = db.session.query(Rental).join(Video, Video.id==Rental.video_id)\
+    all_rentals = db.session.query(Rental).join(Video, Video.id==Rental.video_id)\
         .join(Customer, Customer.id==Rental.customer_id).filter(Video.id==video_id).all()
 
-    all_customers_response = []
-    for customer in all_customers:
-        all_customers_response.append(customer.to_dict())
+    all_rentals_response = []
+    for rental in all_rentals:
+        customer = Customer.query.get(rental.id)
+        all_rentals_response.append({
+            "name": customer.name,
+            "postal_code": customer.postal_code,
+            "phone": customer.phone,
+            "due_date": rental.due_date + timedelta(days=7)
+        })
+        # all_customers_response.append(customer.to_dict())
         
-    return jsonify(all_customers_response), 200
+    return jsonify(all_rentals_response), 200
 
 
 
