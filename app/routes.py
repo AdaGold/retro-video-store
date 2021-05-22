@@ -4,14 +4,15 @@ from .models.customer import Customer
 from .models.video import Video
 from .models.rentals import Rental
 from datetime import datetime, timedelta
-import requests
 import os
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
-#maybe add a function to take in strings to check for (or a list of strings and check if they're in the request??)
+
+#---------------------# HELPER FUNCS + DECORATORS #---------------------#
+
 def invalid_input():
     return jsonify({"details":"Invalid data"}), 400
 
@@ -28,7 +29,6 @@ def video_not_found(func):
         if Video.query.get(video_id) is None:
             return jsonify({"details": "Video not found"}), 404
         return func(video_id)
-    #renames the function for each wrapped endpoint to avoid endpoint conflict
     inner.__name__ = func.__name__
     return inner
 
@@ -71,8 +71,6 @@ def update_customer(customer_id):
     customer.name = response_body["name"]
     customer.postal_code = response_body["postal_code"]
     customer.phone = response_body["phone"]
-    #customer.registered_at = response_body["registered_at"]
-    #customer.videos_checked_out_count = response_body["videos_checked_out_count"]
     db.session.commit()
     return jsonify(customer.to_json()), 200
 
@@ -123,7 +121,6 @@ def create_video():
     new_video = Video(title = request_body["title"],
                     release_date = request_body["release_date"],
                     total_inventory = request_body["total_inventory"],
-                    #making available_inventory = to total because it's a brand new movie
                     available_inventory = request_body["total_inventory"])
     db.session.add(new_video)
     db.session.commit()
@@ -192,7 +189,7 @@ def check_out_video():
                     due_date = datetime.now() + timedelta(7))
     db.session.add(new_rental)
     db.session.commit()
-    return jsonify(new_rental.to_json()), 200
+    return jsonify(new_rental.check_out_to_json()), 200
 
 @rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
 def check_in_video():
@@ -202,18 +199,12 @@ def check_in_video():
     customer_id = request_body["customer_id"]
     video_id = request_body["video_id"]
     for rental in rentals:
-        if rental.due_date and rental.customer_id == customer_id and rental.video_id == video_id:
+        if rental.customer_id == customer_id and rental.video_id == video_id and rental.check_in_date == None:
             rental.customer.videos_checked_out_count -= 1
             rental.video.available_inventory += 1
-            rental.due_date = None
-            db.session.delete(rental)
+            rental.check_in_date = datetime.now()
             db.session.commit()
-            return jsonify({
-                    "customer_id": customer_id,
-                    "video_id": video_id,
-                    "videos_checked_out_count": rental.customer.videos_checked_out_count,
-                    "available_inventory": rental.video.available_inventory
-                    }), 200
+            return jsonify(rental.check_in_to_json()), 200
     return invalid_input()
 
 
@@ -222,7 +213,7 @@ def check_in_video():
 @rentals_bp.route("/overdue", methods=["GET"], strict_slashes=False)
 def overdue_rentals_index():
     rentals = Rental.query.all()
-    overdue_rentals = [rental.to_json() for rental in rentals if rental.due_date < datetime.now()]
+    overdue_rentals = [rental.overdue_to_json() for rental in rentals if rental.due_date < datetime.now() and rental.check_in_date == None]
     return jsonify(overdue_rentals), 200
 
 @videos_bp.route("/<video_id>/history", methods=["GET"], strict_slashes=False)
