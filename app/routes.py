@@ -61,6 +61,19 @@ def handle_one_customer(customer_id):
         db.session.commit()
         return ({"id" : int(customer_id)}, 200)
 
+@customers_bp.route("/<customer_id>/rentals", methods=["GET"])
+def get_rentals_by_customer(customer_id):
+    customer = Customer.query.get_or_404(customer_id)
+
+    rental_list = []
+    for rental in customer.rentals:
+        video = Video.query.get_or_404(rental.video_id)
+        rental_list.append({"release_date" : video.release_date,
+            "title" : video.title,
+            "due_date" : rental.due_date
+            })
+
+    return jsonify(rental_list),200
 
 # ==== Videos ==== 
 videos_bp = Blueprint("videos",__name__,url_prefix="/videos")
@@ -115,6 +128,21 @@ def handle_one_video(video_id):
         return ({"id" : int(video_id)}, 200)
 
 
+@videos_bp.route("/<video_id>/rentals", methods=["GET"])
+def get_rentals_by_customer(video_id):
+    video = Video.query.get_or_404(video_id)
+
+    rental_list = []
+    for rental in video.rentals:
+        customer = Customer.query.get_or_404(rental.customer_id)
+        rental_list.append({"name" : customer.name,
+                            "phone" : customer.phone,
+                            "postal_code" : customer.postal_code,
+                            "due_date" : rental.due_date
+                            })
+
+    return jsonify(rental_list),200
+
 # ==== Rentals ==== 
 
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
@@ -155,28 +183,26 @@ def check_in_rental():
     request_body = request.get_json()
     customer_id = request_body["customer_id"]
     video_id = request_body["video_id"]
+    
+    if type(customer_id) is not int or type(video_id) is not int: 
+        return {"details": "Invalid data"}, 400
 
-    try:
-        rental = Rental.query.filter_by(
-            customer_id=customer_id, 
-            video_id=video_id
-            ).first()
-    except KeyError:
-        return make_response({"details" : "Invalid data"}, 400)
+    customer = Customer.query.get(customer_id)
+    video = Video.query.get(video_id)
 
-    if not rental:
-        return make_response({"details" : "Invalid data"}, 400)
+    if customer and video: 
+        rental = Rental.query.filter_by(customer_id=customer_id, video_id=video_id).all()
+        if rental: 
+            customer.videos_checked_out_count -= 1
+            video.available_inventory += 1
 
-    db.session.delete(rental)
-    db.session.commit()
+            for rental in rental:
+                db.session.delete(rental)
+            db.session.commit()
 
-    customer = Customer.query.get(rental.customer_id)
-    video = Video.query.get(rental.video_id)
+            to_json = rental.rental_to_json()
+            del to_json["due_date"]
+            return jsonify(to_json), 200
 
-    ret_body = {"customer_id" : rental.customer_id,
-        "video_id" : rental.video_id,
-        "videos_checked_out_count" : len(customer.active_rentals),
-        "available_inventory" : video.total_inventory - len(video.active_rentals)
-        }
-
-    return make_response(ret_body, 200)
+        return {"details": "this rental record does not exist"}, 400
+    return make_response("", 404) 
