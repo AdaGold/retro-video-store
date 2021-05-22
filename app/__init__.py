@@ -23,9 +23,9 @@ def create_app(test_config=None):
             "SQLALCHEMY_TEST_DATABASE_URI")
 
     # Import models here for Alembic setup
-    from app.models.customer import Customer# why are these faded?
-    from app.models.video import Video # "" ""
-    from app.models.rentals import Rental # "" ""
+    from app.models.customer import Customer
+    from app.models.video import Video
+    from app.models.rentals import Rental
 
     from .routes import customer_bp
     from .routes import video_bp
