@@ -1,10 +1,11 @@
 from app import db
 from app.models import video
+from app.models import customer
 from app.models.customer import Customer
 from app.models.rentals import Rental
 from app.models.video import Video
 from flask import json, request, Blueprint, make_response, jsonify, Flask
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import desc, asc
 import os
@@ -37,13 +38,13 @@ def list_customers():
 def list_single_customer(customer_id):
     """Retrieves data of specific customer"""
     single_customer = Customer.query.get(customer_id)
-    print('SINGLE CUSTOMER: ', single_customer)
+    #print('SINGLE CUSTOMER: ', single_customer)
     if not single_customer:
         return make_response({"details": f"There is no customer in the database with ID #{customer_id}"}, 404)
 
-    print('before: ', type(single_customer.postal_code))
+    #print('before: ', type(single_customer.postal_code))
     single_customer.postal_code = int(single_customer.postal_code)
-    print('after: ', type(single_customer.postal_code))
+    #print('after: ', type(single_customer.postal_code))
 
     return jsonify(single_customer.to_json())
 
@@ -217,7 +218,7 @@ def check_out_video():
 def check_in_video():
     """Checks a customer's video back in"""
     request_body = request.get_json() # {"customer_id": 16, "video_id": 17}
-    print('CHECK IN RB: ', request_body)
+    #print('CHECK IN RB: ', request_body)
 
     for detail in ["customer_id", "video_id"]: 
         if not (detail in request_body):
@@ -252,10 +253,226 @@ def check_in_video():
             "available_inventory": video.available_inventory
             })
 
-@customer_bp.route("/customer_id/rentals", methods=["GET"])
+@customer_bp.route("/<customer_id>/rentals", methods=["GET"])
 def list_customer_videos(customer_id):
     """Retrieves all videos a customer has checked out"""
-    hold_customer_rented_vids = []
-    customer = Customer.query.get(customer_id) # customer whose videos we're looking for
-    print('RENTALS: ', customer)
+    hold_whats_relevant = {} # for final return 
+    hold_dictified_entities = [] # hold obj>dict entities in here
+    customer_entity = [] # hold separated obj in prep for dict rebuild
+    dictified_ce = {} # store rebuilt dict
+    video_entity = [] # hold separated obj in prep for dict rebuild
+    dictified_ve = {} # store rebuilt dict
+    rental_entity = [] # hold separated obj in prep for dict rebuild
+    dictified_re = {} # store rebuilt dict
+
+    # get all videos associated with a customer at ID X:
+    # result will be an array of tuples.  Each tuple will hold a Customer instance, a Video instance 
+    # and a Rental instance (in the order they are listed in the query):
+    customer_vids = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
+        .join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id==customer_id).all()
+    
+    # customer_vids = [
+    #   ({
+            #"id": self.customer_id,  
+            #"name": self.name,
+            #"phone": self.phone_number,
+            #"postal_code": self.postal_code,
+            #"registered_at": check_registration,
+            #"videos_checked_out_count": self.videos_checked_out_count}),
+            # 
+            # ({
+            #"id": self.video_id,
+            #"title": self.title,
+            #"release_date": self.release_date,
+            #"total_inventory": self.total_inventory,
+            #"available_inventory": self.available_inventory}), 
+            # 
+            # ({
+            #"customer_id": self.customer_id,
+            #"video_id": self.video_id,
+            #"due_date": self.check_out_date + (timedelta(days=7)),
+            #"videos_checked_out_count": self.renter.videos_checked_out_count,
+            #"available_inventory": self.video.available_inventory})
+            # 
+            # ]
+
+    # extract entities from list of tuples
+    for tupled_entity in customer_vids: # for every tupled entity instance in the list, ({"":"", "":""})
+        if tupled_entity[0] == None: # if first entity is not a customer, it means the customer doenst exist..
+            return make_response({"details": "Customer does not exist"}, 404)
+        for entity in tupled_entity: # for every instance-itself in the tuple, {"":"", "":""},  # entity = <Customer 24>
+            if type(entity) == Customer: # put all the customer info together in same dict
+                if entity.videos_checked_out_count == 0:
+                    return jsonify([])
+                customer_entity.append(entity) # customer_entity = [<Customer 9>]
+                dictified_ce["id"] = entity.customer_id # build the dict
+                dictified_ce["name"] = entity.name
+                dictified_ce["phone"] = entity.phone_number
+                dictified_ce["postal_code"] = entity.postal_code
+                dictified_ce["registered_at"] = entity.register_at
+                dictified_ce["videos_checked_out_count"] = entity.videos_checked_out_count
+                hold_dictified_entities.append(dictified_ce) # add built dict to final workable list; now [ 1 ] dict inside
+            elif type(entity) == Video:
+                video_entity.append(entity) # video_entity = [<Video 9>]
+                dictified_ve["id"] = entity.video_id # build the dict
+                dictified_ve["title"] = entity.title
+                dictified_ve["release_date"] = entity.release_date
+                dictified_ve["total_inventory"] = entity.total_inventory
+                dictified_ve["available_inventory"] = entity.available_inventory
+                hold_dictified_entities.append(dictified_ve) # add built dict to final workable list; now [ 2 ] dicts inside
+            elif type(entity) == Rental:
+                rental_entity.append(entity) # rental_entity = [<Rental 15>]
+                dictified_re["customer_id"] = entity.customer_id # build the dict
+                dictified_re["video_id"] = entity.video_id
+                dictified_re["due_date"] = entity.check_out_date + (timedelta(days=7))
+                dictified_re["videos_checked_out_count"] = entity.renter.videos_checked_out_count
+                dictified_re["available_inventory"] = entity.video.available_inventory
+                hold_dictified_entities.append(dictified_re) # add built dict to workable list; now [ 3 ] dicts inside
+
+    # hold_dictified_entities = [
+    #   {'id': 12, 'name': 'Lars Sankar', 'phone': '111-111-1111', 'postal_code': 75007, 'registered_at': datetime.datetime(2021, 5, 21, 14, 47, 34, 892201), 'videos_checked_out_count': 1}, 
+    #   {'id': 12, 'title': 'Blacksmith Of The Banished', 'release_date': datetime.datetime(1979, 1, 18, 0, 0), 'total_inventory': 1, 'available_inventory': 0}, 
+    #   {'customer_id': 12, 'video_id': 12, 'due_date': datetime.datetime(2021, 5, 28, 14, 47, 35, 37057), 'videos_checked_out_count': 1, 'available_inventory': 0}
+    # ]
+
+    for dictified_entity in hold_dictified_entities: # for every dict in the list
+        if "release_date" in dictified_entity: # if 'release_date' key is in that dictified entity, recreate it and its info in the final dict for return
+            hold_whats_relevant["release_date"] = dictified_entity["release_date"]
+            print("RELEASE DATE: ", hold_whats_relevant["release_date"])
+        if "title" in dictified_entity: # if 'title' is in that entity, recreate it and its info in the final dict for return
+            hold_whats_relevant["title"] = dictified_entity["title"]
+            print("TITLE: ", hold_whats_relevant["title"])
+        if "due_date" in dictified_entity: # if 'due_date' is in that entity, recreate it and its info in the final dict for return
+            dictified_entity["due_date"] = str(dictified_entity["due_date"])
+            hold_whats_relevant["due_date"] = dictified_entity["due_date"]
+            print("DUE DATE: ", hold_whats_relevant["due_date"])
+    print('FINAL FOR COMPARE: ', hold_whats_relevant) 
+    # hold_whats_relevant = {'release_date': datetime.datetime(1979, 1, 18, 0, 0), 
+    #                        'title': 'Blacksmith Of The Banished', 
+    #                         'due_date': datetime.datetime(2021, 5, 28, 15, 8, 26, 463780)
+    #                       }
+    return jsonify(hold_whats_relevant) # wrap above in list: [{..hold_whats_relevant...}]
+    
+# jsonify and return finished product
+# which should look like this: 
+# [
+#     {
+#         "release_date": "Wed, 01 Jan 1958 00:00:00 GMT",
+#         "title": "Vertigo",
+#         "due_date": "Thu, 13 May 2021 19:27:47 GMT",
+#     },
+#     {
+#         "release_date": "Wed, 01 Jan 1941 00:00:00 GMT",
+#         "title": "Citizen Kane",
+#         "due_date": "Thu, 13 May 2021 19:28:00 GMT",
+#     }
+# ]
+
+# >>> check!
+
+# `GET /videos/<id>/rentals`
+@video_bp.route("/<video_id>/rentals", methods=["GET"])
+def list_video_renters(video_id):
+    """List the customers who currently have the video checked out"""
+    hold_whats_relevant = {} # for final return 
+    hold_dictified_entities = [] # hold obj>dict entities in here
+    customer_entity = [] # hold separated obj in prep for dict rebuild
+    dictified_ce = {} # store rebuilt dict
+    video_entity = [] # hold separated obj in prep for dict rebuild
+    dictified_ve = {} # store rebuilt dict
+    rental_entity = [] # hold separated obj in prep for dict rebuild
+    dictified_re = {} # store rebuilt dict
+
+    # get all customers associated with a video at ID X:
+    # result will be an array of tuples.  Each holding a Video instance, Customer instance
+    # and a Rental instance (in the order they are listed in the query):
+    videos_by_customer = db.session.query(Video, Customer, Rental).join(Video, Video.video_id==Rental.video_id)\
+        .join(Customer, Customer.customer_id==Rental.customer_id).filter(Video.video_id==video_id).all()
+    
+    # videos_by_customer = [
+    #   # ({
+            #"id": self.video_id,
+            #"title": self.title,
+            #"release_date": self.release_date,
+            #"total_inventory": self.total_inventory,
+            #"available_inventory": self.available_inventory}),
+            # 
+            # ({
+            #"id": self.customer_id,  
+            #"name": self.name,
+            #"phone": self.phone_number,
+            #"postal_code": self.postal_code,
+            #"registered_at": check_registration,
+            #"videos_checked_out_count": self.videos_checked_out_count}),
+            # 
+            # 
+            # ({
+            #"customer_id": self.customer_id,
+            #"video_id": self.video_id,
+            #"due_date": self.check_out_date + (timedelta(days=7)),
+            #"videos_checked_out_count": self.renter.videos_checked_out_count,
+            #"available_inventory": self.video.available_inventory})
+            # 
+            # ]
+
+    # extract entities from list of tuples
+    for tupled_entity in videos_by_customer: # for every tupled entity instance in the list, ({"":"", "":""})
+        if tupled_entity[0] == None: # if first entity is not a video, it means the video doenst exist..
+            return make_response({"details": "Video does not exist"}, 404)
+        for entity in tupled_entity: # for every instance-itself in the tuple, {"":"", "":""},  # entity = <Video 24>
+            if type(entity) == Video:
+                if entity.total_inventory == entity.available_inventory:
+                    return jsonify([])
+                video_entity.append(entity) # video_entity = [<Video 9>]
+                dictified_ve["id"] = entity.video_id # build the dict
+                dictified_ve["title"] = entity.title
+                dictified_ve["release_date"] = entity.release_date
+                dictified_ve["total_inventory"] = entity.total_inventory
+                dictified_ve["available_inventory"] = entity.available_inventory
+                hold_dictified_entities.append(dictified_ve) # add built dict to final workable list; now [ 1 ] dict inside
+            elif type(entity) == Customer: # put all the customer info together in same dict
+                customer_entity.append(entity) # customer_entity = [<Customer 9>]
+                dictified_ce["id"] = entity.customer_id # build the dict
+                dictified_ce["name"] = entity.name
+                dictified_ce["phone"] = entity.phone_number
+                dictified_ce["postal_code"] = entity.postal_code
+                dictified_ce["registered_at"] = entity.register_at
+                dictified_ce["videos_checked_out_count"] = entity.videos_checked_out_count
+                hold_dictified_entities.append(dictified_ce) # add built dict to final workable list; now [ 2 ] dicts inside
+            elif type(entity) == Rental:
+                rental_entity.append(entity) # rental_entity = [<Rental 15>]
+                dictified_re["customer_id"] = entity.customer_id # build the dict
+                dictified_re["video_id"] = entity.video_id
+                dictified_re["due_date"] = entity.check_out_date + (timedelta(days=7))
+                dictified_re["videos_checked_out_count"] = entity.renter.videos_checked_out_count
+                dictified_re["available_inventory"] = entity.video.available_inventory
+                hold_dictified_entities.append(dictified_re) # add built dict to workable list; now [ 3 ] dicts inside
+    print("HOWDY: ", hold_dictified_entities)
+    # hold_dictified_entities = [
+    #   {'id': 12, 'name': 'Lars Sankar', 'phone': '111-111-1111', 'postal_code': 75007, 'registered_at': datetime.datetime(2021, 5, 21, 14, 47, 34, 892201), 'videos_checked_out_count': 1}, 
+    #   {'id': 12, 'title': 'Blacksmith Of The Banished', 'release_date': datetime.datetime(1979, 1, 18, 0, 0), 'total_inventory': 1, 'available_inventory': 0}, 
+    #   {'customer_id': 12, 'video_id': 12, 'due_date': datetime.datetime(2021, 5, 28, 14, 47, 35, 37057), 'videos_checked_out_count': 1, 'available_inventory': 0}
+    # ]
+
+    for dictified_entity in hold_dictified_entities: # for every dict in the list
+        if "name" in dictified_entity: # if 'name' key is in that dictified entity, recreate it and its info in the final dict for return
+            hold_whats_relevant["name"] = dictified_entity["name"]
+            print("NAME: ", hold_whats_relevant["name"])
+        elif "postal_code" in dictified_entity: # if 'postal_code' key is in that dictified entity, recreate it and its info in the final dict for return
+            hold_whats_relevant["postal_code"] = dictified_entity["postal_code"]
+            print("POSTAL_CODE: ", hold_whats_relevant["postal_code"])
+        elif "phone" in dictified_entity: # if 'phone' is in that entity, recreate it and its info in the final dict for return
+            hold_whats_relevant["phone"] = dictified_entity["phone"]
+            print("PHONE: ", hold_whats_relevant["phone"])
+        elif "due_date" in dictified_entity: # if 'due_date' is in that entity, recreate it and its info in the final dict for return
+            dictified_entity["due_date"] = str(dictified_entity["due_date"])
+            hold_whats_relevant["due_date"] = dictified_entity["due_date"]
+            print("DUE DATE: ", hold_whats_relevant["due_date"])
+    print('FINAL FOR COMPARE: ', hold_whats_relevant) 
+    # hold_whats_relevant = {'release_date': datetime.datetime(1979, 1, 18, 0, 0), 
+    #                        'title': 'Blacksmith Of The Banished', 
+    #                         'due_date': datetime.datetime(2021, 5, 28, 15, 8, 26, 463780)
+    #                       }
+    return jsonify(hold_whats_relevant) # wrap above in list: [{..hold_whats_relevant...}]
+
 

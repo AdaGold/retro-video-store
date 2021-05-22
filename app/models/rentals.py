@@ -8,10 +8,12 @@ class Rental(db.Model): # represents the taking of the video from blockbuster
     rental_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     customer_id = db.Column('customer_id', db.Integer, db.ForeignKey('customer.customer_id'))
     video_id = db.Column('video_id', db.Integer, db.ForeignKey('video.video_id'))
-    check_out_date = db.Column('check_out_date', db.DateTime, default=datetime.now()) # leave default off bc taken care of in route
+    check_out_date = db.Column('check_out_date', db.DateTime, default=datetime.now())
+    # tried this line 3:35pm, 5/21/21; migrated and upgraded, throwing off other tests..
+    #due_date = db.Column('due_date', db.DateTime, default=check_out_date + (timedelta(days=7)))
 
     # says when i have rental and want the renter instance attached to it, i can access easily, via Rental.renter
-    renter = db.relationship('Customer', backref='rentals', lazy=True, foreign_keys=customer_id) # backref properties need to change!! (maybe); was 'renter =...'
+    renter = db.relationship('Customer', backref='rentals', lazy=True, foreign_keys=customer_id)
     video = db.relationship('Video', backref='rentals', lazy=True, foreign_keys=video_id)
 
     def to_json(self):
