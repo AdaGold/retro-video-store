@@ -31,15 +31,36 @@ class Rental(db.Model):
     )
         db.session.add(new_rental)
         db.session.commit()
-    #customer.helper function to adjust customer attritubve
+
         video.inventory_checkout()
         customer.added_checkout()
 
-    #helpfer function ot connect increase checkout count()
-    #decrease_inventory()
-    # .add rental_id
-    # .commit 
         return new_rental
+
+    @classmethod
+    def checkin(cls, customer_id, video_id):
+
+        from .customer import Customer
+        from .video import Video
+ 
+        customer = Customer.query.get(customer_id)
+        video = Video.query.get(video_id)
+        
+        customer.videos_checked_out_count = customer.decrease_checkout()
+        video.available_inventory = video.inventory_checkin()
+
+        
+        db.session.commit()
+
+        return {
+            "customer_id": customer_id,
+            "video_id": video_id,
+            "videos_checked_out_count": customer.videos_checked_out_count,
+            "available_inventory": video.available_inventory
+        }
+
+
+        #return checkin
 
     def return_rental_info(self):
         return {"customer_id" : self.customer_id,

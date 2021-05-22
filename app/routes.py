@@ -152,7 +152,7 @@ def get_single_video(video_id):
     return make_response(video.return_video_info(), 200)
 
 @rentals_bp.route("/check-out", methods=["POST"])
-def inventory_update():
+def check_out_video():
     form_data = request.get_json()
 
     if "customer_id" not in form_data or "video_id" not in form_data:
@@ -166,6 +166,36 @@ def inventory_update():
     new_rental = Rental.checkout(customer_id, video_id)
     
     return make_response(new_rental.return_rental_info(), 200)
-#increase the customer videos_checked_out_count by 1
-#decrease the video's available_inventory by one
-#create a due date. The rental's due date is the seven days from the current date.
+
+@rentals_bp.route("/check-in", methods=["POST"])
+def check_in_video():
+    form_data = request.get_json()
+
+    if "customer_id" not in form_data or "video_id" not in form_data:
+        return make_response({"details": "Invalid data"}, 400)
+
+    customer_id = form_data["customer_id"]
+    video_id = form_data["video_id"]
+    if isinstance(customer_id, str) or isinstance(video_id, str):
+        return make_response(({"details": "Invalid data type"}), 400)
+    
+    check_in = Rental.checkin(customer_id, video_id)
+
+    return make_response(check_in, 200)
+
+
+@customers_bp.route("/<customer_id>/rentals", methods=["GET"])
+def get_customer_checkedout_info(customer_id):
+    customer = Customer.query.get(customer_id)
+    if customer is None:
+        return make_response({"details": "invalid data"}, 404)
+
+    return make_response(customer.return_customer_info(), 200)
+
+@videos_bp.route("/<video_id>/rentals", methods=["GET"])
+def get_video_checkedout_info(video_id):
+    video = Video.query.get(video_id)
+    if video is None:
+        return make_response({"details": "invalid data"}, 404)
+
+    return make_response(video.return_video_info(), 200)

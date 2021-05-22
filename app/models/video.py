@@ -17,15 +17,15 @@ class Video(db.Model):
         }
 
     def inventory_checkin(self):
-        #increase inventory, checking back in
-        self.available_inventory = self.available_inventory + 1
+        if self.available_inventory:
+            self.available_inventory = self.available_inventory + 1
+        else:
+            self.available_inventory = 0
     
     def inventory_checkout(self):        
-        if self.available_inventory == 0:
-            return ("bad request")
-        else:
+        if self.available_inventory:
             self.available_inventory = self.available_inventory - 1
-            
-        db.sessions.commit()
+        else:
+            self.available_inventory = 1  
+        db.session.commit()
 
-    #decrease available inventory 
