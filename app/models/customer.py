@@ -1,5 +1,5 @@
 from flask import current_app
-from sqlalchemy.orm import relationship
+# from sqlalchemy.orm import relationship
 from app import db
 
 
@@ -12,10 +12,11 @@ class Customer(db.Model):
     # Needed to give this a default value of 0 so that it can be incrememted in the checkout endpoint:
     videos_checked_out_count = db.Column(db.Integer, default=0)
 
-    current_rentals = relationship('Video', secondary='rental')
+    # current_rentals = relationship('Video', secondary='rental')
+    current_rentals = db.relationship('Video', secondary='rental')
                             
 
-    def convert_to_json(self):
+    def convert_to_json(self, rentals_list=None):
 
         response_body = {  
             "id": self.cust_id,
@@ -26,5 +27,7 @@ class Customer(db.Model):
             "videos_checked_out_count": self.videos_checked_out_count
         }
 
+        if rentals_list != None:
+            response_body["rentals"] = rentals_list
 
         return response_body
