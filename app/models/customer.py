@@ -4,6 +4,7 @@ from app import db
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
+
 class Customer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
@@ -11,6 +12,8 @@ class Customer(db.Model):
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime, nullable = True)
     videos_checked_out_count = db.Column(db.Integer, default = 0) 
+
+
 
     def to_json(self):
         return { 
@@ -20,3 +23,4 @@ class Customer(db.Model):
             "phone": self.phone,
             "registered_at": self.registered_at,
             "videos_checked_out_count": self.videos_checked_out_count }
+
