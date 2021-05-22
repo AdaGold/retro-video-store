@@ -204,10 +204,10 @@ def rental_checkout():
     if video is None:
         return "Not Found", 404
 
-    # if video.available_inventory <= 0:
-    #     return {
-    #         "message": "Invalid data."
-    #     }, 400
+    if video.available_inventory <= 0:
+        return {
+            "message": "Invalid data."
+        }, 400
 
     customer.checkout_count += 1
     video.available_inventory -= 1
@@ -216,19 +216,20 @@ def rental_checkout():
     db.session.add(rental_list)
     db.session.commit()
 
-    return rental_list.to_json_rental(), 200
+    # return rental_list.to_json_rental(), 200
 
-    # return {
-    #     "customer_id": rental_list.customer_id,
-    #     "video_id": rental_list.video_id,
-    #     "due_date": rental_list.due_date, #7 days from checked out date
-    #     "videos_checked_out_count": customer.videos_checked_out_count,
-    #     "available_inventory": video.available_inventory 
-    # }, 200
+    return jsonify({
+        "customer_id": rental_list.customer_id,
+        "video_id": rental_list.video_id,
+        "due_date": rental_list.due_date, #7 days from checked out date
+        "videos_checked_out_count": customer.checkout_count,
+        "available_inventory": video.available_inventory 
+    }), 200
 
 
 @rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
 def rental_checkin():
+
     checkin_list= request.get_json()
 
     checkin_customer = checkin_list["customer_id"]
@@ -237,7 +238,7 @@ def rental_checkin():
     customer = Customer.query.get(checkin_customer)
     video = Video.query.get(checkin_video)
 
-    rental = Rental.query.all()
+    # rental = Rental.query.all()
 
     if customer is None:
         return "Customer not found.", 404
@@ -245,9 +246,11 @@ def rental_checkin():
     if video is None:
         return "Video not found.", 404
 
+    rental = Rental.query.all()
+
     customer.checkout_count -= 1
     video.available_inventory += 1
-
+    
     db.session.commit()
 
     return {
@@ -258,15 +261,17 @@ def rental_checkin():
     }
 
 
-@rentals_bp.route("/customers-id/rentals", methods=["GET"], strict_slashes=False)
+@customers_bp.route("<customer_id>/rentals", methods=["GET"], strict_slashes=False)
 
 # List the videos a customer currently has checked out
-def get_video_by_customer_checkout(id):
+def get_video_by_customer_checkout(customer_id):
 
-    customer = Customer.query.get(id)
+    customer = Customer.query.get(customer_id)
 
     if not customer:
         return({"details":"Invalid data"},400)
+    
+    print(customer)
 
     video_list =[]
 
@@ -284,11 +289,11 @@ def get_video_by_customer_checkout(id):
     return jsonify(video_list)
 
 
-@rentals_bp.route("/<videos_id>/rentals", methods=["GET"], strict_slashes=False)
+@videos_bp.route("<video_id>/rentals", methods=["GET"], strict_slashes=False)
 # List the customers who currently have the video checked out
-def get_customer_by_video_checkout(id):
+def get_customer_by_video_checkout(video_id):
 
-    video= Video.query.get(id)
+    video= Video.query.get(video_id)
 
     if not video:
         return({"details":"Invalid data"},400)
@@ -300,10 +305,9 @@ def get_customer_by_video_checkout(id):
         customer = Customer.query.get(rental.customer_id)
 
         customer_list.append({
-            "name":Customer.name,
-            "phone":video.phone,
-            "postal_code":Customer.postal_code,
-            "due_date":rental.due_date
-
+            "name": customer.name,
+            "phone": customer.phone,
+            "postal_code": int(customer.postal_code),
+            "due_date": rental.due_date
         })
     return jsonify(customer_list)

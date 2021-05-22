@@ -10,6 +10,9 @@ from app import db
 class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String)
+
+    phone = db.Column(db.String) # just added this? 
+    
     release_date = db.Column(db.DateTime, nullable = True)
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
