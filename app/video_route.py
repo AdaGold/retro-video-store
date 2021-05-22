@@ -2,8 +2,6 @@ from app import db
 from app.models.video import Video
 from flask import request, Blueprint, make_response,jsonify
 from datetime import datetime 
-import requests
-import json
 
 
 # Video route for all inquiry GET & POST
@@ -30,7 +28,7 @@ def handle_video_get_post_all():
     elif request.method == "POST":
 
         request_body = request.get_json()
-
+        
         if "title" not in request_body or "release_date" not in request_body or "total_inventory" not in request_body:
             return make_response({
                 "details": "Invaild data"
@@ -47,7 +45,6 @@ def handle_video_get_post_all():
             "id": new_video.video_id
 
         }, 201)
-
 
 
 

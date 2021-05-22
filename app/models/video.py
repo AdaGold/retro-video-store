@@ -11,6 +11,8 @@ class Video(db.Model):
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime)
     total_inventory = db.Column(db.Integer, default=0)
+    
+    rental_video = db.relationship("Rental", backref="video")
     #turning my dictionary into a json object
     
     def json_object(self):
@@ -22,3 +24,4 @@ class Video(db.Model):
             "total_inventory": self.total_inventory,
             "available_inventory": 6
         }
+    
