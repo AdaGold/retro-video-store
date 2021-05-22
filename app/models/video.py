@@ -8,12 +8,9 @@ class Video(db.Model):
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime)
     total_inventory = db.Column(db.Integer, default=0)
-    available_inventory = db.Column(db.Integer, default=9)
+    available_inventory = db.Column(db.Integer, default=1)
     rentals = db.relationship("Rental", back_populates="video")
     
-
-
-
     def to_json(self):
         r_date = self.release_date.date()
         r_date = r_date.isoformat()

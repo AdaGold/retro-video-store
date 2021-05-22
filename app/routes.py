@@ -190,6 +190,9 @@ def rent_videos():
     if not video:
         return make_response(jsonify({"details": "Invalid data"}), 404) 
 
+    if video.available_inventory <= 0:
+        return make_response(jsonify({"details": "Invalid data"}), 400) 
+
 
     customer_id = request_body["customer_id"] 
     customer = Customer.query.get(customer_id) 
@@ -197,10 +200,8 @@ def rent_videos():
     if not customer:
         return make_response(jsonify({"details": "Invalid data"}), 404) 
 
-    rental=Rental.check_out(customer_id, video_id)
-
-
-    return make_response(rental.to_json(), 200)
+    rental = Rental.check_out(customer_id, video_id)
+    return jsonify(rental.to_json()), 200
 
 
 @rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
@@ -228,10 +229,12 @@ def return_videos():
         return make_response(jsonify({"details": "Invalid data"}), 404) 
         
 
-    rental=Rental.check_in(customer_id, video_id)
+    rental = Rental.check_in(customer_id, video_id)
+    print(rental)
+    if rental == None:
+        return make_response(jsonify({"details": "Invalid data"}), 400)
 
-
-    return make_response(rental.to_dict(), 200)
+    return jsonify(rental.to_dict()), 200
 
 
 @customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
@@ -251,9 +254,9 @@ def custumers_check_outs(customer_id):
     for rental in rentals:
         video = Video.query.get(rental.video_id)
         videos_rent.append({
-            "release_date":video.release_date,
+            "release_date":video.release_date.date().isoformat(),
             "title": video.title,
-            "due_date": rental.due_date
+            "due_date": rental.due_date.isoformat()
         })
     return jsonify(videos_rent), 200
 
@@ -263,15 +266,19 @@ def get_customer_with_rental(video_id):
     video = Video.query.get(video_id)
 
     if video is None:
-        return make_response("", 404)
+        return make_response({"details": "Invalid data"}, 404)
 
-    rentals = Rental.query.filter(Rental.video_id==video_id).all()
+    rentals = Rental.query.filter(Rental.video_id == video_id).all()
 
     customers = []
     for rental in rentals:
         customer = Customer.query.get(rental.customer_id)
+
+        if customer is None:
+            continue
+
         customer = {
-            "due_date": rental.due_date,
+            "due_date": rental.due_date.isoformat(),
             "name": customer.name,
             "phone": customer.phone,
             "postal_code": customer.postal_code
@@ -279,6 +286,6 @@ def get_customer_with_rental(video_id):
 
         customers.append(customer)
     
-    return make_response(customer), 200
+    return jsonify(customers), 200
 
 

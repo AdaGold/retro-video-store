@@ -44,7 +44,7 @@ class Rental(db.Model):
         regular_response = {
             "customer_id": self.customer_id,
             "video_id": self.video_id,
-            "due_date": self.due_date,
+            "due_date": self.due_date.isoformat(),
             "videos_checked_out_count": self.customer.videos_checked_out_count,
             "available_inventory": self.video.available_inventory
         }
@@ -55,17 +55,19 @@ class Rental(db.Model):
 
         customer = Customer.query.get(customer_id)
         video = Video.query.get(video_id)
+        rentals = Rental.query.filter(Rental.video_id==video_id).all()
+        for rental in rentals:
+            if rental.customer_id == customer_id:
 
-        video_return= cls(customer_id = customer_id,
-                            video_id = video_id)
-        
-        video.available_inventory += 1
-        customer.videos_checked_out_count -= 1
-        
-        db.session.add(video_return)
-        db.session.commit()
+                video.available_inventory += 1
+                customer.videos_checked_out_count -= 1
 
-        return video_return
+                db.session.delete(rental)
+                db.session.commit()
+
+                return rental
+        
+        return None
 
 
     def to_dict(self):
