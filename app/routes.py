@@ -31,7 +31,8 @@ def add_new_customer():
         )
     db.session.add(new_customer)
     db.session.commit()
-    return make_response({"id": new_customer}, 201)
+
+    return make_response({"id": new_customer.customer_id}, 201)
 
 def invalid_data(request_body):
     if ("name" not in request_body or "postal_code" not in request_body or "phone" not in request_body):
@@ -45,21 +46,23 @@ def get_customer_id(customer_id):
     if customer is None:
         return make_response({"details": ("Customer not in the system... Want to become a member?")}, 404)
 
-    return jsonify(customer.get_customer_info())
+    return jsonify(customer.resp_json())
 
 @customers_bp.route("/<customer_id>", methods=["PUT"])
 def update_customer(customer_id):
     customer = Customer.query.get(customer_id)
-    request_body = request.get_json()
-
+   
     if customer is None:
+        return make_response({"details":("Customer not a member")}, 404)
+        
+    request_body = request.get_json()
+    
+    try: 
+        customer.name = request_body["name"]
+        customer.postal_code = request_body["postal_code"]
+        customer.phone = request_body["phone"]
+    except KeyError:
         return make_response({"details":("invalid data")}, 400)
-
-    customer.name = request_body["name"]
-    customer.postal_code = request_body["postal_code"]
-    customer.phone = request_body["phone"]
-
-    db.session.add(customer)
     db.session.commit()
 
     return make_response(customer.resp_json(), 200)
@@ -77,4 +80,13 @@ def delete_customer(customer_id):
     return {
         "id": f"Customer {customer.customer_id} has been erased from the universe!"
     }, 200
+
+@videos_bp.route("", methods=["GET"])
+def get_videos():
+    videos = Video.query.all()
+    return jsonify([video.get_video_info() for video in videos])
+
+# @videos_bp.route("", methods=["POST"])
+# def 
+
 
