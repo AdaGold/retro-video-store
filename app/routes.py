@@ -237,29 +237,33 @@ def check_in():
 
 @customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
 def get_current_rentals_by_customer_id(customer_id):
-    results = db.session.query(Customer, Video, Rental).join(Customer, Customer.customer_id==Rental.customer_id)\
-            .join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id == customer_id).all()
-#results = [(<Customer 28>, <Video 28>, <Rental 23>)]
-    customer = results[0][0]
-    video = results[0][1]
-
-    if customer == None:
-        return make_response({
-                "details": f"Customer {customer.customer_id} not found"
-            }, 404)
-
-    rentals = customer.rentals
+    rentals = Rental.query.filter_by(customer_id=customer_id).all()
+    
     rentals_response = []
 
     for rental in rentals:
         rentals_response.append({
-        "release_date": video.release_date,
-        "title": video.title,
+        "release_date": rental.videos.release_date,
+        "title": rental.videos.title,
         "due_date": rental.due_date,
         })
-
+    
     return jsonify(rentals_response), 200
 
 @videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
 def get_customers_by_video_id(video_id):
-    pass
+    rentals = Rental.query.filter_by(video_id=video_id).all()
+    
+    rentals_response = []
+
+    for rental in rentals:
+        rentals_response.append({
+        "due_date": rental.due_date,
+        "name": rental.customers.name,
+        "phone": rental.customers.phone,
+        "postal_code": rental.customers.postal_code,
+    })
+        
+    return jsonify(rentals_response), 200
+
+#https://docs.sqlalchemy.org/en/14/orm/backref.html

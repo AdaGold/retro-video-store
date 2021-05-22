@@ -6,3 +6,7 @@ class Rental(db.Model):
     due_date = db.Column(db.DateTime, nullable=True)
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.customer_id"))
     video_id = db.Column(db.Integer, db.ForeignKey("videos.video_id"))
+    customers = db.relationship("Customer", backref="rentals")
+    videos = db.relationship("Video", backref="rentals")
+
+    
