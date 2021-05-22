@@ -1,6 +1,7 @@
 from flask import current_app
 from app import db
 from .rental import Rental
+from datetime import datetime
 
 class Customer(db.Model):
     """
@@ -15,7 +16,7 @@ class Customer(db.Model):
     name = db.Column(db.String, nullable=False)
     postal_code = db.Column(db.String,nullable=False)
     phone = db.Column(db.String,nullable=False)
-    registered_at = db.Column(db.DateTime,nullable=True)
+    registered_at = db.Column(db.DateTime,default=datetime.utcnow())
     videos_checked_out_count = db.Column(db.Integer,default=0)
     rentals = db.relationship("Rental", backref='customer',lazy=True)
   

@@ -32,6 +32,7 @@ def create_customer():
             name = request_body['name'],
             postal_code = request_body['postal_code'],
             phone = request_body['phone']
+            
         )
         
         db.session.add(new_customer)
@@ -269,7 +270,7 @@ def videos_of_customer(id):
         video_dict = {
         "title" : video.title,
         "release_date" : video.release_date,
-        "due_date": rental.due_date.strftime("%a,%d %b %Y,%H:%M:%S %Z")
+        "due_date": rental.due_date
         }
         video_list.append(video_dict)
     return jsonify(video_list), 200
