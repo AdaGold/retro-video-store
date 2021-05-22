@@ -64,7 +64,7 @@ def put_customer(id):
         return make_response("Customer does not exist",404)    
     
     elif all(keys in form_data for keys in ("name","postal_code","phone")) == True:
-        #form_data=request.get_json()
+        
         customer.name=form_data["name"]
         customer.postal_code=form_data["postal_code"]
         customer.phone=form_data["phone"]
@@ -172,18 +172,7 @@ def check_out():
     except ValueError or KeyError:
         return make_response({"error":"Bad Request"},400)
 
-    #rental_id and customer_id in request body, if not 404
-    # if type(request_body["video_id"])!=int:
-    #     return make_response({"error":"Bad Request"},400)
     
-    #once we retreive rental and customer id, query these in customer table, filter and checkout
-
-    #Checking to see if video and customer exist
-    # if Rental.video is None or Rental.customer is None:
-    #     return make_response(404)
-    #Checking to see if request body has both keys
-    # elif all(keys in request_body for keys in ("customer_id","video_id")) == False:
-    #     return make_response({"error":"Bad Request"},400)
     #Checks to see if the number of videos is more than 0 in inventory so we can rent it out
     video=Video.query.get(request_body["video_id"]).available_inventory()
     
@@ -192,27 +181,20 @@ def check_out():
     
     #if all conditions are met, we return the rental status
     else:
-        new_rental = Rental(customer_id=request_body["customer_id"], video_id=request_body["video_id"])
-        # new_rental.customer.videos_checked_out_count+=1
-        # new_rental.video.available_inventory-=1
+        new_rental = Rental(customer_id=customer_id, video_id=video_id)
+        
         db.session.add(new_rental)
         db.session.commit()
-        print("check_out",new_rental.rental_check_out())
-        #rental=Rental.query.get(new_rental.id)
+        
         return new_rental.rental_check_out()
 
 
-# results=db.session.query(Customer,Video,Rental).join(Customer,Customer.id == Rental.customer_id)\
-    #         .join(Video,Video.id==Rental.video_id).filter(Customer.id==X).all() 
+
 @rental_bp.route("check-in",methods=["POST"])
 def check_in():
-    # #drop due date
-    # #need to return 400 if video and customer do not match rental
-    #Rental.query.get(())
+   
     request_body=request.get_json()
-    # rental_query=Rental.query.get(request_body["video_id"],request_body["customer_id"])
-    # if rental_query:
-    #     return make_response({"error":"Bad Request"},400)
+    
     try:
         video_id= int(request_body["video_id"]) #make this video_id string into an integer 
 
@@ -224,17 +206,7 @@ def check_in():
     rental = Rental.query.get((customer_id,video_id))
     if rental is None:
         return make_response({"error":"Bad Request"},400)
-    # if type(request_body["video_id"])!=int:
-    #     return make_response({"error":"Bad Request"},400)
-    
-    # video=Video.query.get(request_body["video_id"]).check_in_inventory()
-    # customer_videos=Customer.query.get(request_body["cutomer_id"]).check_in_video_count()
-    # if customer_videos!=0:
-    #    return make_response({"error":"Bad Request"},400)
-
-    
-       
-    #rental = Rental(customer_id=request_body["customer_id"], video_id=request_body["video_id"])
+   
     db.session.delete(rental)
     rental_return=rental.rental_check_in()
     db.session.commit()
@@ -248,42 +220,17 @@ def check_in():
 
 @video_bp.route("/<video_id>/rentals",methods=["GET"])
 def current_rental_customers(video_id):
-    # rental_query=request.args.get(video_id) #dont need request.args
-    # if rental_query:
-    #     rentals=Rental.query.filter_by(video_id=video_id)
-
-    #     #rentals=Rental.query.filter_by(rental=rental_query)
-    # else:
-    #     rentals=Rental.query.all()
-    # rentals_response=[]
-    # for rental in rentals:
-    #     rentals_response.append(rental.get_customer_current_rentals())
-    
-    # return jsonify(rentals_response)
-    
-    # rental_query=request.args.get(video_id)
+   
     video_query=Video.query.get(video_id) #video record of video id
-    # if rental_query:
-    #     rentals=Rental.query.filter_by(rental=rental_query)
-    # else:
-        # rentals=Rental.query.all()
+   
     customer_list=video_query.customers #list of customers that rented this video;accessing customer objects from query
     rentals_response=[]
     for customer in customer_list:
         
         rental_model=Rental.query.get((customer.id,video_id)) #
 
-        rentals_response.append(rental_model.get_customer_current_rentals())
-    # rentals_response=[]
-    # for customer in customer_list:
-    #     rentals_response.append(video.get_customer_current_rentals())
-    #video_query.customers
-    #Rental.query.get((customer_id,video_id))
-    #rentals_response=[]
+        rentals_response.append(rental_model.get_rentals_by_video())
     
-    # for rental in rentals:
-    #     rentals_response.append(rental.get_customer_current_rentals())
-    # print("video_id rentals",rentals_response[0])
     return jsonify(rentals_response)
 
 
@@ -298,16 +245,4 @@ def current_rental_customers_by_customer(customer_id):
 
     return jsonify(rentals_response)
 
-    # rental_query=request.args.get(customer_id) #dont need request.args
-    # if rental_query:
-    #     rentals=Rental.query.filter_by(customer_id=customer_id)
-
-    #     #rentals=Rental.query.filter_by(rental=rental_query)
-    # else:
-    #     rentals=Rental.query.all()
-    # rentals_response=[]
-    # for rental in rentals:
-    #     rentals_response.append(rental.get_rentals_by_customers())
-    
-    # return jsonify(rentals_response)
 

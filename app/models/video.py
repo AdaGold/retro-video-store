@@ -1,6 +1,5 @@
 from sqlalchemy.orm import backref,relationship
 from app import db
-#from app.models.customer import Customer
 
 
 class Video(db.Model):
@@ -17,8 +16,7 @@ class Video(db.Model):
         #decreases by one
         return self.total_inventory-len(self.customers)
 
-    # def check_out_inventory(self):
-    #     return self.total_inventory+len(self.customers)
+   
 
     def check_in_inventory(self):
         #increases available inventory by one for check in

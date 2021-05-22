@@ -6,20 +6,16 @@ from datetime import timedelta, datetime
 
 
 class Rental(db.Model):
-    #id=db.Column(db.Integer, primary_key=True,autoincrement=True)
-    #composite Primary Key, in order to pass the tuple customer and video id, hence using them as primary keys
+    
     customer_id=db.Column(db.Integer,db.ForeignKey('customer.id'),primary_key=True)
     video_id=db.Column(db.Integer,db.ForeignKey('video.id'),primary_key=True)
     
-    #datetime.today()
-    #default=(datetime.today() + timedelta(days=7)).strftime("%Y-%m-%d")
+    
     due_date= db.Column(db.DateTime(), nullable=True, default=(datetime.today() + timedelta(days=7)))
-    # available_inventory=db.Column(db.Integer,default=Video.total_inventory)
-    # videos_checked_out_count=db.Column(db.Integer,default=0)
+    
     customer = relationship(Customer,backref=backref("rental",cascade=None))
     video = relationship(Video,backref=backref("rental",cascade=None))
-    # results=db.session.query(Customer,Video,Rental).join(Customer,Customer.id == Rental.customer_id)\
-    #         .join(Video,Video.id==Rental.video_id).filter(Customer.id==X).all() 
+    
    
 
     
@@ -28,12 +24,10 @@ class Rental(db.Model):
             "customer_id": self.customer_id,
             "video_id": self.video_id,
             "due_date": self.due_date,
-            "videos_checked_out_count": self.customer.videos_checked_out_count(),#increment
+            "videos_checked_out_count": self.customer.videos_checked_out_count(),#increment by one
             "available_inventory": self.video.available_inventory() #decrease this one
         }
-        #     "videos_checked_out_count": self.find_number_of_checked_out_videos(),
-        #     "available_inventory": self.find_available_inventory()
-        # }
+      
 
     def rental_check_in(self):
         return {
@@ -44,7 +38,7 @@ class Rental(db.Model):
 
         }
 
-    def get_customer_current_rentals(self):
+    def get_rentals_by_video(self):
         return {
             "due_date": self.due_date,
             "name": self.customer.name,
