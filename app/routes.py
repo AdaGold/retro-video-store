@@ -5,9 +5,7 @@ from app.models.video import Video
 from app.models.rentals import Rental
 from flask import Blueprint, request, make_response, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import asc, desc
 from datetime import datetime, timedelta
-import os 
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -17,8 +15,13 @@ customers_bp = Blueprint("customer", __name__, url_prefix="/customers")
 
 @customers_bp.route("", methods=["GET"])
 def get_customers():
-    customers = Customer.query.all()
-    return jsonify([customer.to_dict() for customer in customers])
+    query_params = request.args.get()
+    if query_params.get("sort"):
+        customers = Customer.query.order_by(query_params.get("sort"))\
+            .paginate(page=query_params["p"], per_page=query_params["n"])
+    else:
+        customers = Customer.query.all()
+    return jsonify([customer.to_dict() for customer in customers], 200)
 
 @customers_bp.route("", methods=["POST"])
 def post_customers():
@@ -194,6 +197,8 @@ def check_in_rental():
     if not rental:
         return make_response({"details" : "Invalid data"}, 400)
 
+    # In prod version, I would move these records to a historical database
+    # For this, I am treating my Rentals as active rentals only
     db.session.delete(rental)
     db.session.commit()
 
