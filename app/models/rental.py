@@ -8,7 +8,7 @@ class Rental(db.Model):
     rental_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     vhs_id = db.Column(db.Integer, db.ForeignKey('videos.video_id'))
     customer_id = db.Column(db.Integer, db.ForeignKey('customers.client_id'))
-    due_date = db.Column(db.DateTime, default=datetime.now) # extra_data
+    due_date = db.Column(db.DateTime, default=datetime.now)
     customer_rentals = db.relationship("Customer", back_populates="rented")
     videos_rented = db.relationship("Video", back_populates="videos_for_rent")
 

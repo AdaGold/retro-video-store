@@ -39,7 +39,6 @@ def customer_validation(post_request):
     valid &= validate_field("name", post_request)
     valid &= validate_field("postal_code", post_request)
     valid &= validate_field("phone", post_request)
-    # valid &= "completed_at" in post_request
     return valid
 
 
@@ -48,13 +47,12 @@ def video_validation(post_request):
     valid &= validate_field("title", post_request)
     valid &= validate_field("release_date", post_request)
     valid &= validate_field("total_inventory", post_request)
-    # valid &= validate_field("available_inventory", post_request)
     return valid
 
 
 
 
-#==============================CUSTOMER_ROUTES==================================
+#==============================CUSTOMER_ROUTES=================================
 
 
 @customers_bp.route("", methods=["GET"], strict_slashes=False)
@@ -123,10 +121,8 @@ def cancel_subscription(client_id):
     db.session.delete(current_subscription)
     db.session.commit()
     return jsonify({"id": current_subscription.client_id})
-    # return jsonify({"details": f"Subscription #{current_subscription.client_id}successfully deleted. We hope you change your mind."})
 
-
-# ==============================VIDEO_ROUTES=====================================
+# ==============================VIDEO_ROUTES===================================
 
 @videos_bp.route("", methods=["GET"], strict_slashes=False)
 def check_inventory():
@@ -220,7 +216,7 @@ def rentals_check_out():
     if valid_video.available_inventory is None or valid_video.available_inventory < 1:
         return {"details": "Invalid data"}, 400
 
-    valid_video.available_inventory -= 1   # change nullable and default?
+    valid_video.available_inventory -= 1
     valid_customer.videos_checked_out_count += 1
 
     new_rental = Rental(
@@ -256,7 +252,7 @@ def rentals_check_in():
     if current_rental is None:
         return {"details": "Invalid data"}, 400
 
-    valid_video.available_inventory += 1   # change nullable and default?
+    valid_video.available_inventory += 1 
     valid_customer.videos_checked_out_count -= 1
 
     db.session.delete(current_rental)
