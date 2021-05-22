@@ -1,7 +1,7 @@
-# from app.routes import Rental_handler
 from flask import Blueprint
 from app import db
 from app.models.customer import Customer
+from app.models.rental import Rental
 from app.models.video import Video
 # from app.models.rental import Rental
 from flask import request, Blueprint, make_response
@@ -13,9 +13,9 @@ from datetime import datetime, timedelta
 
 
 
-
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals",__name__, url_prefix="/rentals")
 
 
 
@@ -44,7 +44,7 @@ def get_customers():
                             postal_code = request_body["postal_code"],
                             phone = request_body["phone"])
         if customer.registered_at == None:
-            customer.registered_at = datetime.datetime.now()
+            customer.registered_at = datetime.now()
         
 
         db.session.add(customer)
@@ -86,18 +86,6 @@ def handle_customer(customer_id):
     
 
 
- # GET RENTALS FOR SPECIFIC CUSTOMER **********************************************************************
-# @customers_bp.route("/<customer_id/rentals>", methods=["GET"], strict_slashes=False)
-# def get_rentals(customer_id):
-
-#     customer = Customer.query.get(customer_id)
-#     if customer is None:
-#         return make_response({"details": "invalid data"}, 404)
-
-#     if request.method == "GET":
-#         return Rental_handler.get_rentals(customer_id)
-
-
 
 # GET VIDEOS ------------------------------------------------------------------------------------------------
 @videos_bp.route("", methods=["GET", "POST"], strict_slashes=False)
@@ -113,7 +101,7 @@ def get_videos():
 
         return jsonify(videos_response)
 
-# CREATE NEW VIDEOS -----------------------------------------------------------------------------------------
+# CREATE /POST NEW VIDEOS -----------------------------------------------------------------------------------------
     elif request.method == "POST":
         request_body = request.get_json()
         if ("title"  not in request_body or "release_date" not in request_body or "total_inventory" not in request_body):
@@ -165,45 +153,24 @@ def handle_video(video_id):
     
 
 
+# GET RENTALS FOR SPECIFIC CUSTOMER +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+@customers_bp.route("/<customer_id/rentals>", methods=["GET"], strict_slashes=False)
+def get_rentals(customer_id):
 
-# CHECK IF WE HAVE A VIDEO AVAILABLE FOR RENTAL +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    customer = Customer.query.get(customer_id)
+    if customer is None:
+        return make_response({"details": "invalid data"}, 404)
 
-# @classmethod
-#     def list_rentals(cls, customer_id):
-#         db_results = db.session.query(Video, Rental, Customer)\
-#             .join(Rental, Rental.video_id==Video.video_id)\
-#             .join(Customer, Rental.customer_id==Customer.customer_id)\
-#             .filter(Customer.customer_id == customer_id).all()
-#         result = []
-#         for element in db_results:
-#             video = element[0]
-#             rental = element[1]
-#             #print(element[2])
-#             json = video.to_json()
-#             json.pop("inventory")
-#             json["due_date"] = rental.due_date
-#             result.append(json)
-
-#         return make_response(jsonify(result), 200)
+    if request.method == "GET":
+        return Rental.get_rentals(customer_id)
 
 
-# class Rental_handler():
+# POST RENTALS/CHECK OUT +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+@customers_bp.route("/<customer_id/rentals>", methods=["POST"], strict_slashes=False)
+def get_rentals(customer_id):
+        request_body = request.get_json()
+        if request.method == "POST":
+            if ("customer_id" not in request_body or "video_id" not in request_body):
+                return make_response(jsonify({"details": "Invalid data"}), 400)
 
-#     @classmethod
-#     def check_out(cls, data):
-#         video = Video.query.get(data["video_id"])
-#         rentals = Rental.query.filter_by(video_id = video.video_id).count()
-
-#         if rentals > video.available_inventory:
-#             return make_response({"Error" : "Out of stock"},400)
-
-#         new_rental = Rental(
-#             customer_id = data["customer_id"],
-#             video = data["video_id"],
-#             due_date = datetime.datime.now() + timedelta(days=7)
-#         )
-
-#         db.session.add(new_rental)
-#         db.commit()
-
-#         return make_response(new_rental),200
+            

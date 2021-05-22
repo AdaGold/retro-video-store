@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import current_app
 from sqlalchemy import Table, Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship
-# from video import Video 
+
 
 # videos_fk = db.Table('videos_fk',
 #     db.Column('video_id', db.Integer, db.ForeignKey('video.id'), primary_key=True),
@@ -17,9 +17,8 @@ class Customer(db.Model):
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime(), nullable=True)
     videos_checked_out_count = db.Column(db.Integer, default =0)
-
-    # relating to goal id by assigning new variable name for "id"
-    # video_id = db.relationship('Video', secondary='video', lazy='subquery', backref=db.backref('customers', lazy=True))
+    # Making a relationship with the word "rentals" and customer which will now be tied together
+    rentals = db.relationship("Rental", back_populates="customer")
 
 
     # helper function  display  json
