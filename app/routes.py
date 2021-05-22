@@ -172,25 +172,27 @@ def check_out_video():
 
     new_rental = Rental.checkout(customer_id, video_id)
 
-    # if new_rental == False:
-    #     return make_response(({"details": "Bad request"}), 400)
-    
     return make_response(new_rental.return_rental_info(), 200)
 
 @rentals_bp.route("/check-in", methods=["POST"])
 def check_in_video():
     form_data = request.get_json()
-
-    if "customer_id" not in form_data or "video_id" not in form_data:
-        return make_response({"details": "Invalid data"}, 400)
-
     customer_id = form_data["customer_id"]
     video_id = form_data["video_id"]
+    if "customer_id" not in form_data or "video_id" not in form_data:
+        return make_response({"details": "Invalid data"}, 400)
+    
     if isinstance(customer_id, str) or isinstance(video_id, str):
         return make_response(({"details": "Invalid data type"}), 400)
+
+    customer = Customer.query.get(customer_id)
+    if customer.videos_checked_out_count == 0:
+        return make_response(({"details": "bad request"}), 400)
+    
     
     check_in = Rental.checkin(customer_id, video_id)
 
+    db.session.commit()
     return make_response(check_in, 200)
 
 

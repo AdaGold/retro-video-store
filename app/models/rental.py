@@ -1,4 +1,4 @@
-from flask import current_app
+from flask import current_app, make_response
 from app import db
 from sqlalchemy.orm import relationship
 from datetime import timedelta
@@ -20,8 +20,7 @@ class Rental(db.Model):
  
         customer = Customer.query.get(customer_id)
         video = Video.query.get(video_id)
-        # if video.available_inventory < 1:
-        #     return False
+
 
         due_date = datetime.now() + timedelta(days=7)
         new_rental = Rental(
@@ -30,24 +29,32 @@ class Rental(db.Model):
                 video_id = video.video_id,
                 due_date = due_date
     )
+ 
+
+        # video.inventory_checkout()
+        # customer.added_checkout()
+        video.available_inventory -= 1
+        customer.videos_checked_out_count += 1
+
         db.session.add(new_rental)
         db.session.commit()
-
-        video.inventory_checkout()
-        customer.added_checkout()
 
         return new_rental
 
     @classmethod
     def checkin(cls, customer_id, video_id):
- 
+        #rental = Rental.query.filter_by(customer_id, video_id)
         customer = Customer.query.get(customer_id)
         video = Video.query.get(video_id)
-        
-        customer.decrease_checkout()
-        video.inventory_checkin()
+        if customer.videos_checked_out_count == 0:
+            return make_response({"details": "invalid data"}, 400)
 
-        
+        customer.videos_checked_out_count -= 1
+        video.available_inventory += 1
+
+        db.session.add(customer)
+        db.session.add(video)
+        #db.session.delete(rental)
         db.session.commit()
 
         return {
