@@ -68,11 +68,10 @@ def get_customer_videos(id):
     response = []
     for rental in customer.videos:
         video = Video.query.get_or_404(rental.video_id)
-        date_formatted = rental.due_date.strftime("%Y-%m-%d")
         response.append({
             "release_date": video.release_date,
             "title": video.title,
-            "due_date": date_formatted,
+            "due_date": rental.due_date,
         })
     return make_response(jsonify(response), 200)
 
