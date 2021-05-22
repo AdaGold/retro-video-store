@@ -20,20 +20,15 @@ class Customer(db.Model):
 
 
     def to_json(self):
-        customer_dictionary = { "id": self.customer_id, 
-                                "name": self.customer_name, 
-                                "postal_code": self.customer_zip, 
-                                "phone": self.customer_phone, 
-                                "registered_at": self.register_at, 
-                                "videos_checked_out_count": self.videos_checked_out_count,
+        return { 
+            "id": self.customer_id, 
+            "name": self.customer_name, 
+            "postal_code": self.customer_zip, 
+            "phone": self.customer_phone, 
+            "registered_at": self.register_at, 
+            "videos_checked_out_count": self.videos_checked_out_count,
                                 }
-        return customer_dictionary
-
-
-
 
     @classmethod
     def new_customer_from_json(cls, request_body):
-        new_customer = Customer(customer_name=request_body["name"], customer_zip=request_body["postal_code"], customer_phone=request_body["phone"], register_at=datetime.now(), videos_checked_out_count=0)
-        
-        return new_customer
+        return Customer(customer_name=request_body["name"], customer_zip=request_body["postal_code"], customer_phone=request_body["phone"], register_at=datetime.now(), videos_checked_out_count=0)

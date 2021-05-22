@@ -4,6 +4,7 @@ from app.models.Customers import Customer
 from app.models.Rentals import Rental
 from flask import Blueprint, make_response, jsonify, request
 from app import db 
+from sqlalchemy import asc, desc
 from datetime import datetime, date, timedelta
 import requests 
 import os 
@@ -17,7 +18,6 @@ rental_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 
 #helper functions 
-
 def make_400():
     return make_response({"Oops! Something went wrong. ": "Invalid data or format."}, 400)
 
@@ -45,7 +45,19 @@ def get_rental_by_video(video_id):
 #/customer endpoints 
 @customer_bp.route("", methods=["GET"])
 def get_all_customers():
-    customers = Customer.query.all()
+    sort_query = request.args.get("sort")
+
+    if sort_query:
+        if sort_query == "name":
+            customers = Customer.query.order_by(asc(Customer.customer_name))
+        elif sort_query == "postal_code":
+            customers = Customer.query.order_by(asc(Customer.customer_zip))
+        elif sort_query == "registered_at":
+            customers = Customer.query.order_by(asc(Customer.register_at))
+        else:
+            return make_400()
+    else:
+        customers = Customer.query.all()
     customer_response = []
     for customer in customers:
         customer_response.append(customer.to_json())    
@@ -187,10 +199,12 @@ def get_customers_rentals_by_video(video_id):
     for tuple_set in video_info:
         customer = tuple_set[0]
         rental = tuple_set[2]
-        rental_list.append({"name": customer.customer_name, 
-                            "phone": customer.customer_phone, 
-                            "postal_code": customer.customer_zip ,
-                            "due_date": rental.due_date})
+        rental_list.append({
+            "name": customer.customer_name, 
+            "phone": customer.customer_phone, 
+            "postal_code": customer.customer_zip ,
+            "due_date": rental.due_date
+            })
     return jsonify(rental_list), 200
 
 

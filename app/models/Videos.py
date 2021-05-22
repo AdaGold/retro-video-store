@@ -16,16 +16,15 @@ class Video(db.Model):
 
 
     def to_json(self):
-        video_dictionary = { "id": self.video_id, 
-                                "title": self.video_title, 
-                                "release_date": self.release_date, 
-                                "total_inventory": self.total_inventory,
-                                "available_inventory": self.available_inventory
+        return { 
+            "id": self.video_id, 
+            "title": self.video_title, 
+            "release_date": self.release_date, 
+            "total_inventory": self.total_inventory,
+            "available_inventory": self.available_inventory
                                 }
-        return video_dictionary
 
 
     @classmethod
     def video_from_json(cls, request_body):
-        new_video = Video(video_title=request_body["title"], release_date=request_body["release_date"], total_inventory=request_body["total_inventory"])
-        return new_video
+        return Video(video_title=request_body["title"], release_date=request_body["release_date"], total_inventory=request_body["total_inventory"])

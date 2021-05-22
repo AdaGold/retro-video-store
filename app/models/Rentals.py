@@ -15,8 +15,8 @@ class Rental(db.Model):
 
 
     def to_json(self):
-        video_rental = {"release_date": self.video.release_date, 
-                        "title": self.video.title, 
-                        "due_date": self.due_date
+        return {
+            "release_date": self.video.release_date, 
+            "title": self.video.title, 
+            "due_date": self.due_date
         }
-        return video_rental
