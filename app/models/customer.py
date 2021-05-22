@@ -3,8 +3,6 @@ from app import db
 from datetime import datetime
 from sqlalchemy.orm import backref
 
-
-
 class Customer(db.Model):
     customer_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String)
@@ -12,7 +10,7 @@ class Customer(db.Model):
     postal_code = db.Column(db.Integer)
     registered_at = db.Column(db.DateTime, nullable = True, default = None)
     videos_checked_out_count = db.Column(db.Integer, autoincrement=False, default=0)
-    rental = db.relationship("Rental", backref='customer', lazy=True)
+    rental_id = db.relationship("Rental", backref='customer', lazy=True)
 
     def customer_info(self):
             return {

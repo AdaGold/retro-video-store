@@ -1,8 +1,7 @@
-from flask import Blueprint
+from flask import Blueprint, json
 from flask.signals import request_finished
 from app import db
 from flask import request, make_response, jsonify
-from sqlalchemy import DateTime
 from datetime import datetime, date, timedelta
 from app.models.customer import Customer
 from app.models.video import Video
@@ -110,7 +109,8 @@ def create_video():
         
     new_video = Video(title=request_body["title"],
                     release_date=request_body["release_date"],
-                    total_inventory=request_body["total_inventory"])
+                    total_inventory=request_body["total_inventory"],
+                    available_inventory=request_body["total_inventory"])
 
     db.session.add(new_video)
     db.session.commit() 
@@ -130,11 +130,11 @@ def get_videos(video_id):
 @video_bp.route("/<video_id>", methods=["PUT"])
 def update_video(video_id):
     video = Video.query.get(video_id)
+    video_data = request.get_json(silent=False)
 
     if video is None:
         return make_response("", 404)
     else:
-        video_data = request.get_json()
         video.title = video_data["title"]
         video.release_date = video_data["release_date"]
         video.total_inventory = video_data["total_inventory"]
@@ -158,64 +158,81 @@ def delete_video(video_id):
 
 # Wave 2 Rental routes
 # Checks out a video to a customer, and updates the data in the database
-"""
-When successful, this request should:
-    increase the customer's videos_checked_out_count by one
-    decrease the video's available_inventory by one
-    create a due date. The rental's due date is the seven days from the current date.
-"""
-@rental_bp.route("/rentals/check-out", methods=["POST"])
-def rental_checkout(customer_id, video_id):
-    rental = Rental.query.all(customer_id, video_id)
-    rental_data = request.get_json()
+# Required request body parameters are customer_id and video_id
+@rental_bp.route("/check-out", methods=["POST"])
+def rental_checkout():
+    request_body = request.get_json()
+    customer_id = request_body.get("customer_id")
+    video_id = request_body.get("video_id")
 
-    if "customer_id" or "video_id" not in rental_data:
-        return make_response({"details": "Invalid data"}, 404) 
-        
-    if "available_inventory" < 1 in rental_data:
+    customer = Customer.query.get(customer_id)
+    video = Video.query.get(video_id)
+    rental = Rental.query.all()
+
+    if customer is None and video is None:
         return make_response({"details": "Invalid data"}, 404)
-        
-    # checked_out_rental = Rental(customer_id=rental_data["customer_id"],
-    #                         video_id=rental_data["video_id"],
-    #                         due_date=rental_data["due_date"],
-    #                         videos_checked_out_count=rental_data["videos_checked_out_count"],
-    #                         available_inventory=rental_data["available_inventory"])
-
-    # db.session.add(checked_out_rental)
-    # db.session.commit() 
     
-    # return make_response(checked_out_rental.rental_info(), 200)
+    if video.available_inventory < 1:
+        return make_response({"details": "Invalid data"}, 400)
 
+    customer.videos_checked_out_count += 1
+    video.available_inventory -= 1
+    # Create this as a person who is renting something new
+    new_rental = Rental(customer_id=customer_id,
+                video_id=video_id,
+                due_date=(datetime.now() + timedelta(days=7)))
 
-@rental_bp.route("/rentals/check-in", methods=["POST"])
-def rental_checkin(customer_id, video_id):
-    rental = Rental.query.get(customer_id, video_id)
-    rental_data = request.get_json()
-
-    if "customer_id" or "video_id" not in rental_data:
-        return make_response({"details": "Invalid data"}, 404) 
-        
-    if "customer_id" and "video_id" not in rental_data:
-        return make_response({"details": "Invalid data"}, 404)
-        
-    # checked_in_rental = Rental(customer_id=rental_data["customer_id"],
-    #                         video_id=rental_data["video_id"],
-    #                         videos_checked_out_count=rental_data["videos_checked_out_count"],
-    #                         available_inventory=rental_data["available_inventory"])
-
-    # db.session.add(checked_in_rental)
-    # db.session.commit() 
+    db.session.delete(new_rental)
+    db.session.commit()
     
-    # return make_response(checked_in_rental.rental_info(), 200)
+    return ({
+        "customer_id": new_rental.customer_id,
+        "video_id": new_rental.video_id,
+        "due_date": new_rental.due_date,
+        "videos_checked_out_count": customer.videos_checked_out_count,
+        "available_inventory": video.available_inventory
+    }), 200
+
+
+# Checks in a video to a customer, and updates the data in the database as such.
+# Required request body parameters are customer_id and video_id
+@rental_bp.route("/check-in", methods=["POST"])
+def rental_checkin():
+    request_body = request.get_json()
+    customer_id = request_body.get("customer_id")
+    video_id = request_body.get("video_id")
+
+    customer = Customer.query.get(customer_id)
+    video = Video.query.get(video_id)
+    rental = Rental.query.all()
+
+    for rental in customer.video:
+        if rental.video_id == video_id:
+            customer.videos_checked_out_count -= 1
+            video.available_inventory += 1
+
+            db.session.delete(rental)
+            db.session.commit()
+            
+            return jsonify({
+                "customer_id": customer_id,
+                "video_id": video_id,
+                "videos_checked_out_count": customer.videos_checked_out_count,
+                "available_inventory": video.available_inventory
+            }), 200
+
+        else:
+            return jsonify({"details": "Invalid data"}), 400
 
 # List the videos a customer currently has checked out
-@rental_bp.route("customers/<customer_id>/rentals", methods=["GET"])
-def customers_video_rentals(customer_id):
-    rental = Rental.query.get(customer_id)
-    rental_data = request.get_json()
+# Required arguments is customer_id
+# @rental_bp.route("customers/<customer_id>/rentals", methods=["GET"])
+# def customers_video_rentals(customer_id):
+#     rental = Rental.query.get(customer_id)
+#     rental_data = request.get_json()
 
-    if rental is None:
-        return make_response("", 404)
+#     if rental is None:
+#         return make_response("", 404)
     # else:
     #     rental.release_date=rental_data["release_date"]
     #     rental.title=rental_data["title"]
@@ -224,13 +241,14 @@ def customers_video_rentals(customer_id):
     #     return make_response(rental.rental_info(), 200)
 
 # List the customers who currently have the video checked out
-@rental_bp.route("videos/<video_id>/rentals", methods=["GET"])
-def customers_renting_video(video_id):
-    rental = Rental.query.get(video_id)
-    rental_data = request.get_json()
+# Required arguments is video_id
+# @rental_bp.route("videos/<video_id>/rentals", methods=["GET"])
+# def customers_renting_video(video_id):
+#     rental = Rental.query.get(video_id)
+#     rental_data = request.get_json()
 
-    if rental is None:
-        return make_response("", 404)
+#     if rental is None:
+#         return make_response("", 404)
     # else:
     #     # rental.due_date=rental_data["due_date"]
     #     # rental.name=rental_data["name"]
