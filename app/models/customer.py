@@ -1,7 +1,7 @@
 from flask import current_app
-from sqlalchemy.orm import backref, relationship
 from app import db
 from datetime import datetime
+from sqlalchemy.orm import backref, relationship
 
 class Customer(db.Model):
     customer_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -9,10 +9,10 @@ class Customer(db.Model):
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime, nullable = True)
-    videos_checked_out_count = db.Column(db.Integer, default = 0) # the logic for the num of videos the customer rents out 
-    # will come later 
-    # declare relationship between customer and rental here
-    #rentals = db.relationship('Video', secondary=Rental, backref='Customer')
+    videos_checked_out_count = db.Column(db.Integer, default = 0) 
+
+    # One to many relationship: one customer has many rentals 
+    customers = db.relationship("Rental", backref="customers", lazy=True)
 
 
     def to_json(self):

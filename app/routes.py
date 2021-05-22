@@ -2,7 +2,8 @@ from flask import request, Blueprint, Response, jsonify, make_response
 from app import db
 from app.models.customer import Customer
 from app.models.video import Video
-from datetime import datetime
+from app.models.rental import Rental
+from datetime import datetime,timedelta
 
 # route for customers
 customer_bp = Blueprint("customers", __name__, url_prefix="/customers")
@@ -94,7 +95,8 @@ def all_videos():
         else:
             new_video= Video(title=request_body["title"],
                     release_date=request_body["release_date"],
-                    total_inventory=request_body["total_inventory"])
+                    total_inventory=request_body["total_inventory"],
+                    available_inventory=request_body["total_inventory"])
         db.session.add(new_video)
         db.session.commit()
 
@@ -138,14 +140,92 @@ def get_one_video(video_id):
             db.session.commit()
             return make_response ({"id": video.video_id}), 200
 
+# This route will check out a video to a customer, and update the data in the database 
+@rental_bp.route("/check-out", methods=["POST"])
+def checkout_video():
+    request_body = request.get_json()
 
-#@rental_bp.route("/check-out", methods=["POST"])
-#if request_body is != num: 
-#    404 error 
+    # Required Request Body Parameters
+    customer = Customer.query.get(request_body["customer_id"])
+    video = Video.query.get(request_body["video_id"])
+    # check if customer id and video id are int
+    if type(customer) != int or type(video) != int:
+        return jsonify({"details":"Invalid data"}, 404)    
+    # return back detailed errors/ status 404: Not Found if the customer or video does not exist
+    if customer == None or video == None:
+        return jsonify({"details":"Invalid data"}, 404)
+    # return back detailed errors/status 400: Bad Request if the video does not have any available inventory before check out    
+    if video.available_inventory==0:
+        return jsonify({"details":"Video out of stock"}, 400)    
+    
+    else:
+        new_rental= Rental(customer_id=request_body["customer_id"],
+                    video_id=request_body["video_id"],
+                    due_date=datetime.now() + timedelta(days=7))
+        # i dk how i can return the customer and video inventory ????
+        ## increase the customer's videos_checked_out_count by one
+        customer.videos_checked_out_count += 1
+        ## decrease the video's available_inventory by one
+        video.available_inventory -= 1
+        
+        db.session.add(new_rental)
+        db.session.add(customer)
+        db.session.add(video)
+        db.session.commit()
 
-#@rental_bp.route("/check-in", methods=["POST"])
+        return make_response(new_rental.to_json_rental(), 200)     
+
+# This route checks in a video to a customer, and updates the data in the database
+@rental_bp.route("/check-in", methods=["POST"])
+def customer_check_in():
+    # look up an explanation on what this is doing ????
+    request_body = request.get_json()
+    video_id = checkin_list.get(id)
+
+    # Required Request Body Parameters
+    customer = Customer.query.get(request_body["customer_id"])
+    video = Video.query.get(request_body["video_id"])
+
+    for rental in customer.video:
+        if rental.video_id == video_id:
+        ## decrease the customer's videos_checked_out_count by one
+            customer.videos_checked_out_count -= 1
+            ## increase the video's available_inventory by one
+            video.available_inventory += 1
+            db.session.commit()
+            return make_response(to_json_rental(), 200)  
 
 
+    else:
+        # return back detailed errors/ status 404: Not Found if the customer or video does not exist
+        if customer == None or video == None:
+            return jsonify({"details":"Invalid data"}, 404)
+        # return back detailed errors/status 400: Bad Request if the video and customer do not match a current rental   
+        if video not in Rental.video_id:
+            return jsonify({"details":"Video not checked out to the customer"}, 400)
+
+
+## List the videos a customer currently has checked out
 #@customer_bp.route("/<customer_id>/rentals", methods=["GET"])
+#def customer_video(customer_id):
+#    customers = Customer.query.get(customer_id=customer_id)
+#    videos = Video.query.all()
+#        customer_videos = []
+#        for one_video in Customer.videos:
+#            videos_response.append(one_video.to_json_video())
 
+
+
+
+
+### you dont need to use the join, query filter by the columns 
+
+## look at filter by documentation for flask this week 
+## some var already defined, ex video_id = 1, ex, customer_id = 5 
+## Rental.query.filter_by(video_id = video_id, customer_id = customer_id) maybe add .all()
+##  run on this and see what comes out, and then add .all() and see what comesout  
+
+
+
+## List the customers who currently have the video checked out
 #@videos_bp.route("/<video_id>/rentals", methods=["GET"])
