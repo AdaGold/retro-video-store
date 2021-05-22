@@ -9,8 +9,7 @@ class Customer(db.Model):
     register_at = db.Column(db.DateTime, nullable = False)
     videos_checked_out = db.Column(db.Integer, default=0)
     videos = db.relationship("Rental", back_populates="customer")
-
-
+    
     def make_json(self):
         return {
             "id": self.id,
@@ -26,6 +25,6 @@ class Customer(db.Model):
     def check_out(self):
         self.videos_checked_out += 1
 
-    def check_in(self):
-        self.videos_checked_out -= 1
+    # def check_in(self):
+        # self.videos_checked_out -= 1
         

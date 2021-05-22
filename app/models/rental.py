@@ -10,18 +10,20 @@ class Rental(db.Model):
     video_id = db.Column(db.Integer, db.ForeignKey('video.id'), primary_key=True)
     due_date = db.Column(db.DateTime, nullable = True)
     customer = db.relationship("Customer", back_populates="videos")    
-    video = db.relationship("Video", back_populates="customers")    
+    video = db.relationship("Video", back_populates="customers")
+    
 
-    def make_json(self):
-
-        if self.due_date == None:
-            return {
+    def return_check_in(self):
+        self.customer.videos_checked_out -= 1
+        
+        return {
                 "customer_id": self.customer_id,
                 "video_id": self.video_id,
                 "videos_checked_out_count": self.customer.videos_checked_out,
                 "available_inventory": self.video.get_available_inventory()
             }
-        else:    
+        
+    def make_json(self):
             return {
                 "customer_id": self.customer_id,
                 "video_id": self.video_id,

@@ -189,7 +189,6 @@ def rental_check_out():
         
     else:
         customer.check_out()
-
         new_rental= Rental(customer_id=customer_id, video_id=video_id, due_date=(datetime.now() + timedelta(days=7)))
 
         db.session.add(new_rental)
@@ -209,13 +208,22 @@ def rental_check_in():
     
     customer = Customer.query.get(customer_id)
     video = Video.query.get(video_id)
-    rental = Rental.query.get((video_id, customer_id))
+    rental = Rental.query.filter_by(video_id=video_id, customer_id=customer_id).one_or_none()
 
     if customer is None or video is None or rental is None:
-        return make_response({"details": "The customer or video you are looking for does not exist"}, 404)
+        return make_response({"details": "The customer or video you are looking for does not exist"}, 400)
     
-    customer.check_in()
-    response = rental.make_json()
+    # rental.customer.check_in()
+    # rental.customer.videos_checked_out -= 1
+    # db.session.commit()
+
+    # response = {
+    #             "customer_id": rental.customer_id,
+    #             "video_id": rental.video_id,
+    #             "videos_checked_out_count": rental.customer.videos_checked_out,
+    #             "available_inventory": rental.video.get_available_inventory()
+    #         }
+    response = rental.return_check_in()
 
     db.session.delete(rental)
     db.session.commit()
