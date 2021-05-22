@@ -7,8 +7,11 @@ class Customer(db.Model):
     name = db.Column(db.String)
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
+
     registered_at = db.Column(db.DateTime, nullable = True)
     checkout_count = db.Column(db.Integer, default =0) 
+
+    video = relationship("Rental", back_populates="customer")
 
     #helper function 
     def to_json_customer(self):

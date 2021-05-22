@@ -216,45 +216,85 @@ def rental_checkout():
 
 @rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
 def rental_checkin():
+    request_body = request.get_json()
 
-# The API should return back detailed errors 
-# and a status 400: Bad Request 
-# if the video does not have any available inventory before check out
+    if "customer_id" not in request_body or "video_id" not in request_body:
+        return jsonify({
+                "detail": "Invaid Data."
+                }), 404
 
-    checkin_list= request.get_json()
-
-    checkin_customer = checkin_list["customer_id"]
-    checkin_video = checkin_list["video_id"]
-
-    customer = Customer.query.get(checkin_customer)
-    video = Video.query.get(checkin_video)
-
-    # if Customer.customer_id == checkin_customer and Video.video_id == checkin_video:
-    #     return {
-    #         "details": "Rental not found."
-    #     }, 400
-
-    # rental = Rental.query.all()
-
-    if customer is None:
-        return "Customer not found.", 404
-
-    if video is None:
-        return "Video not found.", 404
-
-    rental = Rental.query.all()
-
-    customer.checkout_count -= 1
-    video.available_inventory += 1
+    if not isinstance(request_body["customer_id"], int) or not isinstance(request_body["video_id"], int):
+        return {
+            "detail": "Invaid Data. Must be an Integer."
+        }, 404
     
-    db.session.commit()
+    customer_id = request_body.get("customer_id")
+    video_id = request_body.get("video_id")
+    
+    customer = Customer.query.get(customer_id)
+    video = Video.query.get(video_id)
 
-    return {
-        "customer_id": customer.id,
-        "video_id": video.id,
-        "videos_checked_out_count": customer.checkout_count,
-        "available_inventory": video.available_inventory
-    }
+    for rental in customer.video:
+        if rental.video_id == video_id:
+            customer.checkout_count -= 1
+            video.available_inventory += 1
+            db.session.delete(rental)
+            db.session.commit()
+
+        return jsonify({
+            "customer_id": customer_id,
+            "video_id": video_id,
+            "videos_checked_out_count": customer.checkout_count,
+            "available_inventory": video.available_inventory
+        }), 200
+
+    else:
+        return jsonify({"details": "Invalid data"}), 400
+
+
+    
+#     if not is_int(customer_id) or not is_int(video_id):
+#         return {
+#             "detail": "Invaid Data."
+#         }, 400
+
+# # The API should return back detailed errors 
+# # and a status 400: Bad Request 
+# # if the video does not have any available inventory before check out
+
+#     checkin_list= request.get_json()
+
+#     checkin_customer = checkin_list["customer_id"]
+#     checkin_video = checkin_list["video_id"]
+
+#     customer = Customer.query.get(checkin_customer)
+#     video = Video.query.get(checkin_video)
+
+# #tried this 
+#     # if Customer.customer_id == checkin_customer and Video.video_id == checkin_video:
+#     #     return {
+#     #         "details": "Rental not found."
+#     #     }, 400
+
+#     if customer is None:
+#         return "Customer not found.", 404
+
+#     if video is None:
+#         return "Video not found.", 404
+
+#     rental = Rental.query.all()
+
+#     customer.checkout_count -= 1
+#     video.available_inventory += 1
+    
+#     db.session.commit()
+
+#     return {
+#         "customer_id": customer.id,
+#         "video_id": video.id,
+#         "videos_checked_out_count": customer.checkout_count,
+#         "available_inventory": video.available_inventory
+#     }
 
 
 @customers_bp.route("<customer_id>/rentals", methods=["GET"], strict_slashes=False)
