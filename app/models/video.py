@@ -1,10 +1,11 @@
 from flask import current_app
 from app import db 
+from datetime import datetime, timedelta
 
 class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True,autoincrement=True)
     title = db.Column(db.String)
-    release_date = db.Column(db.DateTime)
+    release_date = db.Column(db.DateTime,default= datetime.now()+timedelta(days=7))
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
     rentals = db.relationship("Rental", back_populates="video", lazy=True)
