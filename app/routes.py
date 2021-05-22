@@ -66,19 +66,72 @@ def delete_video(video_id):
 #POST /rentals/check-in
 #GET /customers/<id>/rentals foobar?
 #GET /videos/<id>/rentals foobar?
+def is_int(value):
+    try:
+        return int(value)
+    except ValueError:
+        return None
+
 @rental_bp.route("/check-out", methods= ["POST"], strict_slashes=False)
 def rent_video():
     request_body = request.get_json()
+    checkem_out = request_body["customer_id"]
+    check_video = request_body["video_id"]
+    if not is_int(checkem_out) or not is_int(check_video):
+        return make_response({"details": "Invalid ID"}, 400)
+
+    customer = Customer.query.get_or_404(checkem_out)
+    video = Video.query.get_or_404(video_check)
+    this_rental = Rental(**request_body) #wtf**********************************************************
+    if video.available_inventory > 0:
+        video.available_inventory -= 1 #use method in class 
+        customer.videos_rented += 1 #use method in class 
+        db.session.add(this_rental)
+        db.session.commit()
+        return make_response(this_rental.rental_info(), 200)
+    return make_response({"details": "Inventory not available"}, 400)
 
 @rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
 def return_video():
     request_body = request.get_json()
+    checkin_customer = request_body["customer_id"]
+    checkin_video = request_body["video_id"]
+    if not is_int(checkin_customer) or not is_int(checkin_video):
+        return make_response({"details": "Invalid ID"}, 400)
+    this_rental = Rental.query.get_or_404((checkin_customer, checkin_video))
+    if this_rental.customer.videos_rented > 0:
+        this_rental.video.available_inventory += 1 #use method in class
+        this_rental.customer.videos_rented -= 1 #use method in class
+        db.session.commit()
+        user_msg = this_rental.rental_info()
+        del user_msg["due_date"]
+        return make_response(user_msg, 200)
+    return make_response({"details": "Rentals all returned"}, 400)
 
 @customers_bp.route("/<int:customer_id>/rentals", methods=["GET"], strict_slashes=False)
 def customer_rentals(customer_id):
+    customer = Customer.query.get_or_404(customer_id)
+    rentals_history = []
+    for rental in customer.videos: #<-is this relationship/ attribute correct?
+        video = Video.query.get(rental.video_id)
+        rentals_history.append({"release_date" : video.release_date,
+                            "title" : video.title,
+                            "due_date" : rental.due_date
+                            })
+    return jsonify(rentals_history), 200
 
 @videos_bp.route("/<int:video_id>/rentals", methods=["GET"], strict_slashes=False)
 def video_rentals(video_id):
+    video = Video.query.get_or_404(video_id)
+    rentals_history = []
+    for rental in video.rentals:
+        customer = Customer.query.get(rental.customer_id)
+        rentals_history.append({"name" : customer.name,
+                            "phone" : customer.phone,
+                            "postal_code" : customer.postal_code,
+                            "due_date" : rental.due_date
+                            })
+    return jsonify(rentals_history), 200
 
 
 
