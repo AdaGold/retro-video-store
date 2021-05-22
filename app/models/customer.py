@@ -31,14 +31,14 @@ class Customer(db.Model):
     
     def added_checkout(self):
         #if self.videos_checked_out_count:
-        self.videos_checked_out_count = self.videos_checked_out_count + 1
+        self.videos_checked_out_count += 1
         # else:
         #     self.videos_checked_out_count = 0
         db.session.commit()
 
     def decrease_checkout(self):
         #if self.videos_checked_out_count:
-        self.videos_checked_out_count = self.videos_checked_out_count - 1
+        self.videos_checked_out_count -= 1
         # else:
         #     self.videos_checked_out_count = 0
         db.session.commit()

@@ -3,6 +3,8 @@ from app import db
 from sqlalchemy.orm import relationship
 from datetime import timedelta
 from datetime import datetime
+from .customer import Customer
+from .video import Video
 
 class Rental(db.Model):
     rental_id = db.Column(db.Integer, primary_key=True)
@@ -15,9 +17,6 @@ class Rental(db.Model):
     
     @classmethod
     def checkout(cls, customer_id, video_id):
-
-        from .customer import Customer
-        from .video import Video
  
         customer = Customer.query.get(customer_id)
         video = Video.query.get(video_id)
@@ -41,9 +40,6 @@ class Rental(db.Model):
 
     @classmethod
     def checkin(cls, customer_id, video_id):
-
-        from .customer import Customer
-        from .video import Video
  
         customer = Customer.query.get(customer_id)
         video = Video.query.get(video_id)

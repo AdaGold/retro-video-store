@@ -94,7 +94,9 @@ def create_video():
     video = Video(title=form_data["title"],
                     release_date=form_data["release_date"],
                     inventory=form_data["total_inventory"],
+                    available_inventory=form_data["total_inventory"]
                     )
+    
 
     db.session.add(video)
     db.session.commit()
@@ -164,14 +166,14 @@ def check_out_video():
     if isinstance(customer_id, str) or isinstance(video_id, str):
         return make_response(({"details": "Bad request"}), 400)
     
-    # video = Video.query.get(video_id)
-    # if video.available_inventory < 1:
-    #     return make_response(({"details": "bad request"}), 400)
+    video = Video.query.get(video_id)
+    if video.available_inventory < 1:
+        return make_response(({"details": "bad request"}), 400)
 
     new_rental = Rental.checkout(customer_id, video_id)
 
-    if new_rental == False:
-        return make_response(({"details": "Bad request"}), 400)
+    # if new_rental == False:
+    #     return make_response(({"details": "Bad request"}), 400)
     
     return make_response(new_rental.return_rental_info(), 200)
 
