@@ -21,8 +21,9 @@ def is_int(value):
         return int(value)
     except ValueError:
         return False
-
+# **********************************************************
 # Wave 1: CRUD (Create, Read, Update & Delete) for customer
+# **********************************************************
 @customers_bp.route("", methods=["POST"], strict_slashes=False)
 def create_customer():
     try:
@@ -199,28 +200,81 @@ def delete_video(video_id):
             "id": video.video_id
         }), 200
 
-# # Wave 2 routes (rental)
-# @rentals_bp.route("/check-out", methods=["POST"], strict_slashes=False)
-# def checkout_rental():
-#     rental_data = request.get_json()
-#     # check video inventory
-#     video = Video.query.get(rental_data["video_id"])
-#     if video.available_inventory == 0:
-#         return make_response({"details": "There are no available copies of this video currently"}, 400)
-#     elif "customer_id" in rental_data and "video_id" in rental_data:
-#         new_rental = Rental(customer_id = rental_data["customer_id"],
-#                             video_id = rental_data["video_id"],
-#                             due_date = rental_data["due_date"])
-#         db.session.add(new_rental)
-        
-#         customer = Customer.query.get(rental_data["customer_id"])
-#         # increment customer video_checked_out_count
-#         customer.videos_checked_out_count += 1
-#         # decrease available video inventory
-#         video.available_inventory -= 1
-#         # commit changes
-#         db.session.commit()
-        
-#         return jsonify(new_rental.to_json), 201
+# **********************************
+# Wave 2 routes (rental) POST & GET
+# **********************************
+@rentals_bp.route("/check-out", methods=["POST"], strict_slashes=False)
+def initiate_rental():
+    rental_data = request.get_json()
+
+    # checks that customer_id for rental is an integer
+    if not is_int(rental_data["customer_id"]):
+        return make_response("Customer ID needs to be an integer", 400)
+
+    # checks that video_id for rental is an integer
+    if not is_int(rental_data["video_id"]):
+        return make_response("Video ID needs to be an integer", 400)
+
+    # checks if customer_id & "video_id" data in rental_data
+    if ("customer_id" not in rental_data.keys() or
+        "video_id" not in rental_data.keys()):
+        return make_response("Not found", 404)
     
-#     return make_response({"details": "Invalid data"}, 404)
+    # generates video and customer instances
+    customer = Customer.query.get(rental_data["customer_id"])
+    video = Video.query.get(rental_data["video_id"])
+
+    # Conditional: Video does not exist
+    if Video is None:
+        return make_response("Video does not exist", 404)
+    
+    # Conditional: Customer does not exist
+    if Customer is None:
+        return make_response("Customer does not exist", 404)
+    
+    # Checks inventory
+    if video.index_available_inventory() == 0:
+        return make_response("No Inventory Available", 400)
+    
+    # Initialize rental - needs customer_id & video_id
+    new_rental = Rental(customer_id = rental_data["customer_id"],
+                        video_id = rental_data["video_id"])
+
+    # add to database & commit
+    db.session.add(new_rental)
+    db.session.commit()
+
+    # return dictionary containing appropriate key-value pairs
+    return {
+        "customer_id": customer.customer_id,
+        "video_id": video.video_id,
+        "due_date": new_rental.due_date,
+        "videos_check_out_count": customer.index_checked_out(),
+        "available_inventory": video.index_available_inventory()
+    }
+
+    
+    
+
+
+    # # check video inventory
+    # video = Video.query.get(rental_data["video_id"])
+    # if video.available_inventory == 0:
+    #     return make_response({"details": "There are no available copies of this video currently"}, 400)
+    # elif "customer_id" in rental_data and "video_id" in rental_data:
+    #     new_rental = Rental(customer_id = rental_data["customer_id"],
+    #                         video_id = rental_data["video_id"],
+    #                         due_date = rental_data["due_date"])
+    #     db.session.add(new_rental)
+        
+    #     customer = Customer.query.get(rental_data["customer_id"])
+    #     # increment customer video_checked_out_count
+    #     customer.videos_checked_out_count += 1
+    #     # decrease available video inventory
+    #     video.available_inventory -= 1
+    #     # commit changes
+    #     db.session.commit()
+        
+    #     return jsonify(new_rental.to_json), 201
+    
+    # return make_response({"details": "Invalid data"}, 404)
