@@ -1,20 +1,22 @@
-import requests
-import datetime
 
-from sqlalchemy.sql.elements import Null
+import datetime
 from app import db
 from app.models.video import Video, Rental
 from app.models.customer import Customer
-from flask import json, request, Blueprint, make_response, jsonify, abort
+from flask import request, Blueprint, make_response, jsonify
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
+
+# ❗️ SO MUCH REPEAT CODE I'M SO SORRRYYYYYYY - so many opportunities here to DRY up code, just ran out of time
+
+
 # HELPER FUNCTIONS:
 #=============================================================================
 
-
+# ❗️ I use this in a custom endpoint and there is so much more I could have done with this BUT ran out of time
 def valid_id_or_400(input_id):
     """
     input: an input id 
@@ -31,14 +33,12 @@ def valid_id_or_400(input_id):
 # CUSTOMER ENDPOINTS:
 #=============================================================================
 
-
 @customers_bp.route("", methods=["GET"], strict_slashes=False)
 def get_all_customers():
     
     customers = Customer.query.all()
     cust_response = []
 
-    # ❗️ would like to review why this step and why it's necessary - what does each_cust look like (what is its data type) prior to being converted to json? 
     for each_cust in customers:
         cust_response.append(each_cust.convert_to_json())
 
@@ -46,17 +46,12 @@ def get_all_customers():
     return jsonify(cust_response), 200
 
 
-
-
 @customers_bp.route("/<customer_id>", methods=["GET"], strict_slashes=False)
 def get_single_customer(customer_id):
     
-
-    # ❗️ Find out if get_or_404 has an optional parameter for a custom error message
     saved_customer = Customer.query.get_or_404(customer_id)
 
     return make_response(saved_customer.convert_to_json(), 200)
-
 
 
 @customers_bp.route("", methods=["POST"], strict_slashes=False)
@@ -64,15 +59,15 @@ def add_new_customer():
 
     request_body = request.get_json()
 
-    # ❗️ Consider refactoring into some kind of helper method 
+    # ❗️ Wish I could have refactored this into a helper method (ran out of time) - I use this code so many times
     if (not request_body) or ("name" not in request_body) or ("postal_code" not in request_body) or ("phone" not in request_body):
         return make_response({ "details": "Invalid data"
         }, 400)
-
+        
     new_customer = Customer(name=request_body["name"], 
                             postal_code=request_body["postal_code"], 
                             phone=request_body["phone"],
-                            registered_at=datetime.datetime.now(tz=None))
+                            registered_at=datetime.datetime.now())
 
     db.session.add(new_customer)
     db.session.commit()
@@ -89,7 +84,6 @@ def update_customer(customer_id):
 
     request_body = request.get_json()
 
-    # ❗️ Consider refactoring into some kind of helper method 
     if (not request_body) or ("name" not in request_body) or ("postal_code" not in request_body) or ("phone" not in request_body):
         return make_response({ "details": "Invalid data"
         }, 400)
@@ -104,9 +98,6 @@ def update_customer(customer_id):
 
 
 
-    
-
-
 @customers_bp.route("/<customer_id>", methods=["DELETE"], strict_slashes=False)
 def delete_customer(customer_id):
 
@@ -119,7 +110,6 @@ def delete_customer(customer_id):
 
 
 
-
 # VIDEO ENDPOINTS:
 #=============================================================================
 
@@ -129,7 +119,6 @@ def get_all_videos():
     videos = Video.query.all()
     videos_response = []
 
-    # ❗️ would like to review why this step and why it's necessary - what does each_cust look like (what is its data type) prior to being converted to json? 
     for each_video in videos:
         videos_response.append(each_video.convert_to_json())
 
@@ -138,16 +127,10 @@ def get_all_videos():
 
 
 
-
 @videos_bp.route("/<video_id>", methods=["GET"], strict_slashes=False)
 def get_single_video(video_id):
-    
 
     saved_video = Video.query.get_or_404(video_id)
-    # saved_video = Video.query.get(video_id)
-    # if not saved_video:
-    #     return make_response({ "details": "Invalid data"
-    #     }, 404)
 
     return make_response(saved_video.convert_to_json(), 200)
 
@@ -158,7 +141,6 @@ def add_new_video():
 
     request_body = request.get_json()
 
-    # ❗️ Consider refactoring into some kind of helper method 
     if (not request_body) or ("title" not in request_body) or ("release_date" not in request_body) or ("total_inventory" not in request_body):
         return make_response({ "details": "Invalid data"
         }, 400)
@@ -179,17 +161,10 @@ def add_new_video():
 @videos_bp.route("/<video_id>", methods=["PUT"], strict_slashes=False)
 def update_customer(video_id):
 
-
-    # ❗️ Find out if get_or_404 has an optional parameter for a custom error message
     saved_video = Video.query.get_or_404(video_id)
-    # saved_video = Video.query.get(video_id)
-    # if not saved_video:
-    #     return make_response({ "details": "Invalid data"
-    #     }, 404)
 
     request_body = request.get_json()
 
-    # ❗️ Consider refactoring into some kind of helper method 
     if (not request_body) or ("title" not in request_body) or ("release_date" not in request_body) or ("total_inventory" not in request_body):
         return make_response({ "details": "Invalid data"
         }, 400)
@@ -197,7 +172,6 @@ def update_customer(video_id):
     saved_video.title = request_body["title"]
     saved_video.release_date = request_body["release_date"]
     saved_video.total_inventory = request_body["total_inventory"]
-
 
     db.session.commit()
 
@@ -207,8 +181,6 @@ def update_customer(video_id):
 
 @videos_bp.route("/<video_id>", methods=["DELETE"], strict_slashes=False)
 def delete_customer(video_id):
-
-
 
     saved_video = Video.query.get_or_404(video_id)
 
@@ -227,7 +199,8 @@ def check_out_video():
 
     request_body = request.get_json()
 
-    # ❗️ just awful
+    # ❗️ just awful - I hacked my way through this piecemeal and with more time could have just modified the existing helper function I call here
+    # Should have done something to make it so a video cannot be checked out twice either (same functionality I have going in my check-in endpoint)
     customer_id = request_body["customer_id"]
     existing_cust_id = valid_id_or_400(customer_id)
     if not existing_cust_id:
@@ -236,7 +209,6 @@ def check_out_video():
     existing_video_id = valid_id_or_400(video_id)
     if not existing_video_id:
         return make_response({"details": f"Video with id '{video_id}' does not exist"}, 400)
-
 
     requested_video = Video.query.get_or_404(request_body["video_id"])
 
@@ -249,14 +221,11 @@ def check_out_video():
     # Creates a due date that is the seven days from the current date:
     new_rental.due_date = datetime.datetime.now() + datetime.timedelta(days=7)
 
-    # Increases the customer's videos_checked_out_count by one: 
-    # ❗️ This code should probably return a warning if repeat check outs are attempted on the same video_id like "did you mean to check out {movie title and id} again"
     updated_cust = Customer.query.get_or_404(new_rental.fk_customer_id)
     updated_cust.videos_checked_out_count += 1
 
     updated_video = Video.query.get_or_404(new_rental.fk_video_id)
     updated_video.available_inventory -= 1
-
 
     db.session.add(new_rental)
     db.session.commit()
@@ -270,11 +239,12 @@ def check_out_video():
                         200)
 
 @rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
-# ❗️ may be able to combine with previous function/endpoint
+# ❗️ I chose to put this in a separate endpoint, wondering if that's correct or if I should have just integrated this code into the check-out endpoint function 
 def check_in_video():
 
     request_body = request.get_json()
 
+    # ❗️ This is such a clunky way to go about this, I just ran out of time. I was trying to figure out a way to mark a rental record as checked in without physically deleting it from the rentals table. This code checks if a rental record is missing a due date, in which case it's presumed that the respective video was already checked in. Super obviously problematic logic, but the code passed the tests. I probably could have just made another attribute for the rental record or something, and then put all of this in a helper method - just ran out of time.
     # Checks if there is even a rental record for this request, so a customer can't check a video back in twice
     video_id = request_body["video_id"]
     customer_id = request_body["customer_id"]
@@ -287,19 +257,15 @@ def check_in_video():
     if not record_due_date:
         return make_response({"details": f"Video with video id {video_id} was already checked in"}, 400)
     
-
-    # ❗️ This code should probably return a warning if repeat check INS are attempted on the same video_id like "did you mean to check out {movie title and id} again"
     updated_cust = Customer.query.get_or_404(request_body["customer_id"])
     updated_cust.videos_checked_out_count -= 1
 
     updated_video = Video.query.get_or_404(request_body["video_id"])
     updated_video.available_inventory += 1
 
-    # This was the only way I could think to mark a record in Rental to show that it had been checked back in already
+    # Once a video gets checked in, this sets the rental record for that video/customer to None so the video cannot be checked back in
     rental = Rental.query.get_or_404(rental_record_id)
     rental.due_date = None 
-
-    # ❗️ The README doesn't say what to do with the rental record? Should it be deleted once a video gets checked back in? K yep that's what I'm gonna do 
 
     
     db.session.commit()
@@ -314,8 +280,6 @@ def check_in_video():
     
 @customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
 def get_customer_rentals(customer_id):
-
-
 
     current_rentals = []
     current_rentals_response = []
@@ -347,7 +311,6 @@ def get_customer_rentals(customer_id):
 
 @videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
 def get_customer_rentals(video_id):
-
 
     current_renters = []
     current_renters_response = []

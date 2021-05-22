@@ -24,18 +24,18 @@ class Video(db.Model):
         return response_body
 
 
-# ❗️ Is it okay that I put this join table in this file?
+# ❗️ Does it matter that I didn't give this its own file? 
 class Rental(db.Model): 
     rental_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     fk_video_id = db.Column(db.Integer, db.ForeignKey('video.video_id'))
     fk_customer_id = db.Column(db.Integer, db.ForeignKey('customer.cust_id'))
     due_date = db.Column(db.DateTime)
 
-    # ❗️ backref here is declaring a 'rental' property for both the Customer and Video classes, but I'm not sure when or if that's being used
+    # ❗️ backref here is declaring a 'rental' property for both the Customer and Video classes, but I'm not sure when or if that's being used since I couldn't get either video.current_renters OR customer.current_rentals to work 
     customer = db.relationship('Customer', backref='rental') 
     video = db.relationship('Video', backref='rental')
 
-    # ❗️ pointless - lol I think I use this once
+    # pointless - lol I think I use this once
     def convert_to_json(self):
 
         response_body = {  

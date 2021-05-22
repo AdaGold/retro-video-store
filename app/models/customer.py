@@ -1,5 +1,5 @@
 from flask import current_app
-# from sqlalchemy.orm import relationship
+
 from app import db
 
 
@@ -11,8 +11,6 @@ class Customer(db.Model):
     registered_at = db.Column(db.DateTime)
     # Needed to give this a default value of 0 so that it can be incrememted in the checkout endpoint:
     videos_checked_out_count = db.Column(db.Integer, default=0)
-
-    # current_rentals = relationship('Video', secondary='rental')
     current_rentals = db.relationship('Video', secondary='rental')
                             
 
