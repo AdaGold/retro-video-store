@@ -27,6 +27,7 @@ def create_app(test_config=None):
     # Import models here for Alembic setup
     from app.models.customer import Customer
     from app.models.video import Video
+    from app.models.rental import Rental
     
 
     db.init_app(app)
@@ -34,6 +35,7 @@ def create_app(test_config=None):
 
     from .routes import customers_bp
     from .routes import videos_bp
+    from .routes import rentals_bp
 
 
     
@@ -41,5 +43,6 @@ def create_app(test_config=None):
     # Register Blueprints here
     app.register_blueprint(customers_bp)
     app.register_blueprint(videos_bp)
+    app.register_blueprint(rentals_bp)
 
     return app

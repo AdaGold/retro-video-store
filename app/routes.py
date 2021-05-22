@@ -1,20 +1,22 @@
 # from flask import Blueprint
 from app import db
-from app.models.customer import Customer
 from flask import request, Blueprint, make_response
 from flask import jsonify
-import time
 import datetime
 from datetime import datetime 
 import requests
 from flask import current_app as app
 import os 
+from app.models.customer import Customer
 from app.models.video import Video
+from app.models.rental import Rental
+# from datetime import timedelta
 
 
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 @customers_bp.route("", methods=["GET"], strict_slashes=False)
 def customers():
@@ -27,8 +29,6 @@ def customers():
         
             customers_response.append(customer.to_json())
             
-            
-
         return jsonify(customers_response)
     
 
@@ -61,7 +61,6 @@ def create_customers():
 
 @customers_bp.route("/<customer_id>", methods=["GET", "PUT", "DELETE"], strict_slashes=False)
 def handle_custumer(customer_id):
-    # Try to find the task with the given id
 
     customer = Customer.query.get(customer_id)
 
@@ -85,7 +84,7 @@ def handle_custumer(customer_id):
 
         db.session.commit()
 
-        return jsonify({"customer": customer.to_json()})
+        return make_response(customer.to_json())
 
     
 
@@ -96,27 +95,18 @@ def handle_custumer(customer_id):
         "id": customer.customer_id
     }, 200)
         
-        # return make_response(f"Customer {customer.task_id} \"{customer.name}\" successfully deleted")
-
-
-
-# ******************************************************************************************
-
 
 @videos_bp.route("", methods=["GET"], strict_slashes=False)
 def videos():
-    # if request.method == "GET":  
     videos = Video.query.all()
+    videos_response = []
 
     if videos is None:
         return make_response("", 404)
 
-    videos_response = []
-
     for video in videos:
         videos_response.append(video.to_json())
 
-    print(videos_response)       
     return jsonify(videos_response)
     
 
@@ -150,7 +140,8 @@ def handle_video(video_id):
 
     if request.method == "GET":
         
-        return jsonify({"video": video.to_json()}),200
+
+        return make_response(video.to_json(), 200)
 
     elif request.method == "PUT":
         
@@ -165,13 +156,129 @@ def handle_video(video_id):
 
         db.session.commit()
 
-        return jsonify({"video": video.to_json()})
-
-    
+        return make_response(video.to_json())
 
     elif request.method == "DELETE":
         db.session.delete(video)
         db.session.commit()
+
     return make_response({
         "id": video.video_id
     }, 200)
+
+def is_int(value):
+    try:
+        return int(value)
+    except ValueError:
+        return False
+
+@rentals_bp.route("/check-out", methods=["POST"], strict_slashes=False)
+def rent_videos():
+    
+    request_body = request.get_json()
+    if "customer_id" not in request_body and "video_id" not in request_body: 
+            return make_response(jsonify({"details": "Invalid data"}), 400)
+    
+    if not is_int(request_body["customer_id"]):
+        return make_response(jsonify({"details": "Invalid data"}), 400)
+    
+    if not is_int(request_body["video_id"]):
+        return make_response(jsonify({"details": "Invalid data"}), 400)
+
+    video_id = request_body["video_id"] 
+    video = Video.query.get(video_id) 
+    if not video:
+        return make_response(jsonify({"details": "Invalid data"}), 404) 
+
+
+    customer_id = request_body["customer_id"] 
+    customer = Customer.query.get(customer_id) 
+
+    if not customer:
+        return make_response(jsonify({"details": "Invalid data"}), 404) 
+
+    rental=Rental.check_out(customer_id, video_id)
+
+
+    return make_response(rental.to_json(), 200)
+
+
+@rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
+def return_videos():
+    
+    request_body = request.get_json()
+    if "customer_id" not in request_body and "video_id" not in request_body:
+            return make_response(jsonify({"details": "Invalid data"}), 400)
+
+    if not is_int(request_body["customer_id"]):
+        return make_response(jsonify({"details": "Invalid data"}), 400)
+    
+    if not is_int(request_body["video_id"]):
+        return make_response(jsonify({"details": "Invalid data"}), 400)
+
+    video_id = request_body["video_id"]
+    video = Video.query.get(video_id) 
+    if not video:
+        return make_response(jsonify({"details": "Invalid data"}), 404) 
+
+    customer_id = request_body["customer_id"] 
+    customer = Customer.query.get(customer_id) 
+
+    if not customer:
+        return make_response(jsonify({"details": "Invalid data"}), 404) 
+        
+
+    rental=Rental.check_in(customer_id, video_id)
+
+
+    return make_response(rental.to_dict(), 200)
+
+
+@customers_bp.route("/<customer_id>/rentals", methods=["GET"], strict_slashes=False)
+def custumers_check_outs(customer_id):
+
+    customer = Customer.query.get(customer_id)
+
+    if Customer.query.get(customer_id) is None:
+        return make_response({"details": "Invalid data"}, 404)
+
+    rentals = db.session.query(Rental)\
+        .join(Customer, Customer.customer_id==Rental.customer_id)\
+        .join(Video, Video.video_id==Rental.video_id)\
+        .filter(Customer.customer_id==customer_id)
+
+    videos_rent = []
+    for rental in rentals:
+        video = Video.query.get(rental.video_id)
+        videos_rent.append({
+            "release_date":video.release_date,
+            "title": video.title,
+            "due_date": rental.due_date
+        })
+    return jsonify(videos_rent), 200
+
+
+@videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
+def get_customer_with_rental(video_id):
+    video = Video.query.get(video_id)
+
+    if video is None:
+        return make_response("", 404)
+
+    rentals = Rental.query.filter(Rental.video_id==video_id).all()
+
+    customers = []
+    for rental in rentals:
+        customer = Customer.query.get(rental.customer_id)
+        customer = {
+            "due_date": rental.due_date,
+            "name": customer.name,
+            "phone": customer.phone,
+            "postal_code": customer.postal_code
+        }
+
+        customers.append(customer)
+    
+    return make_response(customer), 200
+
+
