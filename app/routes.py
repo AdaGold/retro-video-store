@@ -11,6 +11,7 @@ from app import db
 #install pip? flask, postgres
 #results = db.session.query(Foo, Bar, FooBarJoin).join(Foo, Foo.id==FooBarJoin.foo_id)\
 #            .join(Bar, Bar.id==FooBarJoin.bar_id).filter(Foo.id == X).all()
+#https://docs.python.org/3/tutorial/controlflow.html#keyword-arguments reference again if not used right
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
@@ -24,18 +25,47 @@ rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 # DELETE /customers/<id>
 @customers_bp.route("", methods=["GET"], strict_slashes=False)
 def get_customers():
+    movie_buffs = Customer.query.all()
+    response_body = []
+    for nerd in movie_buffs:
+        response_body.append(nerd.customer_info())
+    return jsonify(response_body), 200
 
 @customers_bp.route("/<int:customer_id>", methods=["GET"], strict_slashes=False)
 def get_customer(customer_id):
+    customer = Customer.query.get_or_404(customer_id)
+    return jsonify(customer.customer_info()), 200
 
 @customers_bp.route("", methods=["POST"], strict_slashes=False)
 def new_customer():
+    request_body = request.get_json()
+    if "name", "postal_code", "phone" in request_body: #probs wrong syntax tho
+        customer = Customer(**request_body) #dict witchcraft
+        db.session.add(customer)
+        db.session.commit()
+        return jsonify(customer.customer_info()), 201
+    else:
+        return jsonify({"details": "Invalid data"}), 400
 
 @customers_bp.route("/<int:customer_id>", methods=["PUT"], strict_slashes=False)
 def update_customer(customer_id):
+    request_body = request.get_json()
+    customer = Customer.query.get_or_404(customer_id)
+    if "name", "postal_code", "phone" in request_body: #probs wrong syntax tho
+        customer.name = request_body["name"]
+        customer.postal_code = request_body["postal_code"]
+        customer.phone = request_body["phone"]
+        db.session.commit()
+        return jsonify(customer.customer_info()), 200
+    else:
+        return jsonify({"details": "Invalid data"}), 400
 
 @customers_bp.route("/<int:customer_id>", methods=["DELETE"], strict_slashes=False)
 def delete_customer(customer_id):
+    keep_your_money = Customer.query.get_or_404(customer_id)
+    db.session.delete(keep_your_money)
+    db.session.commit()
+    return make_response({"id": keep_your_money.customer_id}, 200)
 
 # GET /videos
 # GET /vidoes/<id>
@@ -105,7 +135,7 @@ def rent_video():
 
     customer = Customer.query.get_or_404(checkem_out)
     video = Video.query.get_or_404(video_check)
-    this_rental = Rental(**request_body) #witchcraft, make sure can use outside of function headers again
+    this_rental = Rental(**request_body) #witchcraft 
     if video.available_inventory > 0:
         video.available_inventory -= 1 #use method in class 
         customer.videos_rented += 1 #use method in class 
