@@ -8,7 +8,6 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime) 
     total_inventory = db.Column(db.Integer) 
     available_inventory = db.Column(db.Integer)
-    # added 6p, 5/21/21
     renter = db.relationship('Rental', backref='customer', lazy=True)
     
     def to_json(self):
@@ -19,8 +18,3 @@ class Video(db.Model):
             "total_inventory": self.total_inventory,
             "available_inventory": self.available_inventory
             }
-    
-    # class Parent(Base):
-    # __tablename__ = 'parent'
-    # id = Column(Integer, primary_key=True)
-    # children = relationship("Child", backref="parent")

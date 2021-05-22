@@ -10,7 +10,6 @@ class Customer(db.Model):
     phone_number = db.Column(db.String(12)) 
     register_at = db.Column(db.DateTime) 
     videos_checked_out_count = db.Column(db.Integer, default=0)
-    # this line itself wasnt throwing the tests; adding this line w/o re-creating (and db migrating/upgrading) the dbs was
     rental = db.relationship('Rental', backref='rental', lazy=True)
 
     def to_json(self):
