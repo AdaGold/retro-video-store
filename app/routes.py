@@ -1,14 +1,16 @@
 from app import db
 from app.models.customer import Customer
 from flask import Blueprint, request, make_response, jsonify
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 import os
 from app.models.video import Video
+from app.models.rental import Rental
 import flask_migrate 
 
 customer_bp = Blueprint("customer", __name__, url_prefix = "/customers")
 video_bp = Blueprint("video", __name__, url_prefix = "/videos")
+rental_bp = Blueprint("rental", __name__, url_prefix = "/rentals")
 
 # --------------------------CUSTOMER ENDPOINTS--------------------------------
 
@@ -134,7 +136,8 @@ def create_video():
     else:
         new_video = Video(title = request_body["title"],
             release_date = request_body["release_date"],
-            total_inventory = request_body["total_inventory"])
+            total_inventory = request_body["total_inventory"],
+            available_inventory = request_body["total_inventory"])
 
         db.session.add(new_video)
         db.session.commit()
@@ -179,3 +182,110 @@ def delete_video(id):
         db.session.delete(video)
         db.session.commit()
         return jsonify({"id": video.id})
+
+# -----------------------------RENTAL ENDPOINTS-----------------------------
+
+@rental_bp.route("/check-out", methods = ["POST"])
+def rental_check_out():
+    request_body = request.get_json()
+
+    customer_id = request_body.get("customer_id")
+    video_id = request_body.get("video_id")
+    
+    if type(customer_id) != int or type(video_id) != int:
+        return jsonify({"details": "Invalid data"}), 400
+
+    customer = Customer.query.get(customer_id)
+    video = Video.query.get(video_id)
+
+    if customer is None and video is None:
+        return jsonify({"details": "id's do not exist"}), 404
+
+    if video.available_inventory < 1:
+        return jsonify({"details": "2Invalid data"}), 400
+
+
+    customer.videos_checked_out_count += 1
+    video.available_inventory -= 1
+
+    new_rental = Rental(
+        customer_id = customer_id,
+        video_id = video_id,
+        due_date = datetime.now() + timedelta(days = 7)
+    )
+
+    db.session.add(new_rental)
+    db.session.commit()
+
+    return jsonify({
+        "customer_id": new_rental.customer_id,
+        "video_id": new_rental.video_id,
+        "due_date": new_rental.due_date,
+        "videos_checked_out_count": customer.videos_checked_out_count,
+        "available_inventory": video.available_inventory
+    }), 200
+
+
+@rental_bp.route("/check-in", methods = ["POST"])
+def rental_check_in():
+    request_body = request.get_json()
+
+    customer_id = request_body.get("customer_id")
+    video_id = request_body.get("video_id")
+    
+    customer = Customer.query.get(customer_id)
+    video = Video.query.get(video_id)
+
+    for rental in customer.video:
+        if rental.video_id == video_id:
+            customer.videos_checked_out_count -= 1
+            video.available_inventory += 1
+            db.session.delete(rental)
+            db.session.commit()
+
+        return jsonify({
+            "customer_id": customer_id,
+            "video_id": video_id,
+            "videos_checked_out_count": customer.videos_checked_out_count,
+            "available_inventory": video.available_inventory
+        }), 200
+
+    else:
+        return jsonify({"details": "Invalid data"}), 400
+
+@customer_bp.route("<int:id>/rentals", methods = ["GET"])
+def customer_rentals(id):
+    customer = Customer.query.get(id)
+
+    if customer is None:
+        return jsonify({"details": "customer not found"}), 404
+
+    customer_rentals = []
+    for rental in customer.video:
+        video = Video.query.get(rental.video_id)
+        customer_rentals.append({
+            "release_date": video.release_date,
+            "title": video.title,
+            "due_date": datetime.now()+timedelta(days=7),
+        })
+
+    return jsonify(customer_rentals), 200
+
+@video_bp.route("<int:id>/rentals", methods = ["GET"])
+def video_rentals(id):
+    video = Video.query.get(id)
+
+    if video is None:
+        return jsonify({"details": "video not found"}), 404
+
+    video_rentals = []
+    for rental in video.customer:
+        customer = Customer.query.get(rental.customer_id)
+        video_rentals.append({
+            "due_date": datetime.now()+timedelta(days=7),
+            "name": customer.name,
+            "phone": customer.phone_number,
+            "postal_code": customer.postal_code,
+        })
+
+        return jsonify(video_rentals), 200
