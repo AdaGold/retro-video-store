@@ -14,7 +14,6 @@ rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 @customers_bp.route("", methods=["GET"])
 def get_customers():
     customers = Customer.query.all()
-    print("***", customers)
 
     customers_response = [customer.to_json() for customer in customers]
 
@@ -46,7 +45,6 @@ def add_customer():
 @customers_bp.route("/<int:id>", methods=["GET"])
 def get_customer(id):
     customer = Customer.query.get(id)
-    print("***", customer)
 
     if customer is None:
         return make_response("Not Found", 404)
