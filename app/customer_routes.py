@@ -66,7 +66,7 @@ def delete_customer(customer_id):
         db.session.delete(customer)
         db.session.commit()
 
-        return {"id": customer.customer_id}, 200
+        return {"id": customer.id}, 200
     
     else:
         return make_response(f"Customer {customer_id} does not exist", 404)

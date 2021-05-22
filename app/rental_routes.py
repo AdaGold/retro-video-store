@@ -6,7 +6,6 @@ from app.models.rental import Rental
 from dotenv import load_dotenv
 from datetime import datetime
 
-
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 load_dotenv()
 
@@ -26,20 +25,10 @@ load_dotenv()
 
 
 @rentals_bp.route("/check-out", methods=["POST"], strict_slashes=False)
-def new_rental(customer_id, video_id):
+def new_rental():
 
-    customer = Rental.query.get(customer_id)
-    video = Rental.query.get(video_id)
 
-    if customer and video: 
 
-        customer.videos_checked_out_count += 1
-        customer.available_inventory -= 1
-        db.session.commit()
-
-        return 201
-    else:
-        return 404
 
 # @customers_bp.route("/<customer_id>", methods=["GET"], strict_slashes=False)
 # def handle_customer(customer_id):

@@ -64,7 +64,7 @@ def delete_video(video_id):
         db.session.delete(video)
         db.session.commit()
 
-        return {"id": video.video_id}, 200
+        return {"id": video.id}, 200
     
     else:
         return make_response(f"Video {video_id} does not exist", 404)

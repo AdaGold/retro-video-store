@@ -1,35 +1,25 @@
 from flask import current_app
 from app import db
+from sqlalchemy.orm import relationship
 
 
 class Customer(db.Model):
     __tablename__ = "customer"
-    customer_id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String)
-    postal_code = db.Column(db.String)
+    postal_code = db.Column(db.Integer)
     phone_number = db.Column(db.String)
     registered_at = db.Column(db.DateTime)
-    videos_checked_out = db.Column(db.Integer)
+    videos_checked_out = db.Column(db.Integer, default=0)
 
-    videos = db.relationship("Video", secondary="rental", backref="customer", lazy=True)
-
-    def videos_default(self):
-        if self.videos_checked_out is None:
-            return 0
-        else:
-            return self.videos_checked_out
-
+    videos = relationship("Video", secondary="rental", lazy=True)
 
     def to_json_customer(self):
         return {
-            "id": self.customer_id,
+            "id": self.id,
             "name": self.name,
             "postal_code": self.postal_code,
             "phone": self.phone_number,
             "registered_at": self.registered_at,
-            "videos_checked_out_count": self.videos_default()
+            "videos_checked_out_count": self.videos_checked_out
         }
-
-    def error_msg(self):
-        return {"errors": "error message"}
-
