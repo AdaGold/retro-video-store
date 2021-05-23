@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, make_response
 from app.models.customer import Customer
 from app.models.video import Video
 from app.models.rentals import Rental
@@ -35,7 +35,7 @@ def get_customer(customer_id):
 @customers_bp.route("", methods=["POST"], strict_slashes=False)
 def new_customer():
     request_body = request.get_json()
-    if "name", "postal_code", "phone" in request_body: #probs wrong syntax tho
+    if "name" in request_body and "postal_code" in request_body and "phone" in request_body: 
         customer = Customer(**request_body) #dict witchcraft
         db.session.add(customer)
         db.session.commit()
@@ -47,7 +47,7 @@ def new_customer():
 def update_customer(customer_id):
     request_body = request.get_json()
     customer = Customer.query.get_or_404(customer_id)
-    if "name", "postal_code", "phone" in request_body: #probs wrong syntax tho
+    if "name" in request_body and "postal_code" in request_body and "phone" in request_body: 
         customer.name = request_body["name"]
         customer.postal_code = request_body["postal_code"]
         customer.phone = request_body["phone"]
@@ -79,7 +79,7 @@ def get_video(video_id):
 @videos_bp.route("", methods=["POST"], strict_slashes=False)
 def post_video():
     request_body = request.get_json()
-     if "title", "release_date", "total_inventory" in request_body: #probs wrong syntax tho
+    if "title" in request_body and "release_date" in request_body and "total_inventory" in request_body: 
         video = Video(**request_body) #dict witchcraft
         db.session.add(video)
         db.session.commit()
@@ -90,7 +90,7 @@ def post_video():
 def update_video(video_id):
     request_body = request.get_json()
     video = Video.query.get_or_404(video_id)
-    if "title", "release_date", "total_inventory" in request_body: #probs wrong syntax tho
+    if "title" in request_body and "release_date" in request_body and "total_inventory" in request_body:
         video.title = request_body["title"]
         video.release_date = request_body["release_date"]
         video.total_inventory = request_body["total_inventory"]
@@ -99,7 +99,7 @@ def update_video(video_id):
     else:
         return jsonify({"details": "Invalid data"}), 400
 
-@video_bp.route("/<video_id>", methods=["DELETE"], strict_slashes=False)
+@videos_bp.route("/<video_id>", methods=["DELETE"], strict_slashes=False)
 def delete_video(video_id):
     vid = Video.query.get_or_404(video_id)
     db.session.delete(vid)
@@ -112,7 +112,7 @@ def is_int(value):
     except ValueError:
         return None
 
-@rental_bp.route("/check-out", methods= ["POST"], strict_slashes=False)
+@rentals_bp.route("/check-out", methods= ["POST"], strict_slashes=False)
 def rent_video():
     request_body = request.get_json()
     checkem_out = request_body["customer_id"]
@@ -121,7 +121,7 @@ def rent_video():
         return make_response({"details": "Invalid ID"}, 400)
 
     customer = Customer.query.get_or_404(checkem_out)
-    video = Video.query.get_or_404(video_check)
+    video = Video.query.get_or_404(check_video)
     this_rental = Rental(**request_body) #witchcraft 
     if video.available_inventory > 0:
         video.available_inventory -= 1 #use method in class 
