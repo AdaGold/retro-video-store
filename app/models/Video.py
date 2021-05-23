@@ -3,6 +3,7 @@ from flask import current_app
 #from app.models.rentals import rental
 
 class Video(db.Model):
+    __tablename__ = "videos"
     video_id = db.Column(db.Integer, primary_key= True)
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime, nullable=True, default=None)
