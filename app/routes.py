@@ -218,10 +218,10 @@ def check_in_video():
         "available_inventory": video.available_inventory
         }), 200
 
-@customers_bp.route("<video_id>/rentals", methods=["GET"])
-def get_customer_rentals(video_id):
+@customers_bp.route("<customer_id>/rentals", methods=["GET"])
+def get_customer_rentals(customer_id):
     """List the videos a customer currently has checked out"""
-    customer = Customer.query.get(video_id)
+    customer = Customer.query.get(customer_id)
 
     if customer is None:
         return not_found()
@@ -240,10 +240,10 @@ def get_customer_rentals(video_id):
 
     return jsonify(rental_response), 200
 
-@videos_bp.route("<customer_id>/rentals", methods=["GET"])
-def get_video_rentals(customer_id):
+@videos_bp.route("<video_id>/rentals", methods=["GET"])
+def get_video_rentals(video_id):
     """List the customers who currently have the video checked out"""
-    video = Video.query.get(customer_id)
+    video = Video.query.get(video_id)
 
     if video is None:
         return not_found()
