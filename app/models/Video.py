@@ -8,8 +8,7 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime, nullable=True, default=None)
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
-    #rentals = db.relationship("Rental", back_populates="video", lazy=True)
-    rentals = db.relationship("Rental", backref="video", lazy=True)
+    rentals = db.relationship("Rental", backref="videos", lazy=True)
 
     def video_info(self):
         return {
