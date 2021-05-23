@@ -1,5 +1,4 @@
 from app import db
-from sqlalchemy.orm import relationship
 
 class Customer(db.Model):
     __tablename__ = "customer"

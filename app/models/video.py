@@ -1,5 +1,4 @@
 from app import db
-from sqlalchemy.orm import relationship
 
 class Video(db.Model):
     __tablename__ = "video"
@@ -17,3 +16,4 @@ class Video(db.Model):
             "total_inventory": self.total_inventory,
             "available_inventory": self.available_inventory
             }
+            
