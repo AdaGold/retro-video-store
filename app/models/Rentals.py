@@ -1,7 +1,7 @@
 from app import db
 from flask import current_app
 from sqlalchemy import DateTime
-from app.models.customer import Customer
+#from app.models.customer import Customer
 from app.models.video import Video
 from datetime import date, datetime, timedelta
 
@@ -11,11 +11,13 @@ class Rental(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.customer_id"))
     video_id = db.Column(db.Integer, db.ForeignKey("videos.video_id"))
     check_out_date = db.Column(db.DateTime)
-    due_date = db.Column(db.DateTime, default= ((datetime.date.now())+datetime.timedelta(days=7)))
-    renter = db.relationship("Customer" backref="customer", lazy=True)
-    video = db.relationship("Video" backref="video", lazy=True)
-    #maybe use back populates instead 
+    due_date = db.Column(db.DateTime, default= ((datetime.now())+timedelta(days=7)))
+    renter = db.relationship("Customer", backref="customer", lazy=True)
+    video = db.relationship("Video", backref="video", lazy=True)
+    
+    #maybe use back populates instead? 
     #renter = db.relationship("Customer", back_populates="rentals", lazy=True)
+    
     #video = db.relationship("Video", back_populates="rentals", lazy=True)
 
     def rental_info(self):

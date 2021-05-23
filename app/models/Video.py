@@ -1,6 +1,6 @@
 from app import db
 from flask import current_app
-from app.models.rentals import rental
+#from app.models.rentals import rental
 
 class Video(db.Model):
     video_id = db.Column(db.Integer, primary_key= True)
@@ -8,7 +8,8 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime, nullable=True, default=None)
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
-    rentals = db.relationship("Rental", back_populates="video", lazy=True)
+    #rentals = db.relationship("Rental", back_populates="video", lazy=True)
+    rentals = db.relationship("Rental", backref="video", lazy=True)
 
     def video_info(self):
         return {

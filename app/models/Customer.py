@@ -1,7 +1,6 @@
 from app import db
 from flask import current_app
 from sqlalchemy import DateTime
-from app.models.video import Video
 from datetime import date, datetime, timedelta
 
 class Customer(db.Model):
@@ -12,9 +11,8 @@ class Customer(db.Model):
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime, nullable=True, default=datetime.utcnow())
     videos_rented = db.Column(db.Integer, default=0)
-
-    videos = db.relationship("Video", secondary= "rentals", back_populates="customers")
-    #rentals = db.relationship("Rental", back_populates="customer", lazy=True)
+    rentals = db.relationship("Rental", backref="customer", lazy=True)
+    
 
     def customer_info(self):
         if self.registered_at:
