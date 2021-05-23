@@ -1,49 +1,35 @@
 from app import db
-from app.models.customer import Customer
 from app.models.video import Video
-from flask import request, Blueprint, make_response,jsonify
-from datetime import datetime 
+from app.models.customer import Customer
+from app.models.rental import Rental
+from flask import request, Blueprint, make_response, jsonify
+from datetime import datetime
 import requests
 import json
 
 
-
+# creates a new varible  to help create my new endpoint
 rental_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
-@rental_bp.route("", methods=["GET", "POST"])
-def handle_rental_get_post_all():
-    
-    if request.method == "GET":
-        
-        
-        video_list = Customer.query.all()
+# /rentals/check-out The @rental_bp.route is create from ^^^
 
-            
-        video_response = []
 
-        for video in video_list:
-        
-            video_response.append(video.json_object())
-        
-        return jsonify(video_response), 200
-
-    elif request.method == "POST":
+@rental_bp.route("/check-out", methods=["POST"], strict_slashes=False)
+# <check-out> would mean I have a parameter that will change since I dont want my parameter I dont add it to my function and I leave the bracket off
+def check_out_video():
+    if request.method == "POST":
 
         request_body = request.get_json()
 
-        if ("name" not in request_body) or ("postal_code" not in request_body) or ("phone" not in request_body):
+        if "customer_id" not in request_body or "video_id" not in request_body:
             return make_response({
-                "details": "Invalid data"
+                "details": "Invaild data"
             }), 400
-    
-        new_customer = Customer(name=request_body["name"],
-                        postal_code=request_body["postal_code"],
-                        phone=request_body["phone"])
 
-        if new_customer.registered_at == None:
-            new_customer.registered_at = datetime.now()
+        check_out_video_rental = Rental(customer_id=request_body["customer_id"],
+            video_id=request_body["video_id"])
 
-        db.session.add(new_customer)
+        db.session.add(check_out_video_rental)
         db.session.commit()
-
-        return make_response({"id": new_customer.customer_id}), 201
+        
+        return make_response(check_out_video_rental.json_object(), 200)

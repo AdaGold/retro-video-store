@@ -12,7 +12,7 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime)
     total_inventory = db.Column(db.Integer, default=0)
     
-    rental_video = db.relationship("Rental", backref="video")
+    video_rental_relationship = db.relationship("Rental", backref="video")
     #turning my dictionary into a json object
     
     def json_object(self):

@@ -47,7 +47,7 @@ def handle_video_get_post_all():
         }, 201)
 
 
-
+# /videos/<video_id>
 @video_bp.route("/<video_id>", methods=["GET", "PUT", "DELETE"], strict_slashes=False)
 def get_single_video(video_id):
     video = Video.query.get(video_id)
