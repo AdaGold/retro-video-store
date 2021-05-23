@@ -18,8 +18,8 @@ class Rental(db.Model):
             "customer_id": self.customer_id,
             "video_id": self.video_id,
             "due_date": self.check_out_date + (timedelta(days=7)),
-            "videos_checked_out": self.renter.videos_rented,
-            "available_inventory": self.video.available_inventory
+            #"videos_checked_out": self.renter.videos_rented,
+            #"available_inventory": self.video.available_inventory
         }
 
 
