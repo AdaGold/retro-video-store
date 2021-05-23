@@ -2,7 +2,7 @@ from app import db
 from app.models.customer import Customer
 from app.models.video import Video
 from app.models.rental import Rental
-from flask import json, request, Blueprint, jsonify
+from flask import request, Blueprint, jsonify
 from datetime import timedelta, date
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
@@ -23,7 +23,6 @@ def not_found():
 def error_response(code=400):
     return {"details": "Invalid data"}, code
     
-
 ####################### CUSTOMER ROUTES #######################
 
 @customers_bp.route("", methods=["GET"])
