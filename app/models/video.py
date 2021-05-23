@@ -9,8 +9,6 @@ class Video(db.Model):
     total_inventory = db.Column(db.Integer, default=0)
     available_inventory = db.Column(db.Integer)
     
-    customer = relationship("rental", back_populates="video")
-
     def to_dict(self):
         return {
             "id": self.video_id,

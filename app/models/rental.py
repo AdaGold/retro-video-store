@@ -8,9 +8,6 @@ class Rental(db.Model):
     video_id = db.Column("video", db.Integer, db.ForeignKey("video.video_id"), primary_key=True)
     due_date = db.Column(db.DateTime)
 
-    video = relationship("video", back_populates="customer")
-    customer = relationship("customer", back_populates="video")
-
     def to_dict(self):
         return {
             "customer_id": self.customer_id,

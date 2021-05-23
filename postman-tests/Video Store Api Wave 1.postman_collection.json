@@ -16,7 +16,7 @@
 							"script": {
 								"exec": [
 									"pm.collectionVariables.set('newCustomerName', 'Lars Sankar');",
-									"pm.collectionVariables.set('newCustomerPostalCode', '75007');",
+									"pm.collectionVariables.set('newCustomerPostalCode', 75007);",
 									"pm.collectionVariables.set('newCustomerPhone', '111-111-1111');",
 									"pm.collectionVariables.set('newCustomerVideosCheckedOut', 0);",
 									"",
@@ -94,7 +94,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Lars Sankar\",\n    \"postal_code\": \"75007\",\n    \"phone\": \"111-111-1111\"\n}",
+							"raw": "{\n    \"name\": \"Lars Sankar\",\n    \"postal_code\": 75007,\n    \"phone\": \"111-111-1111\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -195,10 +195,7 @@
 									"    const newCustomerPostalCode = pm.collectionVariables.get('newCustomerPostalCode');",
 									"    const newCustomerVideosCheckedOut = pm.collectionVariables.get('newCustomerVideosCheckedOut');",
 									"",
-									"    pm.expect(Object.keys(res)).to.have.members(['id', 'name', 'phone', 'postal_code', 'registered_at', 'videos_checked_out_count'])",
-									"            ",
-									"",
-									"    pm.expect(res).to.have.all.keys(['id', 'name', 'phone', 'postal_code', 'registered_at', 'videos_checked_out_count']);",
+									"    pm.expect(res).to.include.keys(['id', 'name', 'phone', 'postal_code', 'registered_at', 'videos_checked_out_count']);",
 									"    pm.expect(res['id']).to.equal(pm.collectionVariables.get('newCustomerId'));",
 									"    pm.expect(res['name']).to.equal(newCustomerName);",
 									"    pm.expect(res['postal_code']).to.equal(newCustomerPostalCode);",
@@ -256,13 +253,15 @@
 									"    const newCustomerPostalCode = pm.collectionVariables.get('newCustomerPostalCode');",
 									"    const newCustomerVideosCheckedOut = pm.collectionVariables.get('newCustomerVideosCheckedOut');",
 									"",
-									"    pm.expect(Object.keys(res)).to.have.members(['id', 'name', 'phone', 'postal_code', 'registered_at', 'videos_checked_out_count'])",
-									"            ",
-									"",
-									"    pm.expect(res).to.have.all.keys(['id', 'name', 'phone', 'postal_code', 'registered_at', 'videos_checked_out_count']);",
+									"    pm.expect(res).to.include.keys(['id', 'name', 'phone', 'postal_code', 'registered_at', 'videos_checked_out_count']);",
 									"    pm.expect(res['id']).to.equal(pm.collectionVariables.get('newCustomerId'));",
 									"    pm.expect(res['name']).to.equal('Carmen Santiago');",
-									"    pm.expect(res['postal_code']).to.equal('98121');",
+									"    if (typeof(res['postal_code']) == String) {",
+									"        pm.expect(res['postal_code']).to.equal('98121');",
+									"    } else {",
+									"        pm.expect(typeof(res['postal_code'])).to.equal('number');",
+									"        pm.expect(res['postal_code']).to.equal(98121);",
+									"    }",
 									"    pm.expect(res['phone']).to.equal('222-222-2222');",
 									"    pm.expect(res['videos_checked_out_count']).to.equal(0);",
 									"});"
@@ -729,7 +728,7 @@
 									"    const newVideoTitle = pm.collectionVariables.get('newMovieTitle');",
 									"    const newVideoTotalInventory = pm.collectionVariables.get('newMovieTotalInventory');",
 									"",
-									"    pm.expect(Object.keys(res)).to.have.members(['id', 'title', 'release_date', 'total_inventory'])",
+									"    pm.expect(res).to.include.keys(['id', 'title', 'release_date', 'total_inventory'])",
 									"            ",
 									"",
 									"    pm.expect(res['id']).to.equal(pm.collectionVariables.get('newVideoId'));",
@@ -794,7 +793,7 @@
 									"    const newVideoTitle = pm.collectionVariables.get('newMovieTitle');",
 									"    const newVideoTotalInventory = pm.collectionVariables.get('newMovieTotalInventory');",
 									"",
-									"    pm.expect(Object.keys(res)).to.have.members(['id', 'title', 'release_date', 'total_inventory'])",
+									"    pm.expect(res).to.include.keys(['id', 'title', 'release_date', 'total_inventory'])",
 									"            ",
 									"",
 									"    pm.expect(res['id']).to.equal(pm.collectionVariables.get('newVideoId'));",
