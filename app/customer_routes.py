@@ -1,9 +1,10 @@
 from flask import Blueprint, request, make_response, jsonify
 from app import db 
 from app.models.customer import Customer
+from app.models.video import Video 
+from app.models.rental import Rental
 from dotenv import load_dotenv
 from datetime import datetime
-
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 load_dotenv()
@@ -95,6 +96,48 @@ def update_customer(customer_id):
             return jsonify({"error": f"Customer {customer_id} not relevant"}), 400
     
     else:
-
         return make_response("Customer does not exist", 404)
+        
+
+@customers_bp.route("/<id>/rentals", methods=["GET"], strict_slashes=False)
+def customer_videos(id):
+
+    # create instance of customer using customer id 
+    request_body = request.get_json()
+    customer = Customer.query.get(id)
+    videos_list = []
+
+    # if customer exists
+    if customer:
+
+        # create join table 
+        results = db.session.query(Customer, Video, Rental)\
+            .join(Customer, Customer.id==Rental.customer_id)\
+                .join(Video, Video.id==Rental.video_id)\
+                    .filter(Customer.id==customer.id).all()
+
+        unpack_join = results[0]
+        print(unpack_join)
+
+        customer = unpack_join[0]
+        print(customer)
+        video = unpack_join[1]
+        print(video)
+
+        rental = unpack_join[2]
+
+        response = {
+            "release_date": video.release_date,
+            "title": video.title,
+            "due_date": rental.due_date
+        }
+
+        print(request_body["video_id"])
+
+        return make_response(f"{rental.id}", 200)
+
+    else:
+        if customer is None:
+            return {"Error": "Customer does not exist"}, 404
+
 

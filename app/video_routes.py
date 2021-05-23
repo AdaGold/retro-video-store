@@ -1,6 +1,8 @@
 from flask import Blueprint, request, make_response, jsonify
 from app import db 
+from app.models.customer import Customer
 from app.models.video import Video
+from app.models.rental import Rental
 from dotenv import load_dotenv
 
 
@@ -91,3 +93,38 @@ def update_video(video_id):
 
     else: 
         return make_response(f"Video {video_id} not relevant", 404) 
+
+@videos_bp.route("/<id>/rentals", methods=["GET"], strict_slashes=False)
+def video_customers(id):
+
+    # create instance of video using video id 
+    request_body = request.get_json()
+    video = Video.query.get(id)
+    customers_list = []
+
+    # if video exists
+    if video:
+
+        # create join table 
+        results = db.session.query(Customer, Video, Rental)\
+            .join(Customer, Customer.id==Rental.customer_id)\
+                .join(Video, Video.id==Rental.video_id)\
+                    .filter(Video.id==Video.id).all()
+
+        unpack_join = results[0]
+
+        customer = unpack_join[0]
+        rental = unpack_join[2]
+
+        response = {
+            "due_date": rental.due_date,
+            "name": customer.name,
+            "phone": customer.phone_number,
+            "postal_code": customer.postal_code
+        }
+
+        return jsonify(response), 200
+
+    else:
+        if video is None:
+            return {"Error": "Video does not exist"}, 404
