@@ -11,6 +11,48 @@ videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 
+def not_found():
+    return make_response("Not Found", 404)
+
+
+def customer_not_found(func):
+    def inner(id):
+        if Customer.query.get(id) is None:
+            return make_response("Not Found", 404)
+        return func(id)
+    inner.__name__ = func.__name__
+    return inner
+
+def video_not_found(func):
+    def inner(id):
+        if Video.query.get(id) is None:
+            return make_response("Not Found", 404)
+        return func(id)
+    inner.__name__ = func.__name__
+    return inner
+
+def handle_invalid_customer_data(func):
+    def inner(*args, **kwargs):
+        request_body = request.get_json()
+        if not request_body.get("name") or not request_body.get("postal_code") or \
+            not request_body.get("phone"):
+            return jsonify({"details": "Invalid data"}), 400
+        return func(*args, **kwargs)
+    inner.__name__ = func.__name__
+    return inner
+
+def handle_invalid_video_data(func):
+    def inner(*args, **kwargs):
+        request_body = request.get_json()
+        if not request_body.get("title") or not request_body.get("release_date") or \
+            not request_body.get("total_inventory"):
+            return jsonify({"details": "Invalid data"}), 400
+        return func(*args, **kwargs)
+    inner.__name__ = func.__name__
+    return inner
+
+
+
 @customers_bp.route("", methods=["GET"])
 def get_customers():
     customers = Customer.query.all()
@@ -21,18 +63,13 @@ def get_customers():
 
 
 @customers_bp.route("", methods=["POST"])
+@handle_invalid_customer_data
 def add_customer():
     request_body = request.get_json()
-    name = request_body.get("name")
-    postal_code = request_body.get("postal_code")
-    phone = request_body.get("phone")
 
-    if not name or not postal_code or not phone:
-        return jsonify({"details": "Invalid data"}), 400
-
-    new_customer = Customer(name=name,
-                            postal_code=postal_code,
-                            phone=phone,
+    new_customer = Customer(name=request_body.get("name"),
+                            postal_code=request_body.get("postal_code"),
+                            phone=request_body.get("phone"),
                             registered_at=datetime.now().strftime("%a, %d %b %Y, %H:%M:%S"),
                             videos_checked_out_count=0)
     
@@ -43,26 +80,20 @@ def add_customer():
 
 
 @customers_bp.route("/<int:id>", methods=["GET"])
+@customer_not_found
 def get_customer(id):
     customer = Customer.query.get(id)
-
-    if customer is None:
-        return make_response("Not Found", 404)
 
     return jsonify(customer.to_json()), 200
 
 
 @customers_bp.route("/<int:id>", methods=["PUT"])
+@customer_not_found
+@handle_invalid_customer_data
 def update_customer(id):
     customer = Customer.query.get(id)
 
-    if customer is None:
-        return make_response("Not Found", 404)
-
     request_body = request.get_json()
-
-    if not request_body.get("name") or not request_body.get("postal_code") or not request_body.get("phone"):
-        return jsonify({"details": "Invalid data"}), 400
 
     customer.name = request_body["name"]
     customer.postal_code = request_body["postal_code"]
@@ -75,11 +106,9 @@ def update_customer(id):
 
 
 @customers_bp.route("/<int:id>", methods=["DELETE"])
+@customer_not_found
 def delete_customer(id):
     customer = Customer.query.get(id)
-
-    if customer is None:
-        return make_response("Not Found", 404)
     
     db.session.delete(customer)
     db.session.commit()
@@ -97,21 +126,14 @@ def get_videos():
 
 
 @videos_bp.route("", methods=["POST"])
+@handle_invalid_video_data
 def add_video():
     request_body = request.get_json()
-    
-    title = request_body.get("title")
-    release_date = request_body.get("release_date")
-    total_inventory = request_body.get("total_inventory")
 
-    if not title or not release_date or not total_inventory:
-        return jsonify({"details": ["title must be provided and it must be a string",
-                                "total_inventory must be provided and it must be a number"]}), 400
-
-    new_video = Video(title=title,
-                    release_date=release_date,
-                    total_inventory=total_inventory,
-                    available_inventory=total_inventory)
+    new_video = Video(title=request_body.get("title"),
+                    release_date=request_body.get("release_date"),
+                    total_inventory=request_body.get("total_inventory"),
+                    available_inventory=request_body.get("total_inventory"))
 
     db.session.add(new_video)
     db.session.commit()
@@ -120,26 +142,20 @@ def add_video():
 
 
 @videos_bp.route("/<int:id>", methods=["GET"])
+@video_not_found
 def get_video(id):
     video = Video.query.get(id)
-
-    if video is None:
-        return make_response("Not Found"), 404
 
     return jsonify(video.to_json()), 200
 
 
 @videos_bp.route("/<int:id>", methods=["PUT"])
+@video_not_found
+@handle_invalid_video_data
 def update_videos(id):
     video = Video.query.get(id)
 
-    if video is None:
-        return make_response("Not Found"), 404
-
     request_body = request.get_json()
-
-    if not request_body.get("title") or not request_body.get("release_date") or not request_body.get("total_inventory"):
-        return make_response("Bad Request"), 400
 
     video.title = request_body["title"]
     video.release_date = request_body["release_date"]
@@ -151,11 +167,9 @@ def update_videos(id):
 
 
 @videos_bp.route("/<int:id>", methods=["DELETE"])
+@video_not_found
 def delete_video(id):
     video = Video.query.get(id)
-
-    if video is None:
-        return make_response("Not Found"), 404
 
     db.session.delete(video)
     db.session.commit()
@@ -164,6 +178,8 @@ def delete_video(id):
 
 
 @rentals_bp.route("/check-out", methods=["POST"])
+@customer_not_found
+@video_not_found
 def handle_rentals_out():
     request_body = request.get_json()
 
@@ -171,7 +187,7 @@ def handle_rentals_out():
     customer_id = request_body.get("customer_id")
 
     if type(customer_id) != int or type(video_id) != int:
-        return make_response({400: "Bad Request"}, 400)
+        return invalid_data()
 
     video = Video.query.get(video_id)
     customer = Customer.query.get(customer_id)
@@ -180,11 +196,8 @@ def handle_rentals_out():
     #     .join(Video, Video.id==Rental.video_id).filter(Customer.id == customer_id).all()
     # print("*** rental ", results)
 
-    if not customer or not video:
-        return make_response({404: "Not Found"}, 404)
-
     if video.available_inventory <= 0:
-        return make_response({400: "Bad Request"}, 400)
+        return invalid_data()
 
     new_rental = Rental(customer_id=customer_id, 
                         video_id=video_id,
@@ -205,6 +218,8 @@ def handle_rentals_out():
 
 
 @rentals_bp.route("/check-in", methods=["POST"])
+@customer_not_found
+@video_not_found
 def handle_rentals_in():
     request_body = request.get_json()
 
@@ -212,7 +227,7 @@ def handle_rentals_in():
     customer_id = request_body.get("customer_id")
 
     if type(customer_id) != int or type(video_id) != int:
-        return make_response({400: "Bad Request"}, 400)
+        return invalid_data()
 
     video = Video.query.get(video_id)
     customer = Customer.query.get(customer_id)
@@ -220,12 +235,6 @@ def handle_rentals_in():
     # results = db.session.query(Customer, Video, Rental).join(Customer, Customer.id==Rental.customer_id)\
     #     .join(Video, Video.id==Rental.video_id).filter(Customer.id == customer_id).all()
     # print("*** results ", results)
-
-    if not customer or not video:
-        return make_response({404: "Not Found"}, 404)
-    
-    # if not customer.video:
-    #     return make_response({400: "Bad Request"}, 400)
 
     for rental in customer.video:
         if rental.status == "checked-in":
@@ -246,11 +255,9 @@ def handle_rentals_in():
 
 
 @customers_bp.route("<int:id>/rentals", methods=["GET"])
+@customer_not_found
 def get_customer_rentals(id):
     customer = Customer.query.get(id)
-
-    if customer is None:
-        return make_response({404: "Not Found"}, 404)
 
     rental_response = []
     for rental in customer.video:
@@ -264,11 +271,9 @@ def get_customer_rentals(id):
 
 
 @videos_bp.route("<int:id>/rentals", methods=["GET"])
+@video_not_found
 def get_video_rentals(id):
     video = Video.query.get(id)
-
-    if video is None:
-        return make_response({404: "Not Found"}, 404)
 
     rental_response = []
     for rental in video.customer:
