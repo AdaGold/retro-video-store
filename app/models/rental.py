@@ -1,5 +1,4 @@
 from app import db
-from sqlalchemy.orm import relationship
 
 class Rental(db.Model):
     __tablename__ = "rental"
@@ -14,3 +13,4 @@ class Rental(db.Model):
             "video_id": self.video_id,
             "due_date": self.due_date
             }
+            
