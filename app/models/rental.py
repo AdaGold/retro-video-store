@@ -1,3 +1,4 @@
+# from app.routes import Customer, Video
 from app import db
 from datetime import timedelta, datetime
 
@@ -19,12 +20,13 @@ class Rental(db.Model):
         print(self.video_id)
 
         return {
-            "due_date": self.due_date, #+ timedelta(days=7),
+            "due_date": self.due_date, 
             "customer_id": self.customer_id,
             "video_id": self.video_id,
             "videos_checked_out_count": self.customer.videos_checked_out_count,
             "available_inventory": self.video.available_inventory
         }
+    
 
     
 
