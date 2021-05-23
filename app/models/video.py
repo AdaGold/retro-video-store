@@ -1,7 +1,7 @@
 from flask import current_app
 from app import db
 from sqlalchemy import Table, Column, Integer, ForeignKey
-from sqlalchemy.orm import relationship
+# from sqlalchemy.orm import relationship, back_populate
 # from app.models.customer import Customer
 # from app.models.rental import Rental
 
@@ -11,8 +11,14 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime)
     total_inventory = db.Column(db.Integer)
     available_inventory = db.Column(db.Integer)
-    # customer = db.relationship("Customer", secondary="orders")
-    rentals = db.relationship('Rental', backref='videos', lazy=True)
+    customers = db.relationship("Rental", back_populates="video")
+
+
+
+    # # customer = db.relationship("Customer", secondary="orders")
+    # rentals = db.relationship('Rental', backref='videos', lazy=True)
+
+
     # rentals = db.relationship('Customer', secondary="rentals", lazy='subquery',backref=db.backref('rentals', lazy=True))
 
 
@@ -20,7 +26,6 @@ class Video(db.Model):
     # renters = relationship("Rental", back_populates="video", lazy = True)
 #OR
     # customer_id = db.Column(db.Integer, db.ForeignKey("customer.id"))
-    # customer = db.relationship("Rental", backref=db.backref("renters"))
 
 
     def api_response(self): 

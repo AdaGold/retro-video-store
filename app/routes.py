@@ -2,7 +2,7 @@ from sqlalchemy.orm.base import instance_dict
 from app import db
 from app.models.customer import Customer
 from app.models.video import Video
-from app.models.rental import Rental
+# from app.models.rental import Rental
 from flask import request, Blueprint, jsonify, Response, make_response
 from datetime import datetime, date, timedelta
 import requests
