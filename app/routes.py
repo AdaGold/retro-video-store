@@ -252,8 +252,9 @@ def create_rental():
 
     new_rental = Rental(customer_id = request_body["customer_id"], \
         video_id = request_body["video_id"], \
-            due_date = datetime.now() + timedelta(days=7))
-
+            checked_out = True)   # datetime.now() + timedelta(days=7),
+                # switch the rental checked_out column to True
+    
     customer.videos_checked_out_count += 1
     video.available_inventory -= 1
 
@@ -284,8 +285,6 @@ def return_rental():
     # if customer or video does not exist:
     if customer_id is None or video_id is None:
         return jsonify(None), 404
-
-    ### If video and customer do not match a current rental - 400
     
     # get both customer_id and video_id
     customer = Customer.query.get(request_body["customer_id"])  
@@ -295,10 +294,14 @@ def return_rental():
     rental_id_to_upgrade = 0
 
     for rental in customer.customers:
-        if rental.video_id == video_id:
+        if rental.video_id == video_id and rental.checked_out == True:
             video.available_inventory += 1
             customer.videos_checked_out_count -= 1
             rental_id_to_upgrade = rental.id
+            rental.checked_out = False
+        else:
+            return jsonify(None), 400
+
 
     rental = Rental.query.get(rental_id_to_upgrade)
     # rental = Rental.query.get(request_body["video_id"])
@@ -306,12 +309,13 @@ def return_rental():
     # rental = Rental.query.filter(Rental.id==customer_id).filter(Rental.id==video_id).filter(Rental.status=="Checked_out").first()
     # query.filter(Rental.customer_id==customer_id).filter(Rental.video_id==video_id).filter(Rental.status=="Checked_out").first()
 
-    if rental is None:
-        return jsonify(None), 400
+    ### If video and customer do not match a current rental - 400
+    # if rental is None:
+    #     return jsonify(None), 400
 
     # db.session.add(customer)
     # db.session.add(video) 
-    db.session.delete(rental) 
+    # db.session.delete(rental) 
     db.session.commit()  
 
     return_dict = {
@@ -345,7 +349,7 @@ def videos_rented_by_customer(customer_id):
         all_videos_response.append({
             "title": Video.query.get(video.id).title,
             "release_date": Video.query.get(video.id).release_date,
-            "due_date": video.due_date + timedelta(days=7)
+            "due_date": video.due_date #+ timedelta(days=7)
         })
     
     return jsonify(all_videos_response), 200
@@ -374,7 +378,7 @@ def customers_rented_video(video_id):
             "name": customer.name,
             "postal_code": customer.postal_code,
             "phone": customer.phone,
-            "due_date": rental.due_date + timedelta(days=7)
+            "due_date": rental.due_date #+ timedelta(days=7)
         })
         # all_customers_response.append(customer.to_dict())
         
