@@ -38,13 +38,13 @@ def new_rental():
         customer.videos_checked_out += 1
     
         # decrease videos.total_inventory by 1
-        if video.total_inventory != 0:
+        if video.total_inventory > 0:
             video.total_inventory -= 1
         else:
             return jsonify({"Error": "Available inventory is not sufficient"}), 400
     
     else:
-        return jsonify({"Error": "Customer does not exist"}), 404
+        return jsonify({"Error": f"Customer {customer.id} does not exist"}), 400
 
     # add it to database and commit
     db.session.add(rental)
@@ -82,7 +82,7 @@ def return_rental():
         customer.videos_checked_out -= 1
 
     else:
-        return jsonify({"Error": "Customer does not exist"}), 404
+        return jsonify({"Error": f"Customer {customer.id} does not exist"}), 400
 
     # if video exists and is valid
     if video: 
@@ -91,7 +91,7 @@ def return_rental():
         video.total_inventory += 1
 
     else:
-        return jsonify({"Error": "Video does not exist"}), 404
+        return jsonify({"Error": f"Video {video.id} does not exist"}), 404
 
     # add it to database and commit
     db.session.commit()
