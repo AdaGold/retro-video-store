@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import re
 from flask import Blueprint, json
 from app.models.customer import Customer
 from app.models.video import Video
@@ -236,7 +237,6 @@ def delete_video(video_id):
 def checkout_to_customer():
     
     request_body = request.get_json() 
-
     input_errors = []
     if 'customer_id' not in request_body.keys(): 
         blank_customer_id = {"customer_id": "can't be blank"}
@@ -250,18 +250,15 @@ def checkout_to_customer():
 
     if input_errors:
         return jsonify(errors=input_errors), 400
-    # elif not input_errors:
-    #     video_thats_rented = Video.query.get(video_id)
-    #     if video_thats_rented.available_inventory == 0:
-    #         return jsonify(errors=(f"{video_id.title} is out of stock")), 400
+
+    video_thats_rented = Video.query.get(video_id)
+    if video_thats_rented.available_inventory == 0:
+        return jsonify(errors=(f"{video_thats_rented.title} is out of stock")), 400
     else:
         # increase the customer's videos_checked_out_count by one
-        # make a helper function in customer model?
         customer_who_rents_video = Customer.query.get(customer_id)
         customer_who_rents_video.videos_checked_out_count += 1
-
         # decrease the video's available_inventory by one 
-        # make a helper function in video model?
         video_thats_rented = Video.query.get(video_id)
         video_thats_rented.available_inventory -= 1
 
@@ -284,54 +281,121 @@ def checkout_to_customer():
             }
 
         return jsonify(response), 200
-        # jsonable_new_rental = new_rental.to_dictionary()
-        # return jsonify(jsonable_new_rental), 201
-
     # have a success response that includes keys: 
     # ['customer_id', 'video_id', 'due_date', 'videos_checked_out_count', 'available_inventory']);
 
 ######################## POST RENTAL /rentals/check-in CRUD - CREATE ###################
-# @rentals_bp.route("/check-in", methods=["POST"])
-# def checkedin_from_customer():
-    # request_body = request.get_json() 
-    # rental_return = Rental(customer_id=request_body["customer_id"],
-    #                 video_id=request_body["video_id"],
-    #                 check_in=datetime.now(check_in))
+@rentals_bp.route("/check-in", methods=["POST"])
+def check_in_from_customer():
+    '''
+    when the customer checks-in/returns a rental/video, decrease the customer's videos_checked_out_count by one,
+    increase the video's available_inventory by one
+    '''
+    request_body = request.get_json() 
 
-    # # decrease the customer's videos_checked_out_count by one
-    # customer_update = Customer.query.get(rental_return.customer_id)
-    # customer_update.videos_checked_out_count -= 1
-    # # increase the video's available_inventory by one
-    # video_update = Video.query.get(rental_return.video_id)
-    # video_update.available_inventory += 1
+    input_errors = []
+    if 'customer_id' not in request_body.keys(): 
+        blank_customer_id = {"customer_id": "can't be blank"}
+        input_errors.append(blank_customer_id)
+    if input_errors:
+        return jsonify(errors=input_errors), 400
+
+    else: # need to access all the data in customer_id --> not just the integer
+        customer_id = request_body.get("customer_id")
+        update_customer = Customer.query.get(customer_id)
+        customers_rental_ids = update_customer.get("rentals") # accesses the rentals column in the data customer table # get this row with the rental_id
+        for rental in customers_rental_ids:
+            if rental.id == update_customer:
+                down_one_count = update_customer.get("videos_checked_out_count") 
+                down_one_count -= 1
+
+        video_id = request_body.get("video_id")
+        update_video = Video.query.get(video_id)
+        video_rental_ids = update_video.get("rentals") # accesses the rentals column in the data video table
+        for rental in video_rental_ids:
+            if rental.id == update_video:
+                up_one_count = update_video.get("available_inventory")
+                up_one_count += 1
+
+    response = {
+            'customer_id': customer_id,
+            'video_id': video_id,
+            'videos_checked_out_count': down_one_count,
+            'available_inventory': up_one_count 
+            }
+    return jsonify(response), 200
+
+# the rental should be linked to a customer and a video -- 
+# both the customer and the video 
+    # if rental is None:
+    #     return jsonify(None), 400
 
 ######################## GET RENTAL /customers/<id>/rentals CRUD - READ ###################
-# @rentals_bp.route("", methods=["GET"])
-# def list_all_vidoes_customer_has_out():
-#     # all_current_videos_w1_customer
-#     pass
-# [
-#     {
-#         "release_date": "Wed, 01 Jan 1958 00:00:00 GMT",
-#         "title": "Vertigo",
-#         "due_date": "Thu, 13 May 2021 19:27:47 GMT",
-#     },
-#     {
-#         "release_date": "Wed, 01 Jan 1941 00:00:00 GMT",
-#         "title": "Citizen Kane",
-#         "due_date": "Thu, 13 May 2021 19:28:00 GMT",
-#     }
-# ]
+@customers_bp.route("/<id>/rentals", methods=["GET"])
+def list_all_videos_customer_has_out(id):
+    customer_id = id
+    customer = Customer.query.get(customer_id)
+    customers_current_videos = customer.rentals # accesses the rentals column in the data customer table # get this row with the rental_id
+    video_id_list = []
+    for rental in customers_current_videos:
+        video_id_list.append(rental.video_id)
+    print(video_id_list)
 
+    response = []
+    for video_id in video_id_list:
+        rental_details = Video.query.get(video_id)
+        release_date = rental_details.release_date
+        title = rental_details.title
+        due_date = rental.due_date
+
+        video_info = {"release_date": release_date, "title": title, "due_date": due_date}
+        
+        response.append(video_info)
+    return jsonify(response), 200
+
+# db.session.query(Video, Customer, Rental).join(Video, Video.id==Rental.video_id).join(Customer, Customer.id==Rental.customer_id).filter(Video.id == who_has_the_vid).all()
+    # ^ result will be an array of tuples. Each tuple will hold 
+    # a Video instance, Customer instance, and a Rental instance 
+        # what_vids_with_customer = ???
+        # videos_with_customer 
 
 ######################## GET RENTAL /videos/<id>/rentals CRUD - READ ###################
-# @rentals_bp.route("/videos/<id>/rentals", methods=["GET"])
-# def list_all_customers_who_currently_have_video(video_id):
-#     who_has_the_vid = video_id
-#     customers_with_video = db.session.query(Video, Customer, Rental).join(Video, Video.id==Rental.video_id).join(Customer, Customer.id==Rental.customer_id).filter(Video.id == who_has_the_vid).all()
-    # ^ result will be an array of tuples. Easch tuple will hold 
-    # a Video instance, Bar instance, and a Rental instance 
-    # (in the order they are listd in the query)
+@videos_bp.route("/videos/<id>/rentals", methods=["GET"])
+def list_all_customers_who_currently_have_video(id):
+    video_id = id
+    # if not video_id.isdigit():
+    #     error_response2 = "is not a number"
+    #     return jsonify(errors={"video_id": error_response2}), 400
+
+    video = Video.query.get(video_id)
+    video_as_rental = video.rentals # accesses the rentals column in the data customer table # get this row with the rental_id
+    
+    customers_with_video_list = []
+    for rental in video_as_rental:
+        customers_with_video_list.append(rental.customer_id)
+
+    response = []
+    for customer_id in customers_with_video_list:
+        rental_customer_details = Customer.query.get(customer_id)
+        name = rental_customer_details.name
+        phone = rental_customer_details.phone
+        postal_code = rental_customer_details.postal_code
+        for rental in customer_id.rentals:
+            if rental.video_id == video_id:
+                due_date = rental.due_date # find the rental instance that matches the customer_id and the video_id and get that due date
+
+        customer_rental_info = {"due_date": due_date, "name": name, "phone": phone, "postal_code": postal_code}
+        
+        response.append(customer_rental_info)
+        print(response)
+    return jsonify(response), 200
+    
+    # who_has_the_vid = video_id
+    # everything in a list of tuples = db.session.query(Video, Customer, Rental).join(Video, Video.id==Rental.video_id).join(Customer, Customer.id==Rental.customer_id).filter(Video.id == who_has_the_vid).all()
+    # ^ result will be an array of tuples. Each tuple will hold 
+    # a Video instance, Customer instance, and a Rental instance 
+    # (in the order they are listd in the query) -- but the response does not require information from the rental model
+    # - I will try to take out the rental model from the hint join statement approach
 # [
 #     {
 #         "due_date": "Thu, 13 May 2021 21:36:38 GMT",
