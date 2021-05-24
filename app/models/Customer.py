@@ -26,7 +26,7 @@ class Customer(db.Model):
             "postal_code": self.postal_code, 
             "phone": self.phone, 
             "registered_at": self.registered_at, 
-            "videos_rented": self.videos_rented 
+            "videos_checked_out_count": self.videos_rented 
         }
 
     def check_out(self):
