@@ -8,7 +8,7 @@ class Customer(db.Model):
     postal_code = db.Column(db.Integer)
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
-    
+
     rentals = db.relationship('Rental', backref='customers', lazy=True)
 
     def get_response(self):
