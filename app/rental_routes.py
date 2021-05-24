@@ -19,11 +19,11 @@ def new_rental():
 
     # invalid customer input
     if type(request_body["customer_id"]) is not int:
-        return {"Error": "Invalid customer input"}, 400
+        return jsonify({"Error": "Invalid customer input"}), 400
 
     # invalid video input
     if type(request_body["video_id"]) is not int:
-        return {"Error": "Invalid video input"}, 400
+        return jsonify({"Error": "Invalid video input"}), 400
 
     # get customer_id and create customer instance
     customer = Customer.query.get(rental.customer_id)
@@ -41,22 +41,22 @@ def new_rental():
         if video.total_inventory != 0:
             video.total_inventory -= 1
         else:
-            return {"Error": "Available inventory is not sufficient"}, 400
+            return jsonify({"Error": "Available inventory is not sufficient"}), 400
     
     else:
-        return {"Error": "Customer does not exist"}, 404
+        return jsonify({"Error": "Customer does not exist"}), 404
 
     # add it to database and commit
     db.session.add(rental)
     db.session.commit()
 
-    return {
+    return jsonify({
         "customer_id": rental.customer_id,
         "video_id": rental.video_id,
         "due_date": rental.due_date,
         "videos_checked_out_count": customer.videos_checked_out,
         "available_inventory": video.total_inventory
-    }
+    }), 200
 
 @rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
 def return_rental():
@@ -65,9 +65,9 @@ def return_rental():
     request_body = request.get_json()
     rental = Rental(customer_id=request_body["customer_id"], video_id=request_body["video_id"])
 
-    # add it to database and commit 
-    # db.session.add(rental)
-    # db.session.commit()
+    # get all rentals
+    rentals = Rental.query.all()
+    print(rentals[0].customer_id)
 
     # get customer_id and create customer instance
     customer = Customer.query.get(rental.customer_id)
@@ -76,29 +76,30 @@ def return_rental():
     video = Video.query.get(rental.video_id)
 
     # if customer exists and is valid 
-    if customer:
+    if customer and customer.videos_checked_out >= 0:
 
         # decreases customer.videos_checked_out by 1
         customer.videos_checked_out -= 1
 
     else:
-        return {"Error": "Customer does not exist"}, 404
+        return jsonify({"Error": "Customer does not exist"}), 404
 
     # if video exists and is valid
     if video: 
         
         # increases videos.total_inventory by 1
         video.total_inventory += 1
+
     else:
-        return {"Error": "Video does not exist"}, 404
+        return jsonify({"Error": "Video does not exist"}), 404
 
     # add it to database and commit
     db.session.commit()
 
-    return {
+    return jsonify({
         "customer_id": rental.customer_id,
         "video_id": rental.video_id,
         "videos_checked_out_count": customer.videos_checked_out,
         "available_inventory": video.total_inventory
-    }
+    }), 200
 
