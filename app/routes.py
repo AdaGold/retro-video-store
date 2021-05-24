@@ -14,6 +14,15 @@ load_dotenv()
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
+welcome_page = Blueprint('welcome_page', __name__)
+
+#################### Routes for Welcome page ####################
+@welcome_page.route('/')
+def index():
+    return {
+        "name": "Weishan Yang",
+        "message": "Hi instructors! Welcome to the rainbow video store!"
+    }
 
 #################### Routes for Customers ####################
 @customers_bp.route("", methods=["GET"], strict_slashes=False)

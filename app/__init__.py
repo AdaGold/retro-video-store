@@ -37,5 +37,8 @@ def create_app(test_config=None):
     
     from .routes import rentals_bp
     app.register_blueprint(rentals_bp)
+    
+    from .routes import welcome_page
+    app.register_blueprint(welcome_page)
 
     return app
