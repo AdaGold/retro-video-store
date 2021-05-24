@@ -1,6 +1,6 @@
 from flask import current_app
 from app import db
-from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 
 class Customer(db.Model):
@@ -8,14 +8,21 @@ class Customer(db.Model):
     name = db.Column(db.String)
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
-    registered_at = db.Column(db.DateTime())
+    registered_at = db.Column(db.DateTime)
+    videos_checked_out_count = db.Column(db.Integer)
 
     def resp_json(self):
-        return {
+        if self.registered_at:
+            register = datetime.datetime(self.registered_at)
+        else:
+            register = None
+        customer_info = {
             "id": self.customer_id,
             "name": self.name,
             "registered_at": self.registered_at,
-            "postal_code": self.postal_code,
+            "postal_code": int(self.postal_code),
             "phone": self.phone,
             "videos_checked_out_count": 0
         }
+
+        return customer_info 
