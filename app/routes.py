@@ -5,14 +5,10 @@ from app.models.rentals import Rental
 from flask.json import jsonify
 from app import db
 
-#2do2night:
-#need to make .env file again
-#run migrations, smoke test?
+
 #write tests? I can dream
-#sleep
 #results = db.session.query(Foo, Bar, FooBarJoin).join(Foo, Foo.id==FooBarJoin.foo_id)\
 #            .join(Bar, Bar.id==FooBarJoin.bar_id).filter(Foo.id == X).all()
-#https://docs.python.org/3/tutorial/controlflow.html#keyword-arguments reference again if not used right
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
@@ -36,7 +32,7 @@ def get_customer(customer_id):
 def new_customer():
     request_body = request.get_json()
     if "name" in request_body and "postal_code" in request_body and "phone" in request_body: 
-        customer = Customer(**request_body) #dict witchcraft
+        customer = Customer(**request_body)
         db.session.add(customer)
         db.session.commit()
         return jsonify(customer.customer_info()), 201
@@ -80,7 +76,7 @@ def get_video(video_id):
 def post_video():
     request_body = request.get_json()
     if "title" in request_body and "release_date" in request_body and "total_inventory" in request_body: 
-        video = Video(**request_body) #dict witchcraft
+        video = Video(**request_body)
         db.session.add(video)
         db.session.commit()
         return jsonify(video.video_info()), 201
@@ -122,7 +118,7 @@ def rent_video():
 
     customer = Customer.query.get_or_404(checkem_out)
     video = Video.query.get_or_404(check_video)
-    this_rental = Rental(**request_body) #witchcraft 
+    this_rental = Rental(**request_body)
     if video.available_inventory > 0:
         video.available_inventory -= 1 #use method in class 
         customer.videos_rented += 1 #use method in class 
@@ -152,7 +148,7 @@ def return_video():
 def customer_rentals(customer_id):
     customer = Customer.query.get_or_404(customer_id)
     rentals_history = []
-    for rental in customer.videos: #<-is this relationship/ attribute correct?
+    for rental in customer.videos:
         video = Video.query.get(rental.video_id)
         rentals_history.append({"release_date" : video.release_date,
                             "title" : video.title,
