@@ -13,6 +13,7 @@ class Customer(db.Model):
     videos_checked_out_count = db.Column(db.Integer, default=0, nullable=False)
     videos = db.relationship("Rental", back_populates="customer")
 
+#all other options i saw???
     # rentals = db.relationship('Rental', backref='customers', lazy=True)
         
     # videos = db.relationship("Video", secondary="rentals")

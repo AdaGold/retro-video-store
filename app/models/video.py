@@ -14,17 +14,14 @@ class Video(db.Model):
     customers = db.relationship("Rental", back_populates="video")
 
 
-
+#all other options i saw???
     # # customer = db.relationship("Customer", secondary="orders")
     # rentals = db.relationship('Rental', backref='videos', lazy=True)
 
 
     # rentals = db.relationship('Customer', secondary="rentals", lazy='subquery',backref=db.backref('rentals', lazy=True))
 
-
-    #do i need the db before relationship?
     # renters = relationship("Rental", back_populates="video", lazy = True)
-#OR
     # customer_id = db.Column(db.Integer, db.ForeignKey("customer.id"))
 
 
