@@ -135,7 +135,15 @@ def get_customers_rentals(customer_id):
 #/video endpoints 
 @video_bp.route("", methods=["GET"])
 def get_all_videos():
-    videos = Video.query.all()
+    sort_query = request.args.get("sort")
+
+    if sort_query:
+        if sort_query == "title":
+            videos = Video.query.order_by(asc(Video.video_title))
+        else:
+            return make_400()
+    else:
+        videos = Video.query.all()
     video_response = []
     for video in videos:
         video_response.append(video.to_json())
