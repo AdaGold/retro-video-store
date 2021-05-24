@@ -17,9 +17,13 @@ def new_rental():
     request_body = request.get_json()
     rental = Rental(customer_id=request_body["customer_id"], video_id=request_body["video_id"])
 
-    # add it to database and commit 
-    # db.session.add(rental)
-    # db.session.commit()
+    # invalid customer input
+    if type(request_body["customer_id"]) is not int:
+        return {"Error": "Invalid customer input"}, 400
+
+    # invalid video input
+    if type(request_body["video_id"]) is not int:
+        return {"Error": "Invalid video input"}, 400
 
     # get customer_id and create customer instance
     customer = Customer.query.get(rental.customer_id)
@@ -40,9 +44,7 @@ def new_rental():
             return {"Error": "Available inventory is not sufficient"}, 400
     
     else:
-        if customer is None:
-            return {"Error": "Customer does not exist"}, 404
-
+        return {"Error": "Customer does not exist"}, 404
 
     # add it to database and commit
     db.session.add(rental)
@@ -73,25 +75,22 @@ def return_rental():
     # get video_id and create video instance
     video = Video.query.get(rental.video_id)
 
-    # if customer and video exist
-    if customer and video:
-
-        # # check that rentals matches customer and video
-        # rentals = Rental.query.all()
-
-        # for rental in rentals:
+    # if customer exists and is valid 
+    if customer:
 
         # decreases customer.videos_checked_out by 1
         customer.videos_checked_out -= 1
-    
-        # increases videos.total_inventory by 1
-        video.total_inventory += 1
 
     else:
-        if customer is None:
-            return {"Error": "Customer does not exist"}, 404
-        elif video is None:
-            return {"Error": "Video does not exist"}, 404
+        return {"Error": "Customer does not exist"}, 404
+
+    # if video exists and is valid
+    if video: 
+        
+        # increases videos.total_inventory by 1
+        video.total_inventory += 1
+    else:
+        return {"Error": "Video does not exist"}, 404
 
     # add it to database and commit
     db.session.commit()

@@ -114,27 +114,16 @@ def customer_videos(id):
         results = db.session.query(Customer, Video, Rental)\
             .join(Customer, Customer.id==Rental.customer_id)\
                 .join(Video, Video.id==Rental.video_id)\
-                    .filter(Customer.id==customer.id).all()
+                    .filter(Customer.id==id).all()
 
-        unpack_join = results[0]
-        print(unpack_join)
+        for row in results:
+            videos_list.append({
+                "release_date": row[1].release_date,
+                "title": row[1].title,
+                "due_date": row[2].due_date
+            })
 
-        customer = unpack_join[0]
-        print(customer)
-        video = unpack_join[1]
-        print(video)
-
-        rental = unpack_join[2]
-
-        response = {
-            "release_date": video.release_date,
-            "title": video.title,
-            "due_date": rental.due_date
-        }
-
-        print(request_body["video_id"])
-
-        return make_response(f"{rental.id}", 200)
+        return jsonify(videos_list)
 
     else:
         if customer is None:
