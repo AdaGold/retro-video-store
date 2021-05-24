@@ -119,7 +119,7 @@ def video_main_func():
 
 @videos_bp.route("/<video_id>", methods=["GET", "PUT", "DELETE"], strict_slashes = False)
 def video_func(video_id):
-    video = Video.query.get_or_404(video_id)
+    video = Video.query.get(video_id)
     
     if not video:
         return make_response("", 404)
@@ -131,7 +131,7 @@ def video_func(video_id):
 
     elif request.method == "PUT":
         about_video = request.get_json()
-        if "title" not in about_video or "release_data" not in about_video or "total_inventory" not in about_video:
+        if "title" not in about_video or "release_date" not in about_video or "total_inventory" not in about_video:
             return make_response({"details": "invalid data"}, 400)
 
         video.title = about_video["title"]
@@ -148,6 +148,5 @@ def video_func(video_id):
         db.session.delete(video)
         db.session.commit()
 
-        return jsonify({
-            "id": video.video_id
-        }), 200
+        return { "id": video.video_id}, 200
+        
