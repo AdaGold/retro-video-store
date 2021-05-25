@@ -22,6 +22,7 @@ class Rental(db.Model):
             "available_inventory": self.videos_rented.available_inventory
             }
 
+
     def check_in_json_format(self):
         return {
             "customer_id": self.customer_id,
@@ -30,6 +31,7 @@ class Rental(db.Model):
             "available_inventory": self.videos_rented.available_inventory
             }
 
+
     def get_customer_rental_json(self):
         return {
             "release_date": self.videos_rented.release_date,
@@ -37,7 +39,7 @@ class Rental(db.Model):
             "due_date": self.due_date
         }
 
-    
+
     def get_video_rental_json(self):
         return {
             "name": self.customer_rentals.name,

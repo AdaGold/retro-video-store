@@ -11,11 +11,8 @@ class Customer(db.Model):
     phone = db.Column(db.String, nullable=False)
     videos_checked_out_count = db.Column(db.Integer, default=0)
     rented = db.relationship("Rental", back_populates="customer_rentals")
-    
-    # parents = relationship("Association", back_populates="child")
-    # In Rentals: 
-    # customer_rentals = relationship("Customer", back_populates="rented")
-    
+
+
     def customers_json_format(self):
         return {
             "id": self.client_id,
@@ -25,9 +22,3 @@ class Customer(db.Model):
             "phone": self.phone,
             "videos_checked_out_count": self.videos_checked_out_count
             }
-
-
-# class Child(Base):
-#     __tablename__ = 'right'
-#     id = Column(Integer, primary_key=True)
-#     parents = relationship("Association", back_populates="child")

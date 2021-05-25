@@ -11,6 +11,7 @@ class Video(db.Model):
     available_inventory = db.Column(db.Integer, nullable=True)
     videos_for_rent = db.relationship("Rental", back_populates="videos_rented") 
 
+
     def videos_to_json_format(self):
         return {
             "id": self.video_id,
