@@ -28,3 +28,12 @@ class Rental(db.Model):
             "videos_checked_out_count": self.customer.videos_checked_out_count,
             "available_inventory": self.video.available_inventory
         }
+
+    def check_in_json_object(self):
+
+        return {
+            "customer_id": self.customer_id,
+            "video_id": self.video_id,
+            "videos_checked_out_count": self.customer.videos_checked_out_count,
+            "available_inventory": self.video.available_inventory
+        }

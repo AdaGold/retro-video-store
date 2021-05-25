@@ -1,3 +1,4 @@
+from app.models.rental import Rental
 from app import db
 from app.models.video import Video
 from flask import request, Blueprint, make_response,jsonify
@@ -7,7 +8,7 @@ from datetime import datetime
 # Video route for all inquiry GET & POST
 video_bp = Blueprint("videos", __name__, url_prefix="/videos")
 
-@video_bp.route("", methods=["GET", "POST"])
+@video_bp.route("", methods=["GET", "POST"], strict_slashes=False)
 def handle_video_get_post_all():
 
     if request.method == "GET":
@@ -87,3 +88,16 @@ def get_single_video(video_id):
 
     }, 200)
     
+@video_bp.route("/<id>/rentals", methods=["GET"], strict_slashes=False)
+def video_id_rentals(id):
+    rentals = Rental.query.filter_by(video_id = id)
+    results = []
+    for rental in rentals:
+        results.append({
+            "due_date": rental.due_date,
+            "name": rental.customer.name,
+            "phone": rental.customer.phone,
+            "postal_code": rental.customer.postal_code
+                })
+
+    return make_response(jsonify(results), 200)
