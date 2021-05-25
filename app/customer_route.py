@@ -51,7 +51,7 @@ def handle_customer_get_post_all():
 
 @customer_bp.route("/<customer_id>", methods=["GET", "PUT", "DELETE"], strict_slashes=False)
 def get_single_customer(customer_id):
-    customer = Customer.query.get(customer_id)
+    customer = Customer.query.get(customer_id) #fetching the customer OBJECT using the customer ID
     #when I request in the url and have no details return None and a 404 message
     if customer is None: #If customer 
         return jsonify(None), 404

@@ -16,8 +16,8 @@ class Rental(db.Model):
     due_date = db.Column(db.DateTime, default=(datetime.datetime.now()) + (datetime.timedelta(days=7)))
 
     # variables to connect video & customer object to rental
-    rental_video_relationship = relationship("Video", backref="rentals")
-    rental_customer_relationship = relationship("Customer", backref="rentals")
+    video = db.relationship("Video", backref="rental")
+    customer = db.relationship("Customer", backref="rental")
 
     def json_object(self):
 
@@ -25,6 +25,6 @@ class Rental(db.Model):
             "customer_id": self.customer_id,
             "video_id": self.video_id,
             "due_date": self.due_date,
-            "videos_checked_out_count": self.rental_customer_relationship.videos_checked_out_count,
-            "available_inventory": self.rental_video_relationship.available_inventory
+            "videos_checked_out_count": self.customer.videos_checked_out_count,
+            "available_inventory": self.video.available_inventory
         }

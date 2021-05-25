@@ -11,8 +11,7 @@ class Customer(db.Model):
     postal_code = db.Column(db.Integer)
     phone = db.Column(db.String)
     registered_at = db.Column(db.DateTime, nullable=True)
-    videos_checked_out_count = db.Column(db.Integer)
-    rental_customer = db.relationship("Rental", backref="customer")
+    videos_checked_out_count = db.Column(db.Integer, default=0)
 
     def json_object(self):
         return {
