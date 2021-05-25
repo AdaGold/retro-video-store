@@ -76,7 +76,7 @@ def add_customer():
     db.session.add(new_customer)
     db.session.commit()
 
-    return jsonify({"id": new_customer.id}), 201
+    return jsonify(new_customer.to_json()), 201
 
 
 @customers_bp.route("/<int:id>", methods=["GET"])
