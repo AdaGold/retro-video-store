@@ -177,6 +177,14 @@ def delete_video(id):
     return jsonify({"id": id}), 200
 
 
+@rentals_bp.route("", methods=["GET"])
+def get_rentals():
+    rentals = Rental.query.all()
+
+    rentals_response = [rental.to_json() for rental in rentals]
+
+    return jsonify(rentals_response), 200
+
 @rentals_bp.route("/check-out", methods=["POST"])
 @customer_not_found
 @video_not_found
