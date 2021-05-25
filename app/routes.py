@@ -168,7 +168,7 @@ def get_rentals_by_video(video_id):
 # START OF RENTALS ENDPOINTS
 
 
-def invalid_check_out_request_body(request_body):
+def invalid_check_out_request(request_body):
     if "customer_id" not in request_body or "video_id" not in request_body:
         return True
 
@@ -189,7 +189,7 @@ def invalid_check_out_request_body(request_body):
 def check_out_video():
     request_body = request.get_json()
 
-    if invalid_check_out_request_body(request_body):
+    if invalid_check_out_request(request_body):
         return make_response({"details": "Missing required data"}, 400)
 
     rental = Rental(customer_id=request_body["customer_id"], video_id=request_body["video_id"])
