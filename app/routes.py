@@ -183,8 +183,22 @@ def delete_video(id):
 @rentals_bp.route("", methods=["GET"])
 def get_rentals():
     rentals = Rental.query.all()
+    print("******", rentals)
 
-    rentals_response = [rental.to_json() for rental in rentals]
+    # rentals_response = [rental.to_json() for rental in rentals]
+    rentals_response = []
+    for rental in rentals:
+        # print("***", rental)
+        # print("***", rental.id)
+        # print("***", rental.customer_id)
+        # print("***", rental.video_id)
+        rentals_response.append({
+                    "id": rental.id,
+                    "customer_id": rental.customer_id,
+                    "video_id": rental.video_id,
+                    "due_date": rental.due_date,
+                    "status": rental.status
+        })  
 
     return jsonify(rentals_response), 200
 
