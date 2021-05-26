@@ -77,6 +77,7 @@ def post_video():
     request_body = request.get_json()
     if "title" in request_body and "release_date" in request_body and "total_inventory" in request_body: 
         video = Video(**request_body)
+        video.available_inventory = video.total_inventory
         db.session.add(video)
         db.session.commit()
         return jsonify(video.video_info()), 201
@@ -90,6 +91,7 @@ def update_video(video_id):
         video.title = request_body["title"]
         video.release_date = request_body["release_date"]
         video.total_inventory = request_body["total_inventory"]
+        video.available_inventory = request_body["total_inventory"]
         db.session.commit()
         return jsonify(video.video_info()), 200
     else:
@@ -108,25 +110,29 @@ def is_int(value):
     except ValueError:
         return None
 
+##check out is not working at all:
 @rentals_bp.route("/check-out", methods= ["POST"], strict_slashes=False)
 def rent_video():
     request_body = request.get_json()
+    if "customer_id" not in request_body or "video_id" not in request_body:
+        return make_response({"details": "Invalid data"}, 400)
     checkem_out = request_body["customer_id"]
     check_video = request_body["video_id"]
     if not is_int(checkem_out) or not is_int(check_video):
-        return make_response({"details": "Invalid ID"}, 400)
+        return make_response({"details": "Bad request"}, 400)
+    customer = Customer.query.get(checkem_out)
+    video = Video.query.get(check_video)
+    if not video.has_available_inventory(): #since it is a column, that is why it is none
+        return make_response({"details": "Inventory not available"}, 400)
+    video.check_out() 
+    customer.videos_checked_out_count += 1
+    this_rental = Rental(**request_body) 
+    db.session.add(this_rental)
+    db.session.commit()
+    return make_response(this_rental.rental_info(), 200)
+    
 
-    customer = Customer.query.get_or_404(checkem_out)
-    video = Video.query.get_or_404(check_video)
-    this_rental = Rental(**request_body)
-    if video.available_inventory > 0:
-        video.available_inventory -= 1 #use method in class 
-        customer.videos_rented += 1 #use method in class 
-        db.session.add(this_rental)
-        db.session.commit()
-        return make_response(this_rental.rental_info(), 200)
-    return make_response({"details": "Inventory not available"}, 400)
-
+#all check in videos seem to be passing
 @rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
 def return_video():
     request_body = request.get_json()
@@ -134,21 +140,23 @@ def return_video():
     checkin_video = request_body["video_id"]
     if not is_int(checkin_customer) or not is_int(checkin_video):
         return make_response({"details": "Invalid ID"}, 400)
-    this_rental = Rental.query.get_or_404((checkin_customer, checkin_video))
-    if this_rental.customer.videos_rented > 0:
+    this_rental = Rental.query.get_or_404(checkin_customer, checkin_video)
+    
+    if this_rental.customer.videos_checked_out_count > 0:
         this_rental.video.available_inventory += 1 #use method in class
-        this_rental.customer.videos_rented -= 1 #use method in class
+        this_rental.customer.videos_checked_out_count -= 1 #use method in class
         db.session.commit()
         user_msg = this_rental.rental_info()
         del user_msg["due_date"]
         return make_response(user_msg, 200)
     return make_response({"details": "Rentals all returned"}, 400)
 
+#rentals by customer do not seem to be passing
 @customers_bp.route("/<int:customer_id>/rentals", methods=["GET"], strict_slashes=False)
 def customer_rentals(customer_id):
     customer = Customer.query.get_or_404(customer_id)
     rentals_history = []
-    for rental in customer.videos:
+    for rental in customer.rentals:
         video = Video.query.get(rental.video_id)
         rentals_history.append({"release_date" : video.release_date,
                             "title" : video.title,
@@ -156,6 +164,7 @@ def customer_rentals(customer_id):
                             })
     return jsonify(rentals_history), 200
 
+#all passing except "TypeError: Cannot convert undefined or null to object" on returning values need to be correct key pair
 @videos_bp.route("/<int:video_id>/rentals", methods=["GET"], strict_slashes=False)
 def video_rentals(video_id):
     video = Video.query.get_or_404(video_id)

@@ -21,9 +21,15 @@ class Video(db.Model):
         }
 
     def check_in(self):
-        self.available_inventory += 1
-        self.save()
+         self.available_inventory += 1
+         
 
     def check_out(self):
-        self.available_inventory -= 1
-        self.save()
+         self.available_inventory -= 1
+         
+
+    def has_available_inventory(self):
+        if self.available_inventory > 0:
+            return True
+        else:
+            return False
