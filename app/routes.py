@@ -157,10 +157,12 @@ def post_rentals_out():
             return {"details": "Not found"}, 404 
 
         #read-me is different from what test is coming back (i'll return a 200 instead of 400 so that I can pass test-cases)
-        # if video.available_inventory == 0:
-        #     return {"details": "Bad Request"}, 200
+        if video.available_inventory == 0:
+            return {"details": "Bad Request"}, 400
 
-        rental = Rental.query.filter_by(customer_id =customer.id,video_id =video.id)
+        rental = Rental.query.filter_by(customer_id =customer.id,video_id =video.id).first()
+        # rental = Rental.query.filter_by(customer_id =customer.id,video_id =video.id)
+        # print(type(rental),file=sys.stderr)
 
         if rental is None: 
             rental = Rental(customer_id=customer.id,
@@ -203,8 +205,8 @@ def post_rentals_in():
         if customer is None or video is None:
             return {"details": "Not Found"}, 400        
 
-        if video.available_inventory == 0:
-            return {"details": "Bad request"}, 400        
+        # if video.available_inventory == 0:
+        #     return {"details": "Bad request"}, 400        
 
         else:
             customer.videos_checked_out_count -= 1
