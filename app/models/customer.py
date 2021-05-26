@@ -11,6 +11,13 @@ class Customer(db.Model):
     videos = db.relationship("Rental", back_populates="customer")
     
     def make_json(self):
+        """
+        Takes in an instance of Customer 
+        returns id, name, registered_at, postal_code,
+        phone and videos_checked_out_count of that Customer 
+        instance in a JSON compatabile dictionary
+
+        """
         return {
             "id": self.id,
             "name": self.name,
@@ -20,11 +27,27 @@ class Customer(db.Model):
             "videos_checked_out_count": self.videos_checked_out
         }
     def return_id(self):
+        """
+        Takes in an instance of Customer 
+        returns the id of that Customer instance in a 
+        JSON compatabile dictionary
+
+        """
         return {"id":self.id}
 
     def check_out(self):
+        """
+        Takes in an instance of Customer 
+        Increases the videos_checked_out by 1
+
+        """
         self.videos_checked_out += 1
 
-    # def check_in(self):
-        # self.videos_checked_out -= 1
+    def check_in(self):
+        """
+        Takes in an instance of Customer 
+        Decreases the videos_checked_out by 1
+
+        """
+        self.videos_checked_out -= 1
         

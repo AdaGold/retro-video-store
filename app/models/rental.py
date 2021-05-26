@@ -13,9 +13,14 @@ class Rental(db.Model):
     video = db.relationship("Video", back_populates="customers")
     
 
-    def return_check_in(self):
-        self.customer.videos_checked_out -= 1
-        
+    def json_check_in(self):
+        """
+        Takes in an instance of Rental 
+        returns the customer_id, video_id, 
+        videos_checked_out_count and available_inventory
+        of that Rental instance in a JSON compatabile dictionary
+
+        """
         return {
                 "customer_id": self.customer_id,
                 "video_id": self.video_id,
@@ -24,7 +29,14 @@ class Rental(db.Model):
             }
         
     def make_json(self):
-            return {
+        """
+        Takes in an instance of Rental 
+        returns the customer_id, video_id, due_date,
+        videos_checked_out_count and available_inventory
+        of that Rental instance in a JSON compatabile dictionary
+
+        """
+        return {
                 "customer_id": self.customer_id,
                 "video_id": self.video_id,
                 "due_date": self.due_date,

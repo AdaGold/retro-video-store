@@ -12,6 +12,12 @@ customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 
 @customers_bp.route("", methods= ["GET", "POST"])
 def handle_get_customers():
+    """
+    Returns data for a GET query and creates a new 
+    customer through a POST query
+    Planning to separate out into handle_get_customers 
+    and handle_post_customers
+    """
     if request.method == "GET":
         customers = Customer.query.all()
         get_response =[]
@@ -36,6 +42,15 @@ def handle_get_customers():
 
 @customers_bp.route("/<id>", methods = ["GET", "PUT", "DELETE"])
 def handle_customer(id):
+    """
+    Takes in cutomer id  
+    Returns information about that customer (if it exists)
+    for a GET query.
+    Alters/ updates one customer's data and returns the updated
+    information. 
+    Deletes all  customer information at the given id number
+    Planning to separate out into individual functions by method 
+    """
     customer = Customer.query.get(id)
 
     if customer is None:
@@ -50,9 +65,6 @@ def handle_customer(id):
         if "name" not in request_body.keys() \
             or "postal_code" not in request_body.keys() \
                 or "phone" not in request_body.keys():
-                    # or not isinstance(request_body["name"], str) \
-                    #     or not isinstance(request_body["postal_code"], int) \
-                    #         or not isinstance(request_body["phone"], str):
                 return make_response({"details": "Invalid data"}, 400) 
         
         customer.name = request_body["name"]
@@ -93,6 +105,11 @@ videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 
 @videos_bp.route("", methods= ["GET", "POST"])
 def handle_videos():
+    """
+    Returns data for a GET query and creates a new 
+    video through a POST query
+    Planning to separate out into individual functions by method 
+    """
     if request.method == "GET":
         videos = Video.query.all()
         get_response =[]
@@ -119,6 +136,15 @@ def handle_videos():
 
 @videos_bp.route("/<id>", methods = ["GET", "PUT", "DELETE"])
 def handle_video(id):
+    """
+    Takes in video id  
+    Returns information about that video (if it exists)
+    for a GET query.
+    Alters/ updates one video's data and returns the updated
+    information. 
+    Deletes all video information at the given id number
+    Planning to separate out into individual functions by method 
+    """
     video = Video.query.get(id)
 
     if video is None:
@@ -148,6 +174,11 @@ def handle_video(id):
 
 @videos_bp.route("/<id>/rentals", methods = ["GET"])
 def handle_rentals_by_video(id):
+    """
+    takes in video id
+    returns a list of customers that have the video
+    at the given id checked-out
+    """
     video = Video.query.get(id)
     
     if video is None:
@@ -171,6 +202,9 @@ rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 @rentals_bp.route("/check-out", methods = ["POST"])
 def rental_check_out():
+    """
+    Check's out one video to one customer
+    """
     request_body = request.get_json()
     try:
         customer_id = int(request_body["customer_id"])
@@ -198,6 +232,9 @@ def rental_check_out():
 
 @rentals_bp.route("/check-in", methods = ["POST"])
 def rental_check_in():
+    """
+    checks in one video to one customer
+    """
     request_body = request.get_json()
 
     try:
@@ -213,19 +250,9 @@ def rental_check_in():
     if customer is None or video is None or rental is None:
         return make_response({"details": "The customer or video you are looking for does not exist"}, 400)
     
-    # rental.customer.check_in()
-    # rental.customer.videos_checked_out -= 1
-    # db.session.commit()
-
-    # response = {
-    #             "customer_id": rental.customer_id,
-    #             "video_id": rental.video_id,
-    #             "videos_checked_out_count": rental.customer.videos_checked_out,
-    #             "available_inventory": rental.video.get_available_inventory()
-    #         }
-    response = rental.return_check_in()
+    rental.customer.check_in()
 
     db.session.delete(rental)
     db.session.commit()
 
-    return make_response(response)
+    return make_response(rental.json_check_in())

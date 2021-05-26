@@ -12,6 +12,14 @@ class Video(db.Model):
     
 
     def make_json(self):
+        """
+        Takes in an instance of Video 
+        returns id, title, release_date, 
+        total_inventory and first calulates and then 
+        returns available_inventory of that Video 
+        instance in a JSON compatabile dictionary
+
+        """
         return {
             "id": self.id,
             "title": self.title,
@@ -21,8 +29,21 @@ class Video(db.Model):
                     }
                     
     def return_id(self):
+        """
+        Takes in an instance of Video 
+        returns the id of that Video instance in a 
+        JSON compatabile dictionary
+
+        """
         return {"id":self.id}
 
     def get_available_inventory(self):
+        """
+        Takes in an instance of Video 
+        returns the number of total copies of that 
+        Video minus the number of copies currently 
+        checked-out by customers
+
+        """
         return self.total_copies - len(self.customers)
 
