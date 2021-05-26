@@ -1,8 +1,8 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from dotenv import load_dotenv ###1 importing the package
-import os ###2 reads environment variables  ???
+from dotenv import load_dotenv                  # importing the package
+import os                               # reads environment variables 
 
 db = SQLAlchemy()   # creates a SQL object to interact with the database
 migrate = Migrate()   # creates a migrate objest to change the structure of the database

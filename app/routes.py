@@ -9,7 +9,6 @@ videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
-### DO I NEED THIS HERE???
 def is_int(value):
     try:
         return int(value)
@@ -24,7 +23,20 @@ def is_int(value):
 @customers_bp.route("", methods=["GET"], strict_slashes=False)
 def customers_index():
 
-    customers = Customer.query.all() 
+    sort_query = request.args.get("sort")
+    page_number_query = request.args.get("n", type=int)
+    query_per_page = request.args.get("p", type=int)
+
+    if sort_query == "name":
+        if query_per_page is int and page_number_query is int:
+            customers = Customer.query.paginate(page=query_per_page, per_page=page_number_query)   # need to combine with the sort_query here
+        else:
+            customers = Customer.query.order_by("name")
+
+    elif query_per_page is int and page_number_query is int:
+        customers = Customer.query.paginate(page=query_per_page, per_page=page_number_query)
+    else: 
+        customers = Customer.query.order_by("id") 
 
     customers_response = [customer.to_dict() for customer in customers]
 
@@ -35,7 +47,6 @@ def customers_index():
 @customers_bp.route("/<customer_id>", methods=["GET"], strict_slashes=False)
 def get_one_customer(customer_id):
 
-    ### CAN I MAKE A HELPER FUNCTION WITH THIS AS IT COMES UP A LOT???
     if not is_int(customer_id):        
         return {"message": f"ID {customer_id} must be an integer"}, 400
     
@@ -257,30 +268,16 @@ def create_rental():
     if customer_id is None or video_id is None:
         return jsonify(None), 404
 
-    new_rental = Rental(
-        customer_id = customer_id, 
-        video_id = video_id, 
-        checked_out = True        # switches the rental checked_out column to True
-    )               
-    
     # get both customer_id and video_id:
-    customer = Customer.query.get(customer_id)
     video = Video.query.get(video_id)
 
     # If inventory check-out empty:
     if video.available_inventory == 0:
         return jsonify({"details": "Invalid data"}), 400 
 
-    customer.videos_checked_out_count += 1
-    video.available_inventory -= 1
-
-    db.session.add(new_rental)
-    db.session.add(customer)
-    db.session.add(video)  
-    db.session.commit()  
-
+    # separating the business: 
+    new_rental = Rental.checkout(customer_id, video_id)
     rental_dict = new_rental.to_dict()
-
     return jsonify(rental_dict), 200
 
 
@@ -342,38 +339,15 @@ def videos_rented_by_one_customer(customer_id):
     all_rentals_for_customer = db.session.query(Rental).join(Customer, Customer.id==Rental.customer_id)\
             .join(Video, Video.id==Rental.video_id).filter(Customer.id == customer_id).all()
     
-    print(f"All rentals of this video are {all_rentals_for_customer}")                           
-
-
-    # all_customer_videos = []
-    # for rental in all_rentals_for_customer:
-    #     print(rental)
-    #     print(Video.query.get(rental.video_id))
-    #     print(Video.query.get(rental.video_id).title)
-    #     print(Video.query.get(rental.video_id).release_date)
-    #     print(rental.due_date)
-    #     all_customer_videos.append({
-    #         "title": Video.query.get(rental.video_id).title,
-    #         "release_date": Video.query.get(rental.video_id).release_date,
-    #         "due_date": rental.due_date 
-    #     })
-    #     print(f"The videos are {all_customer_videos}")  
-
     all_customer_videos = []
     for rental in all_rentals_for_customer:
         video = Video.query.get(rental.video_id)
-        print(rental)
-        print(video)
-        # all_customer_videos.append(video.to_dict())
         all_customer_videos.append({
             "title": video.title,
             "release_date": video.release_date,
             "due_date": rental.due_date 
         })
-        print(f"The videos are {all_customer_videos}")     
    
-
-    
     return jsonify(all_customer_videos), 200
 
 
@@ -393,45 +367,19 @@ def customers_rented_one_video(video_id):
     all_rentals_for_video = db.session.query(Rental).join(Video, Video.id==Rental.video_id)\
         .join(Customer, Customer.id==Rental.customer_id).filter(Video.id==video_id).all()
 
-    print(f"All rentals of this video are {all_rentals_for_video}")                           
-    
-
-    # all_rentals_response = []
-    # for rental in all_rentals_for_video:
-    #     print(rental)
-    #     print(Customer.query.get(rental.customer_id))
-    #     print(Video.query.get(rental.video_id))
-    #     print(Customer.query.get(rental.customer_id).name)
-    #     print(Customer.query.get(rental.customer_id).postal_code)
-    #     print(Customer.query.get(rental.customer_id).phone)
-    #     print(rental.due_date )
-    #     all_rentals_response.append({
-    #         "name": Customer.query.get(rental.customer_id).name,
-    #         "postal_code": Customer.query.get(rental.customer_id).postal_code,
-    #         "phone": Customer.query.get(rental.customer_id).phone,
-    #         "due_date": rental.due_date 
-    #     })
-    #     print(f"The customers are {all_rentals_response}")     
-
-    ### WHY AM I GETTING A VIDEO THAT IS NOT CHECKED-OUT??? -- I added that column, so the tests are probably not consistent..
 
     all_video_customers = []
     for rental in all_rentals_for_video:
-        customer = Customer.query.get(rental.customer_id)
-        print(rental)
-        print(customer)
-        # all_video_customers.append(customer.to_dict())
+        customer = Customer.query.get(rental.customer_id)        # also try rental.customer 
+
         all_video_customers.append({
             "name": customer.name,
             "postal_code": customer.postal_code,
             "phone": customer.phone,
             "due_date": rental.due_date 
         })
-        print(f"The customers are {all_video_customers}")     
 
-        
     return jsonify(all_video_customers), 200
-
 
 
 

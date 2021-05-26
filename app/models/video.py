@@ -22,7 +22,5 @@ class Video(db.Model):
             "total_inventory": self.total_inventory,
             "available_inventory": self.available_inventory
         }
-        # if self.videos_id:
-        #     make_dict["video_id"] = self.videos_id
-            
+       
         return make_dict
