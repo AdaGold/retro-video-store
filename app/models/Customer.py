@@ -29,10 +29,9 @@ class Customer(db.Model):
             "videos_checked_out_count": self.videos_checked_out_count
         }
 
-    # def check_out(self):
-    #     self.videos_checked_out_count += 1
-    #     self.save()
-
-    # def check_in(self):
-    #     self.videos_checked_out_count -= 1
-    #     self.save()
+    def check_out(self):
+         self.videos_checked_out_count += 1
+        
+    def check_in(self):
+         self.videos_checked_out_count -= 1
+        
