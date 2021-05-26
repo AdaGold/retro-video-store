@@ -2,7 +2,7 @@ from app import db
 from flask import current_app
 from sqlalchemy import DateTime
 from datetime import date, datetime, timedelta
-#make sure you can access the videos with a method in the customer class
+
 class Customer(db.Model):
     __tablename__ = "customers"
     customer_id = db.Column(db.Integer, primary_key=True, autoincrement=True)

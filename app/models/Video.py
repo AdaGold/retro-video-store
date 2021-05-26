@@ -1,6 +1,6 @@
 from app import db
 from flask import current_app
-#from app.models.rentals import rental
+
 
 class Video(db.Model):
     __tablename__ = "videos"

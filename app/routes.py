@@ -5,15 +5,9 @@ from app.models.rentals import Rental
 from flask.json import jsonify
 from app import db
 
-
-#write tests? I can dream
-#results = db.session.query(Foo, Bar, FooBarJoin).join(Foo, Foo.id==FooBarJoin.foo_id)\
-#            .join(Bar, Bar.id==FooBarJoin.bar_id).filter(Foo.id == X).all()
-
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
-
 
 @customers_bp.route("", methods=["GET"], strict_slashes=False)
 def get_customers():
@@ -130,8 +124,6 @@ def rent_video():
     db.session.commit()
     return make_response(this_rental.rental_info(), 200)
     
-
-#all check in videos seem to be *not* passing
 @rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
 def return_video():
     request_body = request.get_json()
@@ -149,8 +141,7 @@ def return_video():
         return make_response({"details": "Invalid Customer"}, 400)
 
     if this_customer.videos_checked_out_count > 0:
-        video.check_in()
-        #this_rental.video.available_inventory += 1 
+        video.check_in() 
         this_customer.videos_checked_out_count -= 1 
         db.session.commit()
         user_msg = this_rental.rental_info()
@@ -169,7 +160,6 @@ def customer_rentals(customer_id):
                             "due_date" : rental.due_date
                             })
     return jsonify(rentals_history), 200
-
 
 @videos_bp.route("/<int:video_id>/rentals", methods=["GET"], strict_slashes=False)
 def video_rentals(video_id):

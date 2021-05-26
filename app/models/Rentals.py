@@ -23,49 +23,7 @@ class Rental(db.Model):
             "videos_checked_out_count": customer.videos_checked_out_count, #customer not and attribbute
             "available_inventory": video.available_inventory
         }
-
-
-
-    # @classmethod
-    # def check_in(cls, customer_id, video_id):
-    #     customer = Customer.query.get(customer_id)
-    #     video = Video.query.get(video_id)
-    #     if customer.videos_check_out_count == 0:
-    #         return make_response({"details": "invalid data"}, 400)
-
-    #     customer.videos_checked_out_count -= 1
-    #     video.available_inventory += 1
-
-    #     db.session.add(customer)
-    #     db.session.add(video)
-
-    #     db.session.commit()
-
-    #     return {
-    #         "customer_id": customer_id,
-    #         "video_id": video_id,
-    #         "videos_checked_out_count": customer.videos_checked_out_count,
-    #         "available_inventory": video.available_inventory
-    #     }
-
-    # @classmethod
-    # def check_out(cls, customer_id, video_id):
-    #     customer = Customer.query.get(customer_id)
-    #     video = Video.query.get(video_id)
+  
 
         
-    #     due_date = datetime.now() + timedelta(days=7)
-    #     new_rental = Rental(
-    #         customer_id= customer.customer_id,
-    #         video_id = video.video_id,
-    #         due_date = due_date 
-    #         )
-        
-    #     customer.videos_checked_out_count += 1
-    #     video.available_inventory -= 1
-        
-    #     db.session.add(new_rental)
-    #     db.session.commit()
-
-    #     return new_rental
 
