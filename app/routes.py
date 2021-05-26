@@ -14,6 +14,9 @@ rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 def not_found():
     return make_response("Not Found", 404)
 
+def invalid_data():
+    return jsonify({"details": "Invalid data"}), 400
+
 
 def customer_not_found(func):
     def inner(id):
@@ -186,8 +189,8 @@ def get_rentals():
     return jsonify(rentals_response), 200
 
 @rentals_bp.route("/check-out", methods=["POST"])
-@customer_not_found
-@video_not_found
+# @customer_not_found
+# @video_not_found
 def handle_rentals_out():
     request_body = request.get_json()
 
@@ -199,6 +202,9 @@ def handle_rentals_out():
 
     video = Video.query.get(video_id)
     customer = Customer.query.get(customer_id)
+
+    if customer is None or video is None:
+        return make_response("Not Found", 404)
 
     # results = db.session.query(Customer, Video, Rental).join(Customer, Customer.id==Rental.customer_id)\
     #     .join(Video, Video.id==Rental.video_id).filter(Customer.id == customer_id).all()
@@ -226,8 +232,8 @@ def handle_rentals_out():
 
 
 @rentals_bp.route("/check-in", methods=["POST"])
-@customer_not_found
-@video_not_found
+# @customer_not_found
+# @video_not_found
 def handle_rentals_in():
     request_body = request.get_json()
 
@@ -239,6 +245,9 @@ def handle_rentals_in():
 
     video = Video.query.get(video_id)
     customer = Customer.query.get(customer_id)
+
+    if customer is None or video is None:
+        return make_response("Not Found", 404)
 
     # results = db.session.query(Customer, Video, Rental).join(Customer, Customer.id==Rental.customer_id)\
     #     .join(Video, Video.id==Rental.video_id).filter(Customer.id == customer_id).all()
