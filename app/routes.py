@@ -32,7 +32,7 @@ def valid_video_input(form_data):
         abort(make_response({"error": "Missing video release_date"},400))
     if "total_inventory" not in form_data:
         abort(make_response({"error": "Missing video total_inventory"},400))
-
+    return True
 
 #routes
 @customers_bp.route("", methods=["GET"])
@@ -125,6 +125,8 @@ def update_video(video_id):
     video.title = form_data["title"]
     video.release_date = form_data["release_date"]
     video.total_inventory = form_data["total_inventory"]
+    #new line below
+    video.available_inventory = form_data["available_inventory"]
     db.session.commit()
     return video.to_dict()
 
