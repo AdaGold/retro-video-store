@@ -11,28 +11,7 @@ customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
-@customers_bp.route("", methods = ["GET"])
-def get_customers():
-    customers = Customer.query.all()
-    customers_response = []
-    if customers is None:
-        return make_response([])
-    for customer in customers:
-        customers_response.append({
-            "id": customer.customer_id,
-            "name": customer.name,
-            "registered_at": customer.register_at,
-            "postal_code": customer.postal_code,
-            "phone": customer.phone_number,
-            "videos_checked_out_count": 0
-        })
-    return jsonify(customers_response)
-
-@customers_bp.route("/<customer_id>", methods = ["GET"])
-def get_one_customer(customer_id):
-    customer = Customer.query.get(customer_id)
-    if customer is None:
-            return make_response({"details": "Customer not found"}, 404)
+def customer_response_helper(customer):
     return {
             "id": customer.customer_id,
             "name": customer.name,
@@ -41,6 +20,39 @@ def get_one_customer(customer_id):
             "phone": customer.phone_number,
             "videos_checked_out_count": 0
         }
+
+def video_response_helper(video):
+    return {
+            "id": video.video_id,
+            "title": video.title,
+            "release_date": video.release_date,
+            "total_inventory": video.total_inventory,
+            "available_inventory": video.available_inventory
+        }
+
+def rentals_response_helper(new_rental, customer, video):
+    return {
+            "customer_id": new_rental.customer_id,
+            "video_id": new_rental.video_id,
+            "due_date": new_rental.due_date,
+            "videos_checked_out_count": customer.videos_checked_out_count,
+            "available_inventory": video.available_inventory
+        }
+
+@customers_bp.route("", methods = ["GET"])
+def get_customers():
+    customers = Customer.query.all()
+    customers_response = []
+    if customers is None:
+        return make_response([])
+    for customer in customers:
+        customers_response.append(customer_response_helper(customer))
+    return jsonify(customers_response)
+
+@customers_bp.route("/<customer_id>", methods = ["GET"])
+def get_one_customer(customer_id):
+    customer = Customer.query.get_or_404(customer_id)
+    return customer_response_helper(customer)
 
 @customers_bp.route("", methods = ["POST"])
 def post_customers():
@@ -70,13 +82,7 @@ def update_customer(customer_id):
     customer.postal_code = form_data["postal_code"]
     customer.phone_number = form_data["phone"]
     db.session.commit()
-    return make_response(jsonify({
-                        "id": customer.customer_id,
-                        "name": customer.name,
-                        "registered_at": customer.register_at,
-                        "postal_code": customer.postal_code,
-                        "phone": customer.phone_number,
-                        "videos_checked_out_count": 0}))
+    return customer_response_helper(customer)
 
 @customers_bp.route("/<customer_id>", methods = ["DELETE"])
 def delete_customer(customer_id):
@@ -94,27 +100,13 @@ def get_videos():
     if videos is None:
         return []
     for video in videos:
-        videos_response.append({
-            "id": video.video_id,
-            "title": video.title,
-            "release_date": video.release_date,
-            "total_inventory": video.total_inventory,
-            "available_inventory": video.available_inventory
-        })
+        videos_response.append(video_response_helper(video))
     return jsonify(videos_response)
 
 @videos_bp.route("/<video_id>", methods = ["GET"])
 def get_one_video(video_id):
-    video = Video.query.get(video_id)
-    if video is None:
-            return make_response({"details": "Video not found"}, 404)
-    return {
-            "id": video.video_id,
-            "title": video.title,
-            "release_date": video.release_date,
-            "total_inventory": video.total_inventory,
-            "available_inventory": video.available_inventory
-        }
+    video = Video.query.get_or_404(video_id)
+    return video_response_helper(video)
 
 @videos_bp.route("", methods = ["POST"])
 def post_videos():
@@ -142,12 +134,7 @@ def update_videos(video_id):
         video.release_date = form_data["release_date"]
         video.total_inventory = form_data["total_inventory"]
         db.session.commit()
-        return make_response(jsonify({
-            "id": video.video_id,
-            "title": video.title,
-            "release_date": video.release_date,
-            "total_inventory": video.total_inventory,
-            "available_inventory" : video.available_inventory }))
+        return video_response_helper(video)
 
 @videos_bp.route("/<video_id>", methods = ["DELETE"])
 def delete_video(video_id):
@@ -173,19 +160,13 @@ def post_rentals_check_out():
 
     video = Video.query.get(new_rental.video_id)
     # customer.videos_checked_out_count += 1
-    # video.available_inventory +=1
+    # video.available_inventory -=1
     db.session.add(new_rental)
     db.session.commit()
     if video.available_inventory == 0:
         return ({"details": "No available inventory"}, 400)
     else:
-            return make_response({
-                "customer_id": new_rental.customer_id,
-                "video_id": new_rental.video_id,
-                "due_date": new_rental.due_date,
-                "videos_checked_out_count": customer.videos_checked_out_count,
-                "available_inventory": video.available_inventory
-            })
+        return rentals_response_helper(new_rental, customer, video)
 
 @rentals_bp.route("/check-in", methods = ["POST"])
 def post_rentals_check_in():
@@ -198,13 +179,7 @@ def post_rentals_check_in():
         video = Video.query.get(new_rental.video_id)
         db.session.add(new_rental)
         db.session.commit()
-        return make_response({
-            "customer_id": new_rental.customer_id,
-            "video_id": new_rental.video_id,
-            "due_date": new_rental.due_date,
-            "videos_checked_out_count": customer.videos_checked_out_count,
-            "available_inventory": video.available_inventory
-        })
+        return rentals_response_helper(new_rental, customer, video)
 
 @customers_bp.route("<customer_id>/rentals", methods = ["GET"])
 def get_customer_checked_out_videos(customer_id):
@@ -216,7 +191,7 @@ def get_customer_checked_out_videos(customer_id):
         list_of_rentals.append({
             "release_date": video.release_date,
             "title": video.title,
-            "due_date": each_rental.due_date     
+            "due_date": each_rental.due_date,    
             })
     return jsonify(list_of_rentals)
 
