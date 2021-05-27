@@ -148,7 +148,15 @@ def update_video(video_id):
         if all(key in form_data for key in ("title", "release_date", "total_inventory")):
             video.title = form_data["title"]
             video.release_date = form_data["release_date"]
+            if video.total_inventory > int(form_data["total_inventory"]):
+                difference = video.total_inventory - int(form_data["total_inventory"])
+                video.available_inventory -= difference
+            else:
+                difference = int(form_data["total_inventory"]) - video.total_inventory
+                video.available_inventory += difference
+            # difference = video.total_inventory - int(form_data["total_inventory"])
             video.total_inventory = form_data["total_inventory"]
+            video.available_inventory - difference
             db.session.commit()
             return video.to_json(), 200
         else:
@@ -186,7 +194,7 @@ def check_out():
             new_rental.due_date = datetime.utcnow() + timedelta(days=7)
             db.session.add(new_rental)
             customer.videos_checked_out_count += 1
-            video.available_inventory = video.total_inventory - 1
+            video.available_inventory -= 1
             db.session.commit()
             return new_rental.to_json(customer, video), 200
 def is_int(value):
@@ -212,6 +220,7 @@ def check_in():
         db.session.commit()
         customer.videos_checked_out_count -= 1
         video.available_inventory += 1
+        db.session.commit()
         return {
             "customer_id": customer_id,
             "video_id": video_id,
