@@ -46,12 +46,18 @@ def update_video(video_id):
     
     if video: 
         update_data = request.get_json() 
-        
+
         keys = ["title", "release_date", "total_inventory"]
         for key in keys: 
             if key not in update_data or bool(update_data) is False:
                 return {"details": "Invalid data"}, 400
 
+        if video.available_inventory == video.total_inventory:
+            video.available_inventory = int(update_data["total_inventory"])
+        else: 
+            video.available_inventory = int(update_data["total_inventory"]) - (video.total_inventory - video.available_inventory)
+        
+        update_data["available_inventory"] = video.available_inventory
         db.session.query(Video).filter(Video.video_id==video_id).update(update_data)
         db.session.commit()
         return jsonify(video.to_json()), 200

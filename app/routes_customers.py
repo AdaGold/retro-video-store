@@ -53,9 +53,11 @@ def update_customer(customer_id):
                 return {"details": "Invalid data"}, 400
 
         db.session.query(Customer).filter(Customer.customer_id==customer_id).update(update_data)
+        # update_data["customer_id"] = customer_id
+        # db.session.query(Customer).update(update_data)
         db.session.commit()
         return jsonify(customer.to_json()), 200
-    
+
     return make_response("", 404)
 
 @customers_bp.route("<int:customer_id>", methods=["DELETE"], strict_slashes=False)

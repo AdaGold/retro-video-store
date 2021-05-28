@@ -31,7 +31,7 @@ def check_out_rentals():
             db.session.commit()
 
             return jsonify(new_rental.check_out_to_json(customer, video)), 200
-    return make_response("", 404)
+    return make_response("Either customer or video does not exist", 404)
 
 @rentals_bp.route("/check-in", methods=["POST"], strict_slashes=False)
 def check_in_rentals(): 
@@ -60,4 +60,4 @@ def check_in_rentals():
             return jsonify(to_json), 200
 
         return {"details": "this rental record does not exist"}, 400
-    return make_response("", 404)
+    return make_response("Either customer or video does not exist", 404)
