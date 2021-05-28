@@ -35,10 +35,8 @@ def valid_id_or_400(input_id):
 
 @customers_bp.route("", methods=["GET"], strict_slashes=False)
 def get_all_customers():
-    
     customers = Customer.query.all()
     cust_response = []
-
     for each_cust in customers:
         cust_response.append(each_cust.convert_to_json())
 
@@ -48,22 +46,18 @@ def get_all_customers():
 
 @customers_bp.route("/<customer_id>", methods=["GET"], strict_slashes=False)
 def get_single_customer(customer_id):
-    
     saved_customer = Customer.query.get_or_404(customer_id)
-
     return make_response(saved_customer.convert_to_json(), 200)
 
 
 @customers_bp.route("", methods=["POST"], strict_slashes=False)
 def add_new_customer():
-
     request_body = request.get_json()
 
     # ❗️ Wish I could have refactored this into a helper method (ran out of time) - I use this code so many times
     if (not request_body) or ("name" not in request_body) or ("postal_code" not in request_body) or ("phone" not in request_body):
         return make_response({ "details": "Invalid data"
         }, 400)
-        
     new_customer = Customer(name=request_body["name"], 
                             postal_code=request_body["postal_code"], 
                             phone=request_body["phone"],
@@ -75,15 +69,10 @@ def add_new_customer():
     return make_response({"id": new_customer.cust_id}, 201)
 
 
-
-
 @customers_bp.route("/<customer_id>", methods=["PUT"], strict_slashes=False)
 def update_customer(customer_id):
-
     saved_customer = Customer.query.get_or_404(customer_id)
-
     request_body = request.get_json()
-
     if (not request_body) or ("name" not in request_body) or ("postal_code" not in request_body) or ("phone" not in request_body):
         return make_response({ "details": "Invalid data"
         }, 400)
@@ -100,14 +89,15 @@ def update_customer(customer_id):
 
 @customers_bp.route("/<customer_id>", methods=["DELETE"], strict_slashes=False)
 def delete_customer(customer_id):
-
     saved_customer = Customer.query.get_or_404(customer_id)
+    rental_records = Rental.query.filter_by(fk_customer_id=customer_id)
 
+    for each_rental in rental_records:
+        db.session.delete(each_rental)
     db.session.delete(saved_customer)
     db.session.commit()
 
     return make_response({"id": saved_customer.cust_id}, 200)
-
 
 
 # VIDEO ENDPOINTS:
@@ -115,7 +105,6 @@ def delete_customer(customer_id):
 
 @videos_bp.route("", methods=["GET"], strict_slashes=False)
 def get_all_videos():
-    
     videos = Video.query.all()
     videos_response = []
 
@@ -126,21 +115,15 @@ def get_all_videos():
     return jsonify(videos_response), 200
 
 
-
 @videos_bp.route("/<video_id>", methods=["GET"], strict_slashes=False)
 def get_single_video(video_id):
-
     saved_video = Video.query.get_or_404(video_id)
-
     return make_response(saved_video.convert_to_json(), 200)
-
 
 
 @videos_bp.route("", methods=["POST"], strict_slashes=False)
 def add_new_video():
-
     request_body = request.get_json()
-
     if (not request_body) or ("title" not in request_body) or ("release_date" not in request_body) or ("total_inventory" not in request_body):
         return make_response({ "details": "Invalid data"
         }, 400)
@@ -157,14 +140,10 @@ def add_new_video():
 
 
 
-
 @videos_bp.route("/<video_id>", methods=["PUT"], strict_slashes=False)
-def update_customer(video_id):
-
+def update_video(video_id):
     saved_video = Video.query.get_or_404(video_id)
-
     request_body = request.get_json()
-
     if (not request_body) or ("title" not in request_body) or ("release_date" not in request_body) or ("total_inventory" not in request_body):
         return make_response({ "details": "Invalid data"
         }, 400)
@@ -178,11 +157,13 @@ def update_customer(video_id):
     return make_response(saved_video.convert_to_json(), 200)
 
 
-
 @videos_bp.route("/<video_id>", methods=["DELETE"], strict_slashes=False)
-def delete_customer(video_id):
-
+def delete_video(video_id):
     saved_video = Video.query.get_or_404(video_id)
+    rental_records = Rental.query.filter_by(fk_video_id=video_id)
+
+    for each_rental in rental_records:
+        db.session.delete(each_rental)
 
     db.session.delete(saved_video)
     db.session.commit()
@@ -267,7 +248,6 @@ def check_in_video():
     rental = Rental.query.get_or_404(rental_record_id)
     rental.due_date = None 
 
-    
     db.session.commit()
 
     return make_response({ "customer_id": updated_cust.cust_id,
@@ -310,7 +290,7 @@ def get_customer_rentals(customer_id):
 
 
 @videos_bp.route("/<video_id>/rentals", methods=["GET"], strict_slashes=False)
-def get_customer_rentals(video_id):
+def get_video_renters(video_id):
 
     current_renters = []
     current_renters_response = []
