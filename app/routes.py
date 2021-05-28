@@ -140,6 +140,8 @@ def get_all_videos():
     if sort_query:
         if sort_query == "title":
             videos = Video.query.order_by(asc(Video.video_title))
+        elif sort_query == "release_date":
+            videos = Video.query.order_by(asc(Video.release_date))
         else:
             return make_400()
     else:
@@ -213,8 +215,6 @@ def get_customers_rentals_by_video(video_id):
             "postal_code": customer.customer_zip ,
             "due_date": rental.due_date
             })
-    if not rental_list:
-        print("We couldn't find the video ID you were looking for. ")
     return jsonify(rental_list), 200
 
 
