@@ -16,14 +16,8 @@ class Customer(db.Model):
     register_at = db.Column(db.DateTime, nullable=True) # nullable=True ??? 
     postal_code = db.Column(db.String) 
     phone = db.Column(db.String) 
-
-    # videos_chekced_out_count =  db.Column(db.Integer, db.ForeignKey("video.video_id"), nullable=True)
     videos_checked_out_count =  db.Column(db.Integer, default=0)
     
-    # videos = db.relationship("Rental", backref="customers", lazy=True)
-    
-
-
     def get_json(self):
         return {
             "id":self.customer_id,
