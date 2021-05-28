@@ -54,6 +54,8 @@ def get_all_customers():
             customers = Customer.query.order_by(asc(Customer.customer_zip))
         elif sort_query == "registered_at":
             customers = Customer.query.order_by(asc(Customer.register_at))
+        elif sort_query == "id":
+            customers = Customer.query.order_by(asc(Customer.customer_id))
         else:
             return make_400()
     else:
@@ -142,6 +144,8 @@ def get_all_videos():
             videos = Video.query.order_by(asc(Video.video_title))
         elif sort_query == "release_date":
             videos = Video.query.order_by(asc(Video.release_date))
+        elif sort_query == "id":
+            videos = Video.query.order_by(asc(Video.video_id))
         else:
             return make_400()
     else:
