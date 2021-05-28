@@ -223,6 +223,17 @@ def get_customers_rentals_by_video(video_id):
 
 
 #/rental endpoints 
+
+@rental_bp.route("", methods=["GET"])
+def get_all_rentals():
+    all_rentals = Rental.query.all()
+    rental_list = []
+    for rental in all_rentals:
+        rental_list.append(rental.to_json())
+
+    return  jsonify(rental_list), 200
+
+
 @rental_bp.route("", methods=["DELETE"])
 def delete_all_rentals():
     all_rentals = Rental.query.all()
