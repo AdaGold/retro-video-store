@@ -12,7 +12,7 @@ class Video(db.Model):
     release_date = db.Column(db.DateTime)
     total_inventory = db.Column(db.Integer) 
     available_inventory = db.Column(db.Integer, default=default_value)
-    # customers = relationship("Rental", back_populates="video")
+    customers = relationship("Rental", back_populates="video", cascade="all, delete")
 
 
     def to_json(self):

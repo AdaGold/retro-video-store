@@ -15,7 +15,7 @@ class Customer(db.Model):
     videos_checked_out_count = db.Column(db.Integer)
 
     #curious about what this is doing and why it works w/o it 
-    # videos = relationship("Rental", back_populates="customer")
+    videos = relationship("Rental", back_populates="customer", cascade="all, delete")
     
 
 

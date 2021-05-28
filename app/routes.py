@@ -213,6 +213,8 @@ def get_customers_rentals_by_video(video_id):
             "postal_code": customer.customer_zip ,
             "due_date": rental.due_date
             })
+    if not rental_list:
+        print("We couldn't find the video ID you were looking for. ")
     return jsonify(rental_list), 200
 
 
@@ -290,6 +292,7 @@ def check_in_video():
         "videos_checked_out_count": customer.videos_checked_out_count, 
         "available_inventory": video.available_inventory
                         }, 200)
+
 
 
 
