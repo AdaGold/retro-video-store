@@ -1,16 +1,17 @@
 from flask import current_app
 from app import db
 from datetime import datetime, date, timedelta
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship
 
 class Rental(db.Model):
     rental_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    customer_id = db.Column(db.Integer, db.ForeignKey('customer.customer_id'), primary_key=True)
-    video_id = db.Column(db.Integer, db.ForeignKey('video.video_id'), primary_key=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey('customer.customer_id'))
+    video_id = db.Column(db.Integer, db.ForeignKey('video.video_id'))
     due_date = db.Column(db.DateTime, default=(datetime.now() + timedelta(days=7)))
 
-    customer = relationship("Customer", backref='video', lazy=True)
-    video = relationship("Video", backref='customer', lazy=True)
+    # go back to the Customers class and bring it back to rentals
+    customer = relationship("Customer", back_populates='rentals', lazy=True)
+    video = relationship("Video", back_populates='rentals', lazy=True)
 
     def rental_info(self):
         return {

@@ -10,7 +10,7 @@ class Customer(db.Model):
     postal_code = db.Column(db.Integer)
     registered_at = db.Column(db.DateTime, nullable = True, default = None)
     videos_checked_out_count = db.Column(db.Integer, autoincrement=False, default=0)
-    rental_id = db.relationship("Rental", backref='customer', lazy=True)
+    rentals = db.relationship('Rental', back_populates='customer', lazy=True)
 
     def customer_info(self):
             return {
