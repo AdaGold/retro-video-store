@@ -10,7 +10,7 @@ class Customer(db.Model):
     registered_at = db.Column(db.DateTime)
     #set videos_checked_out_count equal to len(videos)??
     videos_checked_out_count = db.Column(db.Integer)
-    videos = db.relationship("Rental", back_populates="customer")
+    rentals = db.relationship("Rental", backref="rentals", lazy=True)
     __tablename__ = "customers"
 
     def to_json(self):

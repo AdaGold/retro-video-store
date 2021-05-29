@@ -7,9 +7,8 @@ class Video(db.Model):
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime)
     total_inventory = db.Column(db.Integer)
-    #set available_inventory = self.total_inventory - len(self.customers)??
     available_inventory = db.Column(db.Integer)
-    customers = db.relationship("Rental", back_populates="video")
+    rentals = db.relationship("Rental", backref="rental", lazy=True)
     __tablename__ = "videos"
 
     def to_json(self):
