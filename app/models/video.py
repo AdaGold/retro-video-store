@@ -14,7 +14,7 @@ class Video(db.Model):
 
     def video_info(self):
         return {
-            "id": self.video_id,
+            "video_id": self.video_id,
             "title": self.title,
             "release_date": self.release_date,
             "total_inventory": self.total_inventory,

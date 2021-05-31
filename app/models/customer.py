@@ -14,7 +14,7 @@ class Customer(db.Model):
 
     def customer_info(self):
             return {
-                "id": self.customer_id,
+                "customer_id": self.customer_id,
                 "name": self.name,
                 "phone": self.phone_number,
                 "postal_code": self.postal_code,

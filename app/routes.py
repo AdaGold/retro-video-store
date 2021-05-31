@@ -62,10 +62,12 @@ def update_customer(customer_id):
     request_body = request.get_json()
 
     if customer is None:
-        return make_response("", 404)
+        return make_response("Not Found", 404)
 
-    if ("name" or "postal_code" or "phone") not in customer_data:
-        return make_response({"details": "Invalid data"}, 400) 
+    required_properties = ["name", "postal_code", "phone"]
+    for prop in required_properties:
+        if len(prop)==0 or prop not in request_body:
+            return make_response({"details": "Bad Request"}, 400)
     else:
         customer.name=request_body["name"]
         customer.postal_code=request_body["postal_code"]
@@ -162,16 +164,14 @@ def delete_video(video_id):
 @rental_bp.route("/check-out", methods=["POST"])
 def rental_checkout():
     request_body = request.get_json()
-    customer_id = request_body["customer_id"]
-    video_id = request_body["video_id"]
+    customer = request_body["customer_id"]
+    video = request_body["video_id"]
 
-    customer = Customer.query.get(customer_id)
-
-    if customer is None or video is None:
+    if "customer_id" not in request_body or "video_id" not in request_body
         return make_response({"details": "Not Found"}, 404)
 
     if not isinstance(customer_id, int) or not isinstance(video_id, int):
-        return make_response({"details": "Bad Request"}, 400)
+        return make_response({"details": "Not Found"}, 404)
     
     video = Video.query.get(video_id)
     if video.available_inventory < 1:
@@ -181,10 +181,10 @@ def rental_checkout():
     video.available_inventory -= 1
     # Create this as a person who is renting something new
     new_rental = Rental(customer_id=customer_id,
-                video_id=video_id,
-                due_date=(datetime.now() + timedelta(days=7)))
+                        video_id=video_id,
+                        due_date=(datetime.now() + timedelta(days=7)))
 
-    db.session.delete(new_rental)
+    db.session.add(new_rental)
     db.session.commit()
     
     return jsonify({
