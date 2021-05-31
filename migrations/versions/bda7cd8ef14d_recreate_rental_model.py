@@ -1,7 +1,7 @@
 """recreate rental model
 
 Revision ID: bda7cd8ef14d
-Revises: cb7a59bb35d5
+Revises: 88621cc911cb
 Create Date: 2021-05-19 21:45:34.062999
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'bda7cd8ef14d'
-down_revision = 'cb7a59bb35d5'
+down_revision = '88621cc911cb'
 branch_labels = None
 depends_on = None
 
