@@ -207,7 +207,7 @@ def rental_checkin():
 
     customer = Customer.query.get(customer_id)
     video = Video.query.get(video_id)
-    if customer is None or video is None:
+    if "customer_id" not in request_body or "video_id" not in request_body:
         return make_response({"details": "Not Found"}, 404)
 
     if video and customer in request_body:
@@ -255,15 +255,9 @@ def customers_with_due_date(video_id):
 
     if rentals is None:
         return make_response("", 404)
-
-    customers_with_due_date_list = []
-    for customer in customers:
-        customers_with_due_date_list.append(customer.customer_info())
-
-    return jsonify(customers_with_due_date_list)
-
-        # return make_response({
-        # "due_date": rental.due_date,
-        # "name": customer.phone,
-        # "postal_code": customer.postal_code
-        # }), 200
+    else:
+        return make_response({
+        "due_date": rental.due_date,
+        "name": customer.phone,
+        "postal_code": customer.postal_code
+        }), 200
