@@ -164,14 +164,15 @@ def delete_video(video_id):
 @rental_bp.route("/check-out", methods=["POST"])
 def rental_checkout():
     request_body = request.get_json()
-    customer = request_body["customer_id"]
-    video = request_body["video_id"]
+    customer_id = request_body["customer_id"]
+    video_id = request_body["video_id"]
 
-    if "customer_id" not in request_body or "video_id" not in request_body
-        return make_response({"details": "Not Found"}, 404)
+    customer = Customer.query.get(customer_id)
+    if "customer_id" not in request_body or "video_id" not in request_body:
+        return make_response({"details": "Not Found"}, 400)
 
     if not isinstance(customer_id, int) or not isinstance(video_id, int):
-        return make_response({"details": "Not Found"}, 404)
+        return make_response({"details": "Not Found"}, 400)
     
     video = Video.query.get(video_id)
     if video.available_inventory < 1:
@@ -201,65 +202,68 @@ def rental_checkout():
 @rental_bp.route("/check-in", methods=["POST"])
 def rental_checkin():
     request_body = request.get_json()
-    customer_id = request_body.get("customer_id")
-    video_id = request_body.get("video_id")
-
-    if customer is None or video is None:
-        return make_response({"details": "Not Found"}, 404)
-    
-    if not isinstance(customer_id, int) or not isinstance(video_id, int):
-        return({"details": "Bad Request"}, 400)
+    customer_id = request_body["customer_id"]
+    video_id = request_body["video_id"]
 
     customer = Customer.query.get(customer_id)
     video = Video.query.get(video_id)
-    rental = Rental.query.all()
+    if customer is None or video is None:
+        return make_response({"details": "Not Found"}, 404)
 
-    for rental in customer.video:
-        if rental.video_id == video_id:
-            customer.videos_checked_out_count -= 1
-            video.available_inventory += 1
+    if video and customer in request_body:
+        customer.videos_checked_out_count -= 1
+        video.available_inventory += 1
 
-            db.session.delete(rental)
-            db.session.commit()
-            
-            return jsonify({
-                "customer_id": customer_id,
-                "video_id": video_id,
-                "videos_checked_out_count": customer.videos_checked_out_count,
-                "available_inventory": video.available_inventory
-            }), 200
-
-# List the videos a customer currently has checked out
-# Required arguments is customer_id
-# @rental_bp.route("customers/<customer_id>/rentals", methods=["GET"])
-# def customers_video_rentals(customer_id):
-#     rental = Rental.query.get(customer_id)
-#     rental_data = request.get_json()
-
-#     if rental is None:
-#         return make_response("", 404)
+    db.session.commit()
+    
+    return jsonify({
+        "customer_id": customer_id,
+        "video_id": video_id,
+        "videos_checked_out_count": customer.videos_checked_out_count,
+        "available_inventory": video.available_inventory
+    }), 200
     # else:
-    #     rental.release_date=rental_data["release_date"]
-    #     rental.title=rental_data["title"]
-    #     rental.due_date=rental_data["due_date"]
-
-    #     return make_response(rental.rental_info(), 200)
-
-# List the customers who currently have the video checked out
-# Required arguments is video_id
-# @rental_bp.route("videos/<video_id>/rentals", methods=["GET"])
-# def customers_renting_video(video_id):
-#     rental = Rental.query.get(video_id)
-#     rental_data = request.get_json()
-
-#     if rental is None:
-#         return make_response("", 404)
-    # else:
-    #     # rental.due_date=rental_data["due_date"]
-    #     # rental.name=rental_data["name"]
-    #     # rental.title=rental_data["title"]
-    #     # rental.due_date=rental_data["due_date"]
-        
-    #     return make_response(rental.rental_info(), 200)
+    #     return jsonify({"video and customer do not match a current rental"}, 400)
 
 
+@rental_bp.route("customers/<customer_id>/rentals", methods=["GET"])
+def customers_video_rentals(customer_id):
+    rentals = Rental.query.get(customer_id)
+    customers = Customer.query.get(customer_id)
+    video = Video.query.get(customer_id)
+    video_rental_list = []
+
+    if rentals is None:
+        return make_response("Not Found", 404)
+    
+    for rental in rentals:
+        video = Video.query.get(rental.video_id)
+        video_rental_list.append()
+
+        return make_response({
+        "release_date": video.release_date,
+        "title": video.title,
+        "due_date": rental.due_date
+        }), 200
+
+
+@rental_bp.route("videos/<video_id>/rentals", methods=["GET"])
+def customers_with_due_date(video_id):
+    rentals = Rental.query.get(video_id)
+    customers = Customer.query.get(video_id)
+    video = Video.query.get(video_id)
+
+    if rentals is None:
+        return make_response("", 404)
+
+    customers_with_due_date_list = []
+    for customer in customers:
+        customers_with_due_date_list.append(customer.customer_info())
+
+    return jsonify(customers_with_due_date_list)
+
+        # return make_response({
+        # "due_date": rental.due_date,
+        # "name": customer.phone,
+        # "postal_code": customer.postal_code
+        # }), 200
