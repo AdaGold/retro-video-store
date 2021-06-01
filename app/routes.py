@@ -143,87 +143,93 @@ def get_one_video(video_id):
 # This route will check out a video to a customer, and update the data in the database 
 @rental_bp.route("/check-out", methods=["POST"])
 def checkout_video():
-    request_body = request.get_json()
+    rental = request.get_json()
+## Required Request Body Parameter
 
-    # Required Request Body Parameters
-    customer = Customer.query.get(request_body["customer_id"])
-    video = Video.query.get(request_body["video_id"])
-    # check if customer id and video id are int
-    if type(customer) != int or type(video) != int:
-        return jsonify({"details":"Invalid data"}, 404)    
-    # return back detailed errors/ status 404: Not Found if the customer or video does not exist
-    if customer == None or video == None:
-        return jsonify({"details":"Invalid data"}, 404)
-    # return back detailed errors/status 400: Bad Request if the video does not have any available inventory before check out    
-    if video.available_inventory==0:
-        return jsonify({"details":"Video out of stock"}, 400)    
-    
-    else:
-        new_rental= Rental(customer_id=request_body["customer_id"],
-                    video_id=request_body["video_id"],
-                    due_date=datetime.now() + timedelta(days=7))
-        # i dk how i can return the customer and video inventory ????
-        ## increase the customer's videos_checked_out_count by one
-        customer.videos_checked_out_count += 1
-        ## decrease the video's available_inventory by one
-        video.available_inventory -= 1
-        
-        db.session.add(new_rental)
-        db.session.add(customer)
-        db.session.add(video)
-        db.session.commit()
+#check customer ID and video ID if int
+    if not isinstance(rental["customer_id"], int) or not isinstance(rental["video_id"], int):
+        return {
+            "detail": "Invaid Data. Must be an Integer."
+        }, 400
 
-        return make_response(new_rental.to_json_rental(), 200)     
+    rental_list = Rental(customer_id = rental["customer_id"],
+                        video_id = rental["video_id"],
+                        due_date = datetime.now() + timedelta(days=7))# return in  7 days to datetime.now(current_date)
+
+
+# 404: Not Found if the customer does not exist
+    customer = Customer.query.get(rental_list.customer_id)
+    if customer is None:
+        return "Not Found", 404
+
+# 404: Not Found if the video does not exist
+    video = Video.query.get(rental_list.video_id)
+    if video is None:
+        return "Not Found", 404
+
+    if video.available_inventory <= 0:
+        return {
+            "message": "Invalid data."
+        }, 400
+
+    customer.checkout_count += 1
+    video.available_inventory -= 1
+
+
+    db.session.add(rental_list)
+    db.session.commit()
+
+    return jsonify({
+        "customer_id": rental_list.customer_id,
+        "video_id": rental_list.video_id,
+        "due_date": rental_list.due_date, #7 days from checked out date
+        "videos_checked_out_count": customer.checkout_count,
+        "available_inventory": video.available_inventory 
+    }), 200
+
+
+
 
 # This route checks in a video to a customer, and updates the data in the database
 @rental_bp.route("/check-in", methods=["POST"])
 def customer_check_in():
-    # look up an explanation on what this is doing ????
     request_body = request.get_json()
-    video_id = checkin_list.get(id)
 
-    # Required Request Body Parameters
-    customer = Customer.query.get(request_body["customer_id"])
-    video = Video.query.get(request_body["video_id"])
+    customer_id = request_body.get("customer_id")
+    video_id = request_body.get("video_id")
+    # if the request body is missing any piece 
+    if "customer_id" not in request_body or "video_id" not in request_body:
+        return jsonify({
+                "detail": "Invaid Data."
+                }), 404
+    # verify the customer and video ids are both integers 
+    if not isinstance(request_body["customer_id"], int) or not isinstance(request_body["video_id"], int):
+        return {
+            "detail": "Invaid Data. Must be an Integer."
+        }, 404
+    
+    # accessing each video id -- rental and customer id 
+    customer = Customer.query.get(customer_id)
+    video = Video.query.get(video_id)
 
     for rental in customer.video:
         if rental.video_id == video_id:
-        ## decrease the customer's videos_checked_out_count by one
-            customer.videos_checked_out_count -= 1
-            ## increase the video's available_inventory by one
+            customer.checkout_count -= 1
             video.available_inventory += 1
+            db.session.delete(rental)
             db.session.commit()
-            return make_response(to_json_rental(), 200)  
 
+        return jsonify({
+            "customer_id": customer_id,
+            "video_id": video_id,
+            "videos_checked_out_count": customer.checkout_count,
+            "available_inventory": video.available_inventory
+        }), 200
 
     else:
-        # return back detailed errors/ status 404: Not Found if the customer or video does not exist
-        if customer == None or video == None:
-            return jsonify({"details":"Invalid data"}, 404)
-        # return back detailed errors/status 400: Bad Request if the video and customer do not match a current rental   
-        if video not in Rental.video_id:
-            return jsonify({"details":"Video not checked out to the customer"}, 400)
+        return jsonify({"details": "Invalid data"}), 400
 
 
-## List the videos a customer currently has checked out
-#@customer_bp.route("/<customer_id>/rentals", methods=["GET"])
-#def customer_video(customer_id):
-#    customers = Customer.query.get(customer_id=customer_id)
-#    videos = Video.query.all()
-#        customer_videos = []
-#        for one_video in Customer.videos:
-#            videos_response.append(one_video.to_json_video())
-
-
-
-
-
-### you dont need to use the join, query filter by the columns 
-
-## look at filter by documentation for flask this week 
-## some var already defined, ex video_id = 1, ex, customer_id = 5 
-## Rental.query.filter_by(video_id = video_id, customer_id = customer_id) maybe add .all()
-##  run on this and see what comes out, and then add .all() and see what comesout  
 
 
 
