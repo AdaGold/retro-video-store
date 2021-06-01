@@ -188,10 +188,6 @@ def get_rentals():
     # rentals_response = [rental.to_json() for rental in rentals]
     rentals_response = []
     for rental in rentals:
-        # print("***", rental)
-        # print("***", rental.id)
-        # print("***", rental.customer_id)
-        # print("***", rental.video_id)
         rentals_response.append({
                     "id": rental.id,
                     "customer_id": rental.customer_id,
@@ -316,7 +312,6 @@ def get_video_rentals(id):
                                 "postal_code": customer.postal_code})
 
     return jsonify(rental_response), 200
-
 
 
 
