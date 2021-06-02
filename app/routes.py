@@ -249,13 +249,8 @@ def add_rental_to_customer():
     request_body = request.get_json()
 
     try:
-        # request_body["customer_id"]
-        # request_body["video_id"]
-        # isinstance(request_body["customer_id"], int)
-        # isinstance(request_body["video_id"], int)
         request_body["customer_id"]=int(request_body["customer_id"])
         request_body["video_id"]=int(request_body["video_id"])
-        # video.available_inventory > 0
     except:
         return make_response({
             "details": "Invalid data"
@@ -292,23 +287,10 @@ def customer_returns_rental():
     Return an active Rental
     """
     request_body = request.get_json()
-    # rental = Rental.query.filter_by(video_id=request_body["video_id"],customer_id=request_body["customer_id"]).one_or_none()
-    # rental = Rental.query.get((request_body["customer_id"],request_body["video_id"]))
-    # get the rental id thru query filter 
-    # drop that rental 
-    # customer.videos_checked_out_count -= 1
-    # video.available_inventory += 1
 
-    # if video.available_inventory < 1:
-    #     return make_response(jsonify({
-    #         "details": "Invalid data"
-    #     }), 400)
     try:
         customer_id = int(request_body["customer_id"])
         video_id = int(request_body["video_id"])
-        # video.available_inventory < video.total_inventory
-        # video.available_inventory < 1
-        # rental != None
     except ValueError or KeyError:
         return make_response(jsonify({
             "details": "Invalid data"
@@ -316,7 +298,6 @@ def customer_returns_rental():
 
     customer = Customer.query.get_or_404(request_body["customer_id"])
     video = Video.query.get_or_404(request_body["video_id"])
-    # rental = Rental.query.get((request_body["customer_id"],request_body["video_id"]))
     rental = Rental.query.filter_by(video_id=request_body["video_id"],customer_id=request_body["customer_id"]).one_or_none()
     if rental is None: 
         return make_response(jsonify({
@@ -334,7 +315,7 @@ def customer_returns_rental():
         "available_inventory": video.available_inventory
     }, 200)
 
-# do i put this route in custmer routes?? 
+
 @customers_bp.route("/<int:customer_id>/rentals", methods=["GET"])
 def get_all_current_rentals_by_id(customer_id):
     """
@@ -342,17 +323,8 @@ def get_all_current_rentals_by_id(customer_id):
     """
     customer = Customer.query.get(customer_id)
 
-    # rentals should be all the instances of videos checked out by customer id?? 
-    # rentals = db.session.query(Customer, Video, Rental).join(Customer,Customer.customer_id==Rental.customer_id).join(Video, Video.video_id==Rental.video_id).filter(Customer.customer_id == customer_id).all()
-    # print(type(rentals)) # returned a list 
-    # print(rentals)
-    # get all the rentals?
     rentals = customer.videos
-    print(rentals) # this is a list of objects of rental class! thats why to_json
     rentals_list = []
-    # create a list called rentals_response and list comprehension here
-    # there is not to_json() for this object-- what is rentals a object of? not video?? 
-    # rentals_response = [rental for rental in rentals]
     for rental in rentals: 
         video = Video.query.get(rental.video_id)
         rentals_list.append({"title":video.title,
@@ -362,7 +334,6 @@ def get_all_current_rentals_by_id(customer_id):
     return jsonify(rentals_list)
 
 
-# do i put this route in video routes?? 
 @videos_bp.route("/<int:video_id>/rentals", methods=["GET"])
 def get_all_current_rentals_by_id(video_id):
     """
@@ -370,7 +341,6 @@ def get_all_current_rentals_by_id(video_id):
     """
     video = Video.query.get(video_id)
     renters = video.customers
-    # print(rentals) # this is a list of objects of rental class! thats why to_json
 
     customers_list = []
     for renter in renters: 
