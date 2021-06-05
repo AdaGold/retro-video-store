@@ -2,12 +2,9 @@ from flask import Blueprint, request, make_response, jsonify
 from sqlalchemy import asc, desc
 from app import db
 from app.models.customer import Customer
-from app.models.video import Video 
+from app.models.video import Video
 from app.models.rental import Rental
 from datetime import datetime
-import requests
-import os
-import random
 
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
@@ -70,8 +67,8 @@ def add_new_customer():
         }), 400)
 
     new_customer = Customer(name=request_body["name"],
-                    postal_code=request_body["postal_code"],
-                    phone=request_body["phone"])
+                            postal_code=request_body["postal_code"],
+                            phone=request_body["phone"])
 
     db.session.add(new_customer)
     db.session.commit()
@@ -117,7 +114,7 @@ def delete_customer_by_id(customer_id):
 
     if customer is None:
         return make_response("Customer not found", 404)
-    
+
     db.session.delete(customer)
     db.session.commit()
 
@@ -163,6 +160,7 @@ def get_video_by_id(video_id):
     video_response = video.to_json()
     return video_response
 
+
 @videos_bp.route("", methods=["POST"])
 def add_new_video():
     """
@@ -180,8 +178,8 @@ def add_new_video():
         }), 400)
 
     new_video = Video(title=request_body["title"],
-                    release_date=request_body["release_date"],
-                    total_inventory=request_body["total_inventory"])
+                      release_date=request_body["release_date"],
+                      total_inventory=request_body["total_inventory"])
 
     db.session.add(new_video)
     db.session.commit()
@@ -227,7 +225,7 @@ def delete_video_by_id(video_id):
 
     if video is None:
         return make_response("Video not found", 404)
-    
+
     db.session.delete(video)
     db.session.commit()
 
@@ -249,8 +247,8 @@ def add_rental_to_customer():
     request_body = request.get_json()
 
     try:
-        request_body["customer_id"]=int(request_body["customer_id"])
-        request_body["video_id"]=int(request_body["video_id"])
+        request_body["customer_id"] = int(request_body["customer_id"])
+        request_body["video_id"] = int(request_body["video_id"])
     except:
         return make_response({
             "details": "Invalid data"
@@ -262,13 +260,13 @@ def add_rental_to_customer():
     customer.videos_checked_out_count += 1
     video.available_inventory -= 1
 
-    if video.available_inventory < 0: 
+    if video.available_inventory < 0:
         return make_response(jsonify({
             "error": "No available inventory"
         }), 400)
 
     new_rental = Rental(customer_id=request_body["customer_id"],
-                    video_id=request_body["video_id"])
+                        video_id=request_body["video_id"])
     db.session.add(new_rental)
     db.session.commit()
 
@@ -298,10 +296,11 @@ def customer_returns_rental():
 
     customer = Customer.query.get_or_404(request_body["customer_id"])
     video = Video.query.get_or_404(request_body["video_id"])
-    rental = Rental.query.filter_by(video_id=request_body["video_id"],customer_id=request_body["customer_id"]).one_or_none()
-    if rental is None: 
+    rental = Rental.query.filter_by(
+        video_id=request_body["video_id"], customer_id=request_body["customer_id"]).one_or_none()
+    if rental is None:
         return make_response(jsonify({
-            "details": "Invalid data" }), 400)
+            "details": "Invalid data"}), 400)
 
     customer.videos_checked_out_count -= 1
     video.available_inventory += 1
@@ -325,11 +324,11 @@ def get_all_current_rentals_by_id(customer_id):
 
     rentals = customer.videos
     rentals_list = []
-    for rental in rentals: 
+    for rental in rentals:
         video = Video.query.get(rental.video_id)
-        rentals_list.append({"title":video.title,
-                            "due_date":rental.due_date,
-                            "release_date":video.release_date})
+        rentals_list.append({"title": video.title,
+                             "due_date": rental.due_date,
+                             "release_date": video.release_date})
 
     return jsonify(rentals_list)
 
@@ -343,12 +342,11 @@ def get_all_current_rentals_by_id(video_id):
     renters = video.customers
 
     customers_list = []
-    for renter in renters: 
+    for renter in renters:
         customer = Customer.query.get(renter.customer_id)
-        customers_list.append({"name":customer.name,
-                            "due_date":renter.due_date,
-                            "phone":customer.phone,
-                            "postal_code":customer.postal_code})
+        customers_list.append({"name": customer.name,
+                               "due_date": renter.due_date,
+                               "phone": customer.phone,
+                               "postal_code": customer.postal_code})
 
     return jsonify(customers_list)
-

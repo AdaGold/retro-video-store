@@ -1,7 +1,7 @@
 from flask import current_app
-from app import db 
+from app import db
 from sqlalchemy import Table, Column, Integer, ForeignKey
-from sqlalchemy.orm import relationship 
+from sqlalchemy.orm import relationship
 
 
 def default_available_inventory(context):
@@ -14,11 +14,12 @@ class Video(db.Model):
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime, nullable=True)
     total_inventory = db.Column(db.Integer, default=0)
-    available_inventory = db.Column(db.Integer, default=default_available_inventory)
+    available_inventory = db.Column(
+        db.Integer, default=default_available_inventory)
     customers = relationship("Rental", back_populates="video")
 
-    def to_json(self): 
-        serialized = {     
+    def to_json(self):
+        serialized = {
             "id": self.video_id,
             "title": self.title,
             "release_date": self.release_date,
