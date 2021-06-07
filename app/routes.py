@@ -3,11 +3,13 @@ from flask import Blueprint, json, make_response, request, jsonify
 from app import db
 from app.models.customer import Customer
 from app.models.video import Video
+from app.models.rental import Rental
 import os
 import requests
 
 customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
 videos_bp = Blueprint("videos", __name__, url_prefix="/videos")
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
                                        ### Crud Customers ###
 #decided to combine the post and get.
@@ -149,4 +151,68 @@ def video_func(video_id):
         db.session.commit()
 
         return { "id": video.video_id}, 200
-        
+    
+                            ######## CRUD RENTAL ########
+
+@rentals_bp.route("/check-out", methods = ["POST"])
+def video_check_out():
+    request_body = request.get_json()
+
+    if "video_id" not in request_body or "customer_id" not in request_body:
+        return make_response({"details":"invalid info"}, 400)
+
+    if not isinstance(request_body["video_id"], int) or not isinstance(request_body["customer_id"], int):
+        return make_response({"details":"invalid info"}, 400)
+
+    video = Video.query.get_or_404(request_body["video_id"])
+    customer = Customer.query.get_or_404(request_body["customer_id"])
+
+    
+    if video.available_inventory == None:
+        return make_response({"details":"inventory unavailable"}, 400)
+    video.available_inventory -=1
+    customer.videos_checked_out_count +=1
+    
+    rental = Rental (
+        customer_id = request_body["customer_id"],
+        video_id = request_body["video_id"]
+        )
+    db.session.add(video)
+    db.session.add(customer)
+    db.session.add(rental)      
+    db.session.commit()
+    return jsonify(
+        rental.rental_ops()
+    ), 200
+
+@rentals_bp.route("/check-in", methods = ["POST"])
+def video_check_in():
+    request_body = request.get_json()
+
+    if "video_id" not in request_body or "customer_id" not in request_body:
+        return make_response({"details":"invalid info"}, 400)
+
+    if not isinstance(request_body["video_id"], int) or not isinstance(request_body["customer_id"], int):
+        return make_response({"details":"invalid info"}, 400)
+
+    video = Video.query.get_or_404(request_body["video_id"])
+    customer = Customer.query.get_or_404(request_body["customer_id"])
+    if video.available_inventory == None:
+        video.available_inventory = 1
+    else:
+        video.available_inventory +=1
+    customer.videos_checked_out_count -=1
+    
+    rental = Rental (
+        customer_id = request_body["customer_id"],
+        video_id = request_body["video_id"]
+        )
+    json_body = rental.rental_ops()
+    db.session.add(video)
+    db.session.add(customer)  
+    # db.session.delete(rental) 
+    db.session.commit()
+    
+    return jsonify(
+        json_body
+    ), 200

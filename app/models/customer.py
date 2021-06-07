@@ -4,18 +4,15 @@ from datetime import datetime
 
 
 class Customer(db.Model):
+    __tablename__ = "customers"
     customer_id = db.Column(db.Integer, primary_key = True, autoincrement = True)
     name = db.Column(db.String)
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
-    registered_at = db.Column(db.DateTime)
-    videos_checked_out_count = db.Column(db.Integer)
+    registered_at = db.Column(db.DateTime, default=datetime.now(), nullable=True)
+    videos_checked_out_count = db.Column(db.Integer, default = 0)
 
     def resp_json(self):
-        if self.registered_at:
-            register = datetime.datetime(self.registered_at)
-        else:
-            register = None
         customer_info = {
             "id": self.customer_id,
             "name": self.name,
