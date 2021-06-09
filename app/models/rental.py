@@ -1,7 +1,5 @@
 from flask import current_app
 from app import db
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relationship
 
 class Rental(db.Model): 
     id = db.Column(db.Integer, primary_key=True)
