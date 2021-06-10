@@ -9,8 +9,8 @@ class Video(db.Model):
     video_id = db.Column(db.Integer, primary_key = True, autoincrement = True) 
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime)
-    total_inventory = db.Column(db.Integer)
-    available_inventory = db.Column(db.Integer)
+    total_inventory = db.Column(db.Integer, autoincrement = True)
+    available_inventory = db.Column(db.Integer, default = 2)
 
     def resp_json(self):
         if self.release_date:

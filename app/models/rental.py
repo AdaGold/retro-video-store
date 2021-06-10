@@ -10,7 +10,7 @@ class Rental(db.Model):
     id = db.Column(db.Integer, primary_key = True, autoincrement = True)
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.customer_id"), primary_key = True)
     video_id = db.Column(db.Integer, db.ForeignKey("videos.video_id"), primary_key = True)
-    due_date = db.Column(db.DateTime, default=(datetime.now() + timedelta(7)))
+    due_date = db.Column(db.DateTime, default=(datetime.now() + timedelta(7)), nullable = True)
 
     def rental_ops(self):
         rental_dict = {
@@ -21,8 +21,6 @@ class Rental(db.Model):
             "available_inventory": Video.query.get(self.video_id).available_inventory
         }
         return rental_dict
-
-
 
 
 

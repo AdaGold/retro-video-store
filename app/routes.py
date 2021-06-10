@@ -168,7 +168,7 @@ def video_check_out():
     customer = Customer.query.get_or_404(request_body["customer_id"])
 
     
-    if video.available_inventory == None:
+    if video.available_inventory < 1:
         return make_response({"details":"inventory unavailable"}, 400)
     video.available_inventory -=1
     customer.videos_checked_out_count +=1
@@ -177,8 +177,7 @@ def video_check_out():
         customer_id = request_body["customer_id"],
         video_id = request_body["video_id"]
         )
-    db.session.add(video)
-    db.session.add(customer)
+    
     db.session.add(rental)      
     db.session.commit()
     return jsonify(
@@ -197,22 +196,38 @@ def video_check_in():
 
     video = Video.query.get_or_404(request_body["video_id"])
     customer = Customer.query.get_or_404(request_body["customer_id"])
+    # rental = Rental.get_by_video_and_customer_id(customer_id = request_body["customer_id"], video_id = request_body["video_id"])
+
+    rentals = Rental.query.all()
+    rentals = filter(lambda x : get_by_customer_id(x, request_body["customer_id"]), rentals)
+    rentals = filter(lambda x : get_by_video_id(x, request_body["video_id"]), rentals)
+    rentals = list(rentals)
+
+    if len(rentals) < 1:
+        return make_response({"details":"invalid info"}, 400)
+    rental = rentals[0]
+
+
     if video.available_inventory == None:
         video.available_inventory = 1
     else:
         video.available_inventory +=1
+
     customer.videos_checked_out_count -=1
     
-    rental = Rental (
-        customer_id = request_body["customer_id"],
-        video_id = request_body["video_id"]
-        )
     json_body = rental.rental_ops()
-    db.session.add(video)
-    db.session.add(customer)  
-    # db.session.delete(rental) 
+    db.session.delete(rental) 
     db.session.commit()
     
     return jsonify(
         json_body
     ), 200
+
+
+def get_by_customer_id(item, customer_id):
+    return item.customer_id == customer_id
+
+def get_by_video_id(item, video_id):
+    return item.video_id == video_id
+
+
