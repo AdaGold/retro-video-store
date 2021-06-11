@@ -14,11 +14,11 @@ class Rental(db.Model):
 
     def rental_ops(self):
         rental_dict = {
-            "customer_id":self.customer_id,
-            "video_id:":self.video_id,
-            "due_date": self.due_date,
-            "videos_checked_out_count": Customer.query.get(self.customer_id).videos_checked_out_count,
-            "available_inventory": Video.query.get(self.video_id).available_inventory
+            'customer_id':self.customer_id,
+            'video_id:':self.video_id,
+            'due_date': self.due_date,
+            'videos_checked_out_count': Customer.query.get(self.customer_id).videos_checked_out_count,
+            'available_inventory': Video.query.get(self.video_id).available_inventory
         }
         return rental_dict
 
