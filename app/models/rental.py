@@ -20,6 +20,7 @@ class Rental(db.Model):
             'videos_checked_out_count': Customer.query.get(self.customer_id).videos_checked_out_count,
             'available_inventory': Video.query.get(self.video_id).available_inventory
         }
+        print(Customer.query.get(self.customer_id).videos_checked_out_count)
         return rental_dict
 
 

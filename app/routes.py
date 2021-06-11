@@ -180,9 +180,7 @@ def video_check_out():
     
     db.session.add(rental)      
     db.session.commit()
-    return jsonify(
-        rental.rental_ops()
-    ), 200
+    return rental.rental_ops(), 200
 
 @rentals_bp.route("/check-in", methods = ["POST"])
 def video_check_in():
