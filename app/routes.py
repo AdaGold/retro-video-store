@@ -13,3 +13,7 @@ import requests
 video_bp = Blueprint("video_bp", __name__, url_prefix="/videos")
 customer_bp = Blueprint("customer_bp", __name__, url_prefix="/customers")
 rental_bp = Blueprint("rental_bp", __name__, url_prefix="/rentals")
+
+
+#Roslyn: Customer
+#Areeba: Video 
