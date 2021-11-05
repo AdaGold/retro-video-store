@@ -17,3 +17,5 @@ rental_bp = Blueprint("rental_bp", __name__, url_prefix="/rentals")
 
 #Roslyn: Customer
 #Areeba: Video 
+
+# extra note
