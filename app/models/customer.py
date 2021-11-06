@@ -10,10 +10,10 @@ class Customer(db.Model):
 
 
     def to_dict(self):
-        # is_complete = False if not self.completed_at else True
         return {
                 "name": self.name,
                 "id": self.id,
                 "phone": self.phone,
                 "postal_code": str(self.postal_code)
                 }
+
