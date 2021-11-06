@@ -14,13 +14,14 @@ video_bp = Blueprint("video_bp", __name__, url_prefix="/videos")
 customer_bp = Blueprint("customer_bp", __name__, url_prefix="/customers")
 rental_bp = Blueprint("rental_bp", __name__, url_prefix="/rentals")
 
+customer_keys = ["name", "phone", "postal_code"]
 
 #Roslyn: Customer
 @customer_bp.route("", methods=["GET", "POST"])
 def handle_customers():
     customer_response = []
     if request.method == "GET":
-        if request.args.get("sort") == "asc":
+        if request.args.get("sort") == "asc": # We can delete "asc" and "desc" sorting if you want, I just carried it over from the task proj
             customers = Customer.query.order_by(Customer.title.asc())
         elif request.args.get("sort") == "desc":
             customers = Customer.query.order_by(Customer.title.desc())
@@ -30,9 +31,37 @@ def handle_customers():
         return jsonify(customer_response), 200
     elif request.method == "POST":
         request_body = request.get_json()
-        is_complete = check_customer_post(request_body)
+        is_complete = check_data(customer_keys, request_body)
+        return is_complete if is_complete else create_customer(request_body)
+
+@customer_bp.route("/<customer_id>", methods=["GET", "DELETE", "PUT"])
+def handle_customer(customer_id):
+    if not customer_id.isnumeric():
+        return make_response({"message" : "Please enter a valid customer id"}, 400)
+    customer = Customer.query.get(customer_id)
+    if request.method == "GET":
+        return not_found_response("Customer", customer_id) if not customer else make_response(customer.to_dict(),200)
+    elif request.method == "DELETE":
+        if not customer:
+            return not_found_response("Customer", customer_id)
+        db.session.delete(customer)
+        db.session.commit()
+        return make_response({"id": int(customer_id)}, 200)
+    elif request.method == "PUT":
+        if not customer:
+            return not_found_response("Customer", customer_id)
+        request_body = request.get_json()
+        is_complete = check_data(customer_keys, request_body)
         if is_complete:
             return is_complete
+        customer.name = request_body["name"]
+        customer.phone = request_body["phone"]
+        customer.postal_code = request_body["postal_code"]
+        db.session.commit()
+        return make_response(customer.to_dict(), 200)
+
+
+def create_customer(request_body):
         new_customer = Customer(name=request_body["name"],
                             phone=request_body["phone"], 
                             postal_code=request_body["postal_code"],
@@ -41,43 +70,16 @@ def handle_customers():
         db.session.commit()
         return make_response(new_customer.to_dict(), 201)
 
-@customer_bp.route("/<customer_id>", methods=["GET", "DELETE", "PUT"])
-def handle_customer(customer_id):
-    if not customer_id.isnumeric():
-        return make_response({"message" : "Please enter a valid customer id"}, 400)
-    customer = Customer.query.get(customer_id)
-    if request.method == "GET":
-        if not customer:
-            return make_response({"message" : f"Customer {customer_id} was not found"}, 404)
-        return make_response(customer.to_dict(),200)
-    elif request.method == "DELETE":
-        if not customer:
-            return make_response({"message" : f"Customer {customer_id} was not found"}, 404)
-        db.session.delete(customer)
-        db.session.commit()
-        return make_response({"id": int(customer_id)}, 200)
-    elif request.method == "PUT":
-        if not customer:
-            return make_response({"message" : f"Customer {customer_id} was not found"}, 404)
-        request_body = request.get_json()
-        customer.name = request_body["name"] if "name" in request_body else customer.name
-        customer.phone = request_body["phone"] if "phone" in request_body else customer.phone
-        customer.postal_code = request_body["postal_code"] if "postal_code" in request_body else customer.postal_code
-        db.session.commit()
-        return make_response({"customer": customer.to_dict()}, 200)
+
+def check_data(check_items, request_body): # Areeba - I think you could use this to check video "PUT" and "POST" request data too
+    for key in check_items:
+        if key not in request_body.keys():
+            return make_response({"details": f"Request body must include {key}."}, 400)
+    return False
 
 
-def check_customer_post(request_body):
-    if "name" not in request_body:
-        return make_response({"details": "Request body must include name."}, 400)
-    elif "phone" not in request_body:
-        return make_response({"details": "Request body must include phone."}, 400)
-    elif "postal_code" not in request_body:
-            return make_response({"details": "Request body must include postal_code."}, 400)
-    else:
-        return False
-
+def not_found_response(entity, id): # Areeba - you could use this and fill in "Video" as the "entity" parameter, or if you think this method is confusing or clunky, we can forego this function
+    return make_response({"message" : f"{entity} {id} was not found"}, 404)
 
 #Areeba: Video 
 
-# extra note
