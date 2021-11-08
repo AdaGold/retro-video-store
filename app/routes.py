@@ -14,17 +14,21 @@ video_bp = Blueprint("video_bp", __name__, url_prefix="/videos")
 customer_bp = Blueprint("customer_bp", __name__, url_prefix="/customers")
 rental_bp = Blueprint("rental_bp", __name__, url_prefix="/rentals")
 
+
+#----------------------------------------------------------------------------------#
+#---------------------------  Customer Endpoints    -------------------------------#
+#----------------------------------------------------------------------------------#
+
 customer_keys = ["name", "phone", "postal_code"]
 
-#Roslyn: Customer
-@customer_bp.route("", methods=["GET"]) #Roslyn - I think we should break the functions up for each method
+@customer_bp.route("", methods=["GET"]) 
 def read_customers():
     customer_response = []
     customers = sort_titles(request.args.get("sort"), Customer)
     customer_response = [customer.to_dict() for customer in customers]
     return jsonify(customer_response), 200
 
-@customer_bp.route("", methods=["POST"]) #Roslyn - I think we should break the functions up for each method
+@customer_bp.route("", methods=["POST"])
 def create_customer():
     request_body = request.get_json()
     is_complete = check_data(customer_keys, request_body)
@@ -68,28 +72,9 @@ def update_a_customer(customer_id):
     db.session.commit()
     return make_response(customer.to_dict(), 200)
 
-def create_customer(request_body):
-        new_customer = Customer(name=request_body["name"],
-                            phone=request_body["phone"], 
-                            postal_code=request_body["postal_code"],
-                            register_at=datetime.utcnow())
-        db.session.add(new_customer)
-        db.session.commit()
-        return make_response(new_customer.to_dict(), 201)
-
-
-def check_data(check_items, request_body): # Areeba - I think you could use this to check video "PUT" and "POST" request data too
-    for key in check_items:
-        if key not in request_body.keys():
-            return make_response({"details": f"Request body must include {key}."}, 400)
-    return False
-
-
-def not_found_response(entity, id): # Areeba - you could use this and fill in "Video" as the "entity" parameter, or if you think this method is confusing or clunky, we can forego this function
-    return make_response({"message" : f"{entity} {id} was not found"}, 404)
-
 #----------------------------------------------------------------------------------#
-#Areeba: Video 
+#---------------------------   Video Endpoints      -------------------------------#
+#----------------------------------------------------------------------------------#
 
 video_keys = ["title", "release_date", "total_inventory"]
 
@@ -189,3 +174,25 @@ def delete_video(video_id):
     response = {"id": video.id}
     return make_response(response, 200)
 
+#----------------------------------------------------------------------------------#
+#---------------------------    Helper Functions    -------------------------------#
+#----------------------------------------------------------------------------------#
+def create_customer(request_body):
+        new_customer = Customer(name=request_body["name"],
+                            phone=request_body["phone"], 
+                            postal_code=request_body["postal_code"],
+                            register_at=datetime.utcnow())
+        db.session.add(new_customer)
+        db.session.commit()
+        return make_response(new_customer.to_dict(), 201)
+
+
+def check_data(check_items, request_body): # Areeba - I think you could use this to check video "PUT" and "POST" request data too
+    for key in check_items:
+        if key not in request_body.keys():
+            return make_response({"details": f"Request body must include {key}."}, 400)
+    return False
+
+
+def not_found_response(entity, id): # Areeba - you could use this and fill in "Video" as the "entity" parameter, or if you think this method is confusing or clunky, we can forego this function
+    return make_response({"message" : f"{entity} {id} was not found"}, 404)
