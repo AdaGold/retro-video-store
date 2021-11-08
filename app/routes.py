@@ -5,7 +5,7 @@ from app.models.video import Video
 from app.models.customer import Customer
 from app.models.rental import Rental
 from flask import request, Blueprint, make_response, jsonify
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
 import requests
@@ -36,7 +36,7 @@ def create_customer():
 
 @customer_bp.route("/<customer_id>", methods=["GET"])
 def read_a_customer(customer_id):
-    response = id_check(customer_id)
+    response = id_check(customer_id)  # I need to go back and see if i can consolidate this
     if response:
         return response
     customer = Customer.query.get(customer_id)
@@ -45,7 +45,7 @@ def read_a_customer(customer_id):
 @customer_bp.route("/<customer_id>", methods=["DELETE"])
 def delete_a_customer(customer_id):
     response = id_check(customer_id)
-    if response:
+    if response: # I need to go back and see if i can consolidate this
         return response
     customer = Customer.query.get(customer_id)
     if not customer:
@@ -57,7 +57,7 @@ def delete_a_customer(customer_id):
 @customer_bp.route("/<customer_id>", methods=["PUT"])
 def update_a_customer(customer_id):
     response = id_check(customer_id)
-    if response:
+    if response: # I need to go back and see if i can consolidate this
         return response
     customer = Customer.query.get(customer_id)
     if not customer:
@@ -72,6 +72,14 @@ def update_a_customer(customer_id):
     db.session.commit()
     return make_response(customer.to_dict(), 200)
 
+# @customer_bp.route("/<customer_id>/rentals", methods=["GET"])
+# def read_a_customer(customer_id):
+#     response = id_check(customer_id)  # I need to go back and see if i can consolidate this
+#     if response:
+#         return response
+#     customers = Customer.query.all(customer_id)
+#     return not_found_response("Customer", customer_id) if not customer else make_response(customer.to_dict(),200)
+    
 #----------------------------------------------------------------------------------#
 #---------------------------   Video Endpoints      -------------------------------#
 #----------------------------------------------------------------------------------#
@@ -107,21 +115,6 @@ def create_video():
         db.session.commit()
         return make_response(new_video.to_dict(), 201)
 
-def sort_titles(sort_by, entity):
-    #Thinking about making this a very generic function to sort anything with a simple order_by 
-    if sort_by == "asc": 
-        sorted = entity.query.order_by(entity.title.asc())
-    elif sort_by == "desc":
-        sorted = entity.query.order_by(entity.title.desc())
-    else:
-        sorted = entity.query.all()
-    return sorted
-
-def sort_dates(sort_by):
-    #May want to use this for release_dates if sort_titles can'st be made generic?
-    pass 
-
-
 @video_bp.route("/<video_id>", methods=["GET"])
 def read_a_video(video_id):
     if not video_id.isnumeric():
@@ -129,12 +122,6 @@ def read_a_video(video_id):
     
     video = Video.query.get(video_id)
     return not_found_response("Video", video_id) if not video else make_response(video.to_dict(),200)
-
-def id_check(id):
-    # DRYing code
-    response = make_response({"message" : "Please enter a valid customer id"}, 400)
-    return response if not id.isnumeric() else False
-
 
 @video_bp.route("/<video_id>", methods=["PUT"])
 def update_video(video_id):
@@ -158,7 +145,6 @@ def update_video(video_id):
     db.session.commit()
     return make_response(video.to_dict(), 200)
     
-
 @video_bp.route("/<video_id>", methods=["DELETE"])
 def delete_video(video_id):
     if not video_id.isnumeric():
@@ -175,6 +161,18 @@ def delete_video(video_id):
     return make_response(response, 200)
 
 #----------------------------------------------------------------------------------#
+#---------------------------   Rental Endpoints     -------------------------------#
+#----------------------------------------------------------------------------------#
+rental_keys = ["customer_id", "video_id"]
+
+@rental_bp.route("/check-out", methods=["POST"])
+def create_rental():
+    request_body = request.get_json()
+    is_complete = check_data(rental_keys, request_body)
+    return is_complete if is_complete else create_rental(request_body)
+
+
+#----------------------------------------------------------------------------------#
 #---------------------------    Helper Functions    -------------------------------#
 #----------------------------------------------------------------------------------#
 def create_customer(request_body):
@@ -186,13 +184,47 @@ def create_customer(request_body):
         db.session.commit()
         return make_response(new_customer.to_dict(), 201)
 
+def create_rental(request_body):
+    video_id = request_body["video_id"]
+    customer_id = request_body["customer_id"]
+    video = Video.query.get(video_id)
+    customer = Customer.query.get(customer_id)
+    if not video:
+        return not_found_response("Video", video_id)
+    if not customer:
+        return not_found_response("Custmer", customer_id)
+    if video.total_inventory > 1:
+        inventory_available = video.total_inventory - 1
+        video.inventory_checked_out += 1
+    else: 
+        return make_response({"message": "Could not perform checkout"}, 400)
+    due_date = datetime.utcnow() + timedelta(7)
+    new_rental = Rental(video_id=video_id, customer_id=customer_id, due_date=due_date)
+    return make_response(new_rental.to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
 
-def check_data(check_items, request_body): # Areeba - I think you could use this to check video "PUT" and "POST" request data too
+def check_data(check_items, request_body): 
     for key in check_items:
         if key not in request_body.keys():
             return make_response({"details": f"Request body must include {key}."}, 400)
     return False
 
-
-def not_found_response(entity, id): # Areeba - you could use this and fill in "Video" as the "entity" parameter, or if you think this method is confusing or clunky, we can forego this function
+def not_found_response(entity, id): 
     return make_response({"message" : f"{entity} {id} was not found"}, 404)
+
+def id_check(id):
+    response = make_response({"message" : "Please enter a valid customer id"}, 400)
+    return response if not id.isnumeric() else False
+
+def sort_titles(sort_by, entity):
+    #Thinking about making this a very generic function to sort anything with a simple order_by 
+    if sort_by == "asc": 
+        sorted = entity.query.order_by(entity.title.asc())
+    elif sort_by == "desc":
+        sorted = entity.query.order_by(entity.title.desc())
+    else:
+        sorted = entity.query.all()
+    return sorted
+
+def sort_dates(sort_by):
+    #May want to use this for release_dates if sort_titles can'st be made generic?
+    pass 
