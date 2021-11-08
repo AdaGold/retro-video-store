@@ -17,49 +17,56 @@ rental_bp = Blueprint("rental_bp", __name__, url_prefix="/rentals")
 customer_keys = ["name", "phone", "postal_code"]
 
 #Roslyn: Customer
-@customer_bp.route("", methods=["GET", "POST"]) #Roslyn - I think we should break the functions up for each method
-def handle_customers():
+@customer_bp.route("", methods=["GET"]) #Roslyn - I think we should break the functions up for each method
+def read_customers():
     customer_response = []
-    if request.method == "GET":
-        if request.args.get("sort") == "asc": #Roslyn - I think you may be able to use my helper function for this
-            customers = Customer.query.order_by(Customer.title.asc())
-        elif request.args.get("sort") == "desc":
-            customers = Customer.query.order_by(Customer.title.desc())
-        else:
-            customers = Customer.query.all()
-        customer_response = [customer.to_dict() for customer in customers]
-        return jsonify(customer_response), 200
-    elif request.method == "POST":
-        request_body = request.get_json()
-        is_complete = check_data(customer_keys, request_body)
-        return is_complete if is_complete else create_customer(request_body)
+    customers = sort_titles(request.args.get("sort"), Customer)
+    customer_response = [customer.to_dict() for customer in customers]
+    return jsonify(customer_response), 200
 
-@customer_bp.route("/<customer_id>", methods=["GET", "DELETE", "PUT"])
-def handle_customer(customer_id):
-    if not customer_id.isnumeric():
-        return make_response({"message" : "Please enter a valid customer id"}, 400)
+@customer_bp.route("", methods=["POST"]) #Roslyn - I think we should break the functions up for each method
+def create_customer():
+    request_body = request.get_json()
+    is_complete = check_data(customer_keys, request_body)
+    return is_complete if is_complete else create_customer(request_body)
+
+@customer_bp.route("/<customer_id>", methods=["GET"])
+def read_a_customer(customer_id):
+    response = id_check(customer_id)
+    if response:
+        return response
     customer = Customer.query.get(customer_id)
-    if request.method == "GET":
-        return not_found_response("Customer", customer_id) if not customer else make_response(customer.to_dict(),200)
-    elif request.method == "DELETE":
-        if not customer:
-            return not_found_response("Customer", customer_id)
-        db.session.delete(customer)
-        db.session.commit()
-        return make_response({"id": int(customer_id)}, 200)
-    elif request.method == "PUT":
-        if not customer:
-            return not_found_response("Customer", customer_id)
-        request_body = request.get_json()
-        is_complete = check_data(customer_keys, request_body)
-        if is_complete:
-            return is_complete
-        customer.name = request_body["name"]
-        customer.phone = request_body["phone"]
-        customer.postal_code = request_body["postal_code"]
-        db.session.commit()
-        return make_response(customer.to_dict(), 200)
+    return not_found_response("Customer", customer_id) if not customer else make_response(customer.to_dict(),200)
+    
+@customer_bp.route("/<customer_id>", methods=["DELETE"])
+def delete_a_customer(customer_id):
+    response = id_check(customer_id)
+    if response:
+        return response
+    customer = Customer.query.get(customer_id)
+    if not customer:
+        return not_found_response("Customer", customer_id)
+    db.session.delete(customer)
+    db.session.commit()
+    return make_response({"id": int(customer_id)}, 200)
 
+@customer_bp.route("/<customer_id>", methods=["PUT"])
+def update_a_customer(customer_id):
+    response = id_check(customer_id)
+    if response:
+        return response
+    customer = Customer.query.get(customer_id)
+    if not customer:
+        return not_found_response("Customer", customer_id)
+    request_body = request.get_json()
+    is_complete = check_data(customer_keys, request_body)
+    if is_complete:
+        return is_complete
+    customer.name = request_body["name"]
+    customer.phone = request_body["phone"]
+    customer.postal_code = request_body["postal_code"]
+    db.session.commit()
+    return make_response(customer.to_dict(), 200)
 
 def create_customer(request_body):
         new_customer = Customer(name=request_body["name"],
@@ -139,12 +146,9 @@ def read_a_video(video_id):
     return not_found_response("Video", video_id) if not video else make_response(video.to_dict(),200)
 
 def id_check(id):
-    pass
-    #DRYing code
-    # if not id.isnumeric():
-    #     return make_response({"message" : "Please enter a valid customer id"}, 400)
-    # else:
-    #     return True
+    # DRYing code
+    response = make_response({"message" : "Please enter a valid customer id"}, 400)
+    return response if not id.isnumeric() else False
 
 
 @video_bp.route("/<video_id>", methods=["PUT"])
