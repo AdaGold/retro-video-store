@@ -177,7 +177,7 @@ def read_rentals_by_video(video_id):# I need to go back and see if i can consoli
     if response:
         return response
     video = Video.query.get(video_id)
-    if not video_id:
+    if not video:
         return not_found_response("Video", video_id)
     # rentals = Rental.query.all() # I think there should be a specific way to search by video id
     # for rental in rentals:
