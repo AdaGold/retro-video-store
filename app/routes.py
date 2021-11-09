@@ -81,10 +81,12 @@ def read_rentals_by_customer(customer_id):# I need to go back and see if i can c
     customer = Customer.query.get(customer_id)
     if not customer:
         return not_found_response("Customer", customer_id)
-    rentals = Rental.query.all()
-    for rental in rentals:
-        if rental.customer_id == customer_id:
-            videos.append(Video.query.get(rental.video_id))
+    rentals = db.session.query(Rental).filter(Rental.customer_id==customer_id)
+    # rentals = Rental.query.all()
+    # for rental in rentals:
+    #     if rental.customer_id == customer_id:
+    #         videos.append(Video.query.get(rental.video_id))
+    videos=[Video.query.get(rental.video_id) for rental in rentals]
     rental_response = [video.to_dict() for video in videos]
     return jsonify(rental_response), 200
 
@@ -177,10 +179,18 @@ def read_rentals_by_video(video_id):# I need to go back and see if i can consoli
     video = Video.query.get(video_id)
     if not video_id:
         return not_found_response("Video", video_id)
-    rentals = Rental.query.all() # I think there should be a specific way to search by video id
-    for rental in rentals:
-        if rental.video_id == video_id:
-            customers.append(Customer.query.get(rental.customer_id))
+    # rentals = Rental.query.all() # I think there should be a specific way to search by video id
+    # for rental in rentals:
+    #     if rental.video_id == video_id:
+    #         customers.append(Customer.query.get(rental.customer_id))
+    # rental_response = [customer.to_dict() for customer in customers]
+
+    rentals = db.session.query(Rental).filter(Rental.video_id==video_id)
+    # rentals = Rental.query.all()
+    # for rental in rentals:
+    #     if rental.customer_id == customer_id:
+    #         videos.append(Video.query.get(rental.video_id))
+    customers=[Customer.query.get(rental.customer_id) for rental in rentals]
     rental_response = [customer.to_dict() for customer in customers]
     return jsonify(rental_response), 200
 
