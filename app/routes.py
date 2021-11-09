@@ -217,7 +217,7 @@ def handle_check_out():
 
 @rental_bp.route("/check-in", methods=["POST"])
 def handle_check_in():
-    request_body = request.get_json()
+    request_body = request.get_json() #grab the form data
     is_complete = check_rental_data(request_body)
     if is_complete:
         return is_complete 
@@ -228,10 +228,23 @@ def handle_check_in():
         video.inventory_checked_out= video.inventory_checked_out - 1
         inventory_available = video.total_inventory - video.inventory_checked_out
         #I think for this query we need to first get the customer id and then loop through their rentals till we find the matching rental id
-        rental = Rental.query.get()
-        db.session.delete(rental)
-        db.session.commit()
-        return make_response(rental.to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
+        #rental = Rental.query.with_entities(Rental.video_id, Rental.customer_id)
+        #result = SomeModel.query.with_entities(SomeModel.col1, SomeModel.col2)
+
+        rentals = Rental.query.filter(Rental.customer_id==customer_id).all() 
+        #rentals = Rental.query.get(customer_id)
+        result = make_response({'message': f"No outstanding rentals for customer {customer_id} and video {video_id}"}, 400)
+        if rentals is None:
+            #return a not found type message?
+            return result
+            
+        for rental in range(len(rentals)):
+            if rentals[rental].video_id == video_id:
+                result = make_response(rentals[rental].to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
+                db.session.delete(rentals[rental])
+                db.session.commit()
+
+        return result
 
 
 
