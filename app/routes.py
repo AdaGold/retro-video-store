@@ -227,10 +227,11 @@ def handle_check_in():
         return result
 
 
-
 #----------------------------------------------------------------------------------#
 #---------------------------    Helper Functions    -------------------------------#
 #----------------------------------------------------------------------------------#
+
+#####---------------------    Model Object Creation   -------------------------#####
 def create_customer(request_body):
         new_customer = Customer(name=request_body["name"],
                             phone=request_body["phone"], 
@@ -256,6 +257,7 @@ def create_rental(request_body, due_date):
     db.session.commit()
     return new_rental
 
+#####---------------------------    Sorting   -------------------------------#####
 def sort_titles(sort_by, entity):
     #Thinking about making this a very generic function to sort anything with a simple order_by 
     if sort_by == "asc": 
@@ -270,7 +272,7 @@ def sort_dates(sort_by):
     #May want to use this for release_dates if sort_titles can'st be made generic?
     pass 
 
-
+#####------------------------    Data Checking   ----------------------------#####
 def check_customer_video_data(method=None, request_body=None, keys=None, id=None, model=None, entity=None):
     if method == "POST":
         for key in keys:
@@ -317,6 +319,19 @@ def check_customer_video_rental_data(id=None, model=None, entity=None, method=No
 
 def calculate_inventory_available(video):
     return video.total_inventory - video.inventory_checked_out
+
+
+
+
+
+
+
+
+
+
+#----------------------------------------------------------------------------------#
+#------------------   Things We Are Too Scared To Delete   ------------------------#
+#----------------------------------------------------------------------------------#
 
 #DRY for error checks: https://stackoverflow.com/questions/38488476/a-dry-approach-to-python-try-except-blocks
 # def check_rental_data(request_body): 
