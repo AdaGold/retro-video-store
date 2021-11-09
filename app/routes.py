@@ -72,14 +72,22 @@ def update_a_customer(customer_id):
     db.session.commit()
     return make_response(customer.to_dict(), 200)
 
-# @customer_bp.route("/<customer_id>/rentals", methods=["GET"])
-# def read_a_customer(customer_id):
-#     response = id_check(customer_id)  # I need to go back and see if i can consolidate this
-#     if response:
-#         return response
-#     customers = Customer.query.all(customer_id)
-#     return not_found_response("Customer", customer_id) if not customer else make_response(customer.to_dict(),200)
-    
+@customer_bp.route("/<customer_id>/rentals", methods=["GET"])
+def read_rentals_by_customer(customer_id):# I need to go back and see if i can consolidate this function
+    videos = []
+    response = id_check(customer_id)  # I need to go back and see if i can consolidate this
+    if response:
+        return response
+    customer = Customer.query.get(customer_id)
+    if not customer:
+        return not_found_response("Customer", customer_id)
+    rentals = Rental.query.all()
+    for rental in rentals:
+        if rental.customer_id == customer_id:
+            videos.append(Video.query.get(rental.video_id))
+    rental_response = [video.to_dict() for video in videos]
+    return jsonify(rental_response), 200
+
 #----------------------------------------------------------------------------------#
 #---------------------------   Video Endpoints      -------------------------------#
 #----------------------------------------------------------------------------------#
@@ -160,16 +168,38 @@ def delete_video(video_id):
     response = {"id": video.id}
     return make_response(response, 200)
 
+@video_bp.route("/<video_id>/rentals", methods=["GET"])
+def read_rentals_by_video(video_id):# I need to go back and see if i can consolidate this function
+    customers = []
+    response = id_check(video_id)  # I need to go back and see if i can consolidate this
+    if response:
+        return response
+    video = Video.query.get(video_id)
+    if not video_id:
+        return not_found_response("Video", video_id)
+    rentals = Rental.query.all() # I think there should be a specific way to search by video id
+    for rental in rentals:
+        if rental.video_id == video_id:
+            customers.append(Customer.query.get(rental.customer_id))
+    rental_response = [customer.to_dict() for customer in customers]
+    return jsonify(rental_response), 200
+
 #----------------------------------------------------------------------------------#
 #---------------------------   Rental Endpoints     -------------------------------#
 #----------------------------------------------------------------------------------#
 rental_keys = ["customer_id", "video_id"]
 
 @rental_bp.route("/check-out", methods=["POST"])
-def create_rental():
+def handle_check_out():
     request_body = request.get_json()
-    is_complete = check_data(rental_keys, request_body)
-    return is_complete if is_complete else create_rental(request_body)
+    is_complete = check_rental_data(request_body)
+    return is_complete if is_complete else create_check_out(request_body)
+
+@rental_bp.route("/check-in", methods=["POST"])
+def handle_check_in():
+    request_body = request.get_json()
+    is_complete = check_rental_data(request_body)
+    return is_complete if is_complete else create_check_in(request_body)
 
 
 #----------------------------------------------------------------------------------#
@@ -184,23 +214,32 @@ def create_customer(request_body):
         db.session.commit()
         return make_response(new_customer.to_dict(), 201)
 
-def create_rental(request_body):
+def create_check_out(request_body):
     video_id = request_body["video_id"]
     customer_id = request_body["customer_id"]
     video = Video.query.get(video_id)
     customer = Customer.query.get(customer_id)
-    if not video:
-        return not_found_response("Video", video_id)
-    if not customer:
-        return not_found_response("Custmer", customer_id)
     if video.total_inventory > 1:
-        inventory_available = video.total_inventory - 1
         video.inventory_checked_out += 1
+        inventory_available = video.total_inventory - video.inventory_checked_out
     else: 
         return make_response({"message": "Could not perform checkout"}, 400)
     due_date = datetime.utcnow() + timedelta(7)
     new_rental = Rental(video_id=video_id, customer_id=customer_id, due_date=due_date)
+    db.session.add(new_rental)
+    db.session.commit()
     return make_response(new_rental.to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
+
+def create_check_in(request_body):
+    video_id = request_body["video_id"]
+    customer_id = request_body["customer_id"]
+    video = Video.query.get(video_id)
+    video.inventory_checked_out-=1
+    inventory_available = video.total_inventory - video.inventory_checked_out
+    rental = Rental.query.get()
+    db.session.delete(rental)
+    db.session.commit()
+    return make_response(rental.to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
 
 def check_data(check_items, request_body): 
     for key in check_items:
@@ -228,3 +267,17 @@ def sort_titles(sort_by, entity):
 def sort_dates(sort_by):
     #May want to use this for release_dates if sort_titles can'st be made generic?
     pass 
+
+def check_rental_data(request_body): 
+    # I think maybe the not_found_response() function and check_data() function could be combined into something similar to this? 
+    # At least in my customer functions, i have a lot of repetative "if response: return response"
+    if "video_id" not in request_body.keys() or "customer_id" not in request_body.keys():
+        return make_response({"details": "Please enter a valid customer id AND video id"}, 400)
+    video = Video.query.get(request_body["video_id"])
+    customer = Customer.query.get(request_body["customer_id"])
+    if not video or not customer:
+            return make_response({"details": "The video or customer id you have entered is incorrect"}, 404)
+    return False
+
+
+
