@@ -31,10 +31,8 @@ def read_customers():
 def create_customer():
     request_body = request.get_json()
     check = check_customer_video_data(method="POST", 
-                            request_body=
-                            request_body, 
+                            request_body=request_body, 
                             keys=customer_keys)
-    
     return check if check else create_customer(request_body)
 
 @customer_bp.route("/<customer_id>", methods=["GET"])
@@ -56,7 +54,8 @@ def delete_a_customer(customer_id):
     customer = Customer.query.get(customer_id)
     db.session.delete(customer)
     db.session.commit()
-    return make_response({"id": int(customer_id)}, 200)
+    response = {"id": customer.id}
+    return make_response(response, 200)
 
 @customer_bp.route("/<customer_id>", methods=["PUT"])
 def update_a_customer(customer_id):
@@ -110,41 +109,31 @@ def read_videos():
 @video_bp.route("", methods=["POST"])
 def create_video():
     request_body = request.get_json()
-    is_complete = check_data(video_keys, request_body)
-    if is_complete:
-        return is_complete
-    else:
-        new_video = Video(title=request_body["title"],
-                            release_date=request_body["release_date"], 
-                            total_inventory=request_body["total_inventory"])
-        db.session.add(new_video)
-        db.session.commit()
-        return make_response(new_video.to_dict(), 201)
+    check = check_customer_video_data(method="POST", 
+                                        request_body=request_body, 
+                                        keys=video_keys)
+    return check if check else create_video(request_body)
 
 @video_bp.route("/<video_id>", methods=["GET"])
 def read_a_video(video_id):
-    if not video_id.isnumeric():
-        return make_response({"message" : "Please enter a valid video id"}, 400)
-    
-    video = Video.query.get(video_id)
-    return not_found_response("Video", video_id) if not video else make_response(video.to_dict(),200)
+    check = check_customer_video_data(method="GET", 
+                                        id=video_id, 
+                                        model=Video, 
+                                        entity="Video")
+    return check if check else make_response(Video.query.get(video_id).to_dict(),200)
 
 @video_bp.route("/<video_id>", methods=["PUT"])
 def update_video(video_id):
-    if not video_id.isnumeric():
-        return make_response({"message" : "Please enter a valid video id"}, 400)
-    
-    video = Video.query.get(video_id) 
-    
-    if not video:
-        return not_found_response("Video", video_id)
-
     request_body = request.get_json()
-
-    is_complete = check_data(video_keys, request_body)
-
-    if is_complete:
-        return is_complete
+    check = check_customer_video_data(method="PUT", 
+                                        request_body=request_body, 
+                                        id=video_id, 
+                                        model=Video, 
+                                        entity="Video", 
+                                        keys=video_keys)
+    if check:
+        return check
+    video = Video.query.get(video_id) 
     video.title = request_body["title"]
     video.release_date = request_body["release_date"]
     video.total_inventory = request_body["total_inventory"]
@@ -153,39 +142,24 @@ def update_video(video_id):
     
 @video_bp.route("/<video_id>", methods=["DELETE"])
 def delete_video(video_id):
-    if not video_id.isnumeric():
-        return make_response({"message" : "Please enter a valid video id"}, 400)
-
+    check = check_customer_video_data(method="DELETE", 
+                                        id=video_id, 
+                                        model=Video,
+                                        entity="Video")
+    if check:
+        return check
     video = Video.query.get(video_id) 
-
-    if not video:
-        return not_found_response("Video", video_id)
     db.session.delete(video)
     db.session.commit()
-    #return make_response({"id": int(video_id)}, 200)
     response = {"id": video.id}
     return make_response(response, 200)
 
 @video_bp.route("/<video_id>/rentals", methods=["GET"])
-def read_rentals_by_video(video_id):# I need to go back and see if i can consolidate this function
-    customers = []
-    response = id_check(video_id)  # I need to go back and see if i can consolidate this
-    if response:
-        return response
-    video = Video.query.get(video_id)
-    if not video:
-        return not_found_response("Video", video_id)
-    # rentals = Rental.query.all() # I think there should be a specific way to search by video id
-    # for rental in rentals:
-    #     if rental.video_id == video_id:
-    #         customers.append(Customer.query.get(rental.customer_id))
-    # rental_response = [customer.to_dict() for customer in customers]
-
+def read_rentals_by_video(video_id):
+    check = check_customer_video_rental_data(video_id, Video, "Video")
+    if check:
+        return check
     rentals = db.session.query(Rental).filter(Rental.video_id==video_id)
-    # rentals = Rental.query.all()
-    # for rental in rentals:
-    #     if rental.customer_id == customer_id:
-    #         videos.append(Video.query.get(rental.video_id))
     customers=[Customer.query.get(rental.customer_id) for rental in rentals]
     rental_response = [customer.to_dict() for customer in customers]
     return jsonify(rental_response), 200
@@ -271,18 +245,14 @@ def create_customer(request_body):
         db.session.commit()
         return make_response(new_customer.to_dict(), 201)
 
-def check_data(check_items, request_body): 
-    for key in check_items:
-        if key not in request_body.keys():
-            return make_response({"details": f"Request body must include {key}."}, 400)
-    return False
+def create_video(request_body):
+    new_video = Video(title=request_body["title"],
+                            release_date=request_body["release_date"], 
+                            total_inventory=request_body["total_inventory"])
+    db.session.add(new_video)
+    db.session.commit()
+    return make_response(new_video.to_dict(), 201)
 
-def not_found_response(entity, id): 
-    return make_response({"message" : f"{entity} {id} was not found"}, 404)
-
-def id_check(id):
-    response = make_response({"message" : "Please enter a valid customer id"}, 400)
-    return response if not id.isnumeric() else False
 
 def sort_titles(sort_by, entity):
     #Thinking about making this a very generic function to sort anything with a simple order_by 
@@ -349,6 +319,19 @@ def check_customer_video_rental_data(id, model, entity):
 
 
 #DRY for error checks: https://stackoverflow.com/questions/38488476/a-dry-approach-to-python-try-except-blocks
+
+# def not_found_response(entity, id): 
+#     return make_response({"message" : f"{entity} {id} was not found"}, 404)
+
+# def id_check(id):
+#     response = make_response({"message" : "Please enter a valid customer id"}, 400)
+#     return response if not id.isnumeric() else False
+
+# def check_data(check_items, request_body): 
+#     for key in check_items:
+#         if key not in request_body.keys():
+#             return make_response({"details": f"Request body must include {key}."}, 400)
+#     return False
 
 # def create_check_out(request_body):
 #     video_id = request_body["video_id"]
