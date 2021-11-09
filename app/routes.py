@@ -77,7 +77,10 @@ def update_a_customer(customer_id):
 
 @customer_bp.route("/<customer_id>/rentals", methods=["GET"])
 def read_rentals_by_customer(customer_id):
-    check = check_customer_video_rental_data(customer_id, Customer, "Customer")
+    check = check_customer_video_rental_data(id=customer_id, 
+                                                model=Customer, 
+                                                entity="Customer", 
+                                                method="GET")
     if check:
         return check
     rentals = db.session.query(Rental).filter(Rental.customer_id==customer_id)
@@ -156,7 +159,10 @@ def delete_video(video_id):
 
 @video_bp.route("/<video_id>/rentals", methods=["GET"])
 def read_rentals_by_video(video_id):
-    check = check_customer_video_rental_data(video_id, Video, "Video")
+    check = check_customer_video_rental_data(id=video_id, 
+                                                model=Video, 
+                                                entity="Video", 
+                                                method="GET")
     if check:
         return check
     rentals = db.session.query(Rental).filter(Rental.video_id==video_id)
@@ -172,63 +178,52 @@ rental_keys = ["customer_id", "video_id"]
 @rental_bp.route("/check-out", methods=["POST"])
 def handle_check_out():
     request_body = request.get_json()
-    is_complete = check_rental_data(request_body)
-    if is_complete: 
-        return is_complete
-    
+    check = check_customer_video_rental_data(request_body=request_body, method="POST")
+    if check:
+        return check
     else: 
         video_id = request_body["video_id"]
         video = Video.query.get(video_id)
-        #customer = Customer.query.get(customer_id)
-        # if video.total_inventory == 0 or video.total_inventory is None:
-        if (video.total_inventory - video.inventory_checked_out) > 0:
-        #if video is not None and video.total_inventory > 0:
-            customer_id = request_body["customer_id"]
-            video.inventory_checked_out = video.inventory_checked_out + 1
-            inventory_available = video.total_inventory - video.inventory_checked_out
+        inventory_available = calculate_inventory_available(video)
+        if inventory_available > 0:
+            video.inventory_checked_out += 1
+            inventory_available = calculate_inventory_available(video)
             today = datetime.now(timezone.utc)
             RENTAL_PERIOD = 7
             due_date = today + timedelta(days=RENTAL_PERIOD)
-            
-            new_rental = Rental(
-            video_id=video_id, 
-            customer_id=customer_id, 
-            due_date=due_date)
-
-            db.session.add(new_rental)
-            db.session.commit()
+            new_rental = create_rental(request_body, due_date) # Replaced the code below with helper function like for video and customer
+            # new_rental = Rental(
+            # video_id=video_id, 
+            # customer_id=customer_id, 
+            # due_date=due_date)
+            # db.session.add(new_rental)
+            # db.session.commit()
             return make_response(new_rental.to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
         else:
             return make_response({"message": "Could not perform checkout"}, 400)
+
 @rental_bp.route("/check-in", methods=["POST"])
 def handle_check_in():
-    request_body = request.get_json() #grab the form data
-    is_complete = check_rental_data(request_body)
-    if is_complete:
-        return is_complete 
+    request_body = request.get_json() 
+    check =check_customer_video_rental_data(request_body=request_body, method="POST")
+    if check:
+        return check
     else:
         video_id = request_body["video_id"]
         customer_id = request_body["customer_id"]
         video = Video.query.get(video_id)
-        video.inventory_checked_out= video.inventory_checked_out - 1
-        inventory_available = video.total_inventory - video.inventory_checked_out
-        #I think for this query we need to first get the customer id and then loop through their rentals till we find the matching rental id
-        #rental = Rental.query.with_entities(Rental.video_id, Rental.customer_id)
-        #result = SomeModel.query.with_entities(SomeModel.col1, SomeModel.col2)
-
+        video.inventory_checked_out -= 1
+        inventory_available = calculate_inventory_available(video)
         rentals = Rental.query.filter(Rental.customer_id==customer_id).all() 
-        #rentals = Rental.query.get(customer_id)
         result = make_response({'message': f"No outstanding rentals for customer {customer_id} and video {video_id}"}, 400)
-        if rentals is None:
+        if not rentals:
             #return a not found type message?
-            return result
-            
+            return result  
         for rental in range(len(rentals)):
             if rentals[rental].video_id == video_id:
                 result = make_response(rentals[rental].to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
                 db.session.delete(rentals[rental])
                 db.session.commit()
-
         return result
 
 
@@ -253,6 +248,13 @@ def create_video(request_body):
     db.session.commit()
     return make_response(new_video.to_dict(), 201)
 
+def create_rental(request_body, due_date):
+    new_rental = Rental(video_id=request_body["video_id"], 
+                        customer_id=request_body["customer_id"], 
+                        due_date=due_date)
+    db.session.add(new_rental)
+    db.session.commit()
+    return new_rental
 
 def sort_titles(sort_by, entity):
     #Thinking about making this a very generic function to sort anything with a simple order_by 
@@ -268,18 +270,6 @@ def sort_dates(sort_by):
     #May want to use this for release_dates if sort_titles can'st be made generic?
     pass 
 
-def check_rental_data(request_body): 
-    # I think maybe the not_found_response() function and check_data() function could be combined into something similar to this? 
-    # At least in my customer functions, i have a lot of repetative "if response: return response"
-    if "video_id" not in request_body.keys() or "customer_id" not in request_body.keys():
-        return make_response({"details": "Please enter a valid customer id AND video id"}, 400)
-    video = Video.query.get(request_body["video_id"])
-    customer = Customer.query.get(request_body["customer_id"])
-    if not video or not customer:
-        return make_response({"details": "The video or customer id you have entered is incorrect"}, 404)
-    # if video.total_inventory == 0 or video.total_inventory is None:
-    #     return make_response({"message": "Could not perform checkout"}, 400) 
-    return False
 
 def check_customer_video_data(method=None, request_body=None, keys=None, id=None, model=None, entity=None):
     if method == "POST":
@@ -307,18 +297,40 @@ def check_customer_video_data(method=None, request_body=None, keys=None, id=None
                 response = make_response({"details": f"Request body must include {key}."}, 400)
         return response
 
-def check_customer_video_rental_data(id, model, entity):
-    if not id.isnumeric():
-        response = make_response({"message" : "Please enter a valid customer id"}, 400)
-    elif not model.query.get(id):
-        response = make_response({"message" : f"{entity} {id} was not found"}, 404)
-    else:
-        response = False
-    return response
+def check_customer_video_rental_data(id=None, model=None, entity=None, method=None, request_body=None):
+    if method == "GET":
+        if not id.isnumeric():
+            return make_response({"message" : "Please enter a valid customer id"}, 400)
+        elif not model.query.get(id):
+            return make_response({"message" : f"{entity} {id} was not found"}, 404)
+        else:
+            return False
+    elif method == "POST":
+        if "video_id" not in request_body.keys() or "customer_id" not in request_body.keys():
+            return make_response({"details": "Please enter a valid customer id AND video id"}, 400)
+        video = Video.query.get(request_body["video_id"])
+        customer = Customer.query.get(request_body["customer_id"])
+        if not video or not customer:
+            return make_response({"details": "The video or customer id you have entered is incorrect"}, 404)
+        else:
+            return False
 
-
+def calculate_inventory_available(video):
+    return video.total_inventory - video.inventory_checked_out
 
 #DRY for error checks: https://stackoverflow.com/questions/38488476/a-dry-approach-to-python-try-except-blocks
+# def check_rental_data(request_body): 
+#     # I think maybe the not_found_response() function and check_data() function could be combined into something similar to this? 
+#     # At least in my customer functions, i have a lot of repetative "if response: return response"
+#     if "video_id" not in request_body.keys() or "customer_id" not in request_body.keys():
+#         return make_response({"details": "Please enter a valid customer id AND video id"}, 400)
+#     video = Video.query.get(request_body["video_id"])
+#     customer = Customer.query.get(request_body["customer_id"])
+#     if not video or not customer:
+#         return make_response({"details": "The video or customer id you have entered is incorrect"}, 404)
+#     # if video.total_inventory == 0 or video.total_inventory is None:
+#     #     return make_response({"message": "Could not perform checkout"}, 400) 
+#     return False
 
 # def not_found_response(entity, id): 
 #     return make_response({"message" : f"{entity} {id} was not found"}, 404)
