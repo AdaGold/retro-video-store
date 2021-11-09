@@ -3,12 +3,12 @@ from app import db
 from sqlalchemy.schema import FetchedValue
 
 class Video(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime)
-    total_inventory = db.Column(db.Integer)
+    total_inventory = db.Column(db.Integer, default=0)
     customers = db.relationship("Customer", secondary="videos_customers", backref="videos")
-    inventory_checked_out = db.Column(db.Integer)
+    inventory_checked_out = db.Column(db.Integer, default=0)
 
     def to_dict(self):
         return {

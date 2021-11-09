@@ -3,7 +3,7 @@ from app import db
 from sqlalchemy.schema import FetchedValue
 
 class Customer(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String)
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)

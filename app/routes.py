@@ -5,7 +5,7 @@ from app.models.video import Video
 from app.models.customer import Customer
 from app.models.rental import Rental
 from flask import request, Blueprint, make_response, jsonify
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 import os
 import requests
@@ -193,13 +193,46 @@ rental_keys = ["customer_id", "video_id"]
 def handle_check_out():
     request_body = request.get_json()
     is_complete = check_rental_data(request_body)
-    return is_complete if is_complete else create_check_out(request_body)
+    if is_complete: 
+        return is_complete
+    
+    else: 
+        video_id = request_body["video_id"]
+        customer_id = request_body["customer_id"]
+        video = Video.query.get(video_id)
+        #customer = Customer.query.get(customer_id)
+        if video.total_inventory == 0 or video.total_inventory is None:
+            return make_response({"message": "Could not perform checkout"}, 400)
+        
+        video.inventory_checked_out = video.inventory_checked_out + 1
+        inventory_available = video.total_inventory - video.inventory_checked_out
+        today = datetime.now(timezone.utc)
+        RENTAL_PERIOD = 7
+        due_date = today + timedelta(days=RENTAL_PERIOD)
+        
+        new_rental = Rental(video_id=video_id, customer_id=customer_id, due_date=due_date)
+        db.session.add(new_rental)
+        db.session.commit()
+        return make_response(new_rental.to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
 
 @rental_bp.route("/check-in", methods=["POST"])
 def handle_check_in():
     request_body = request.get_json()
     is_complete = check_rental_data(request_body)
-    return is_complete if is_complete else create_check_in(request_body)
+    if is_complete:
+        return is_complete 
+    else:
+        video_id = request_body["video_id"]
+        customer_id = request_body["customer_id"]
+        video = Video.query.get(video_id)
+        video.inventory_checked_out= video.inventory_checked_out - 1
+        inventory_available = video.total_inventory - video.inventory_checked_out
+        #I think for this query we need to first get the customer id and then loop through their rentals till we find the matching rental id
+        rental = Rental.query.get()
+        db.session.delete(rental)
+        db.session.commit()
+        return make_response(rental.to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
+
 
 
 #----------------------------------------------------------------------------------#
@@ -214,32 +247,36 @@ def create_customer(request_body):
         db.session.commit()
         return make_response(new_customer.to_dict(), 201)
 
-def create_check_out(request_body):
-    video_id = request_body["video_id"]
-    customer_id = request_body["customer_id"]
-    video = Video.query.get(video_id)
-    customer = Customer.query.get(customer_id)
-    if video.total_inventory > 1:
-        video.inventory_checked_out += 1
-        inventory_available = video.total_inventory - video.inventory_checked_out
-    else: 
-        return make_response({"message": "Could not perform checkout"}, 400)
-    due_date = datetime.utcnow() + timedelta(7)
-    new_rental = Rental(video_id=video_id, customer_id=customer_id, due_date=due_date)
-    db.session.add(new_rental)
-    db.session.commit()
-    return make_response(new_rental.to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
+# def create_check_out(request_body):
+#     video_id = request_body["video_id"]
+#     customer_id = request_body["customer_id"]
+#     video = Video.query.get(video_id)
+#     customer = Customer.query.get(customer_id)
+#     if video.total_inventory > 0:
+#         video.inventory_checked_out += 1
+#         inventory_available = video.total_inventory - video.inventory_checked_out
+#     else: 
+#         return make_response({"message": "Could not perform checkout"}, 400)
+    
+#     today = datetime.now(timezone.utc)
+#     RENTAL_PERIOD = 7
+#     due_date = today + timedelta(days=RENTAL_PERIOD)
+    
+#     new_rental = Rental(video_id=video_id, customer_id=customer_id, due_date=due_date)
+#     db.session.add(new_rental)
+#     db.session.commit()
+#     return make_response(new_rental.to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
 
-def create_check_in(request_body):
-    video_id = request_body["video_id"]
-    customer_id = request_body["customer_id"]
-    video = Video.query.get(video_id)
-    video.inventory_checked_out-=1
-    inventory_available = video.total_inventory - video.inventory_checked_out
-    rental = Rental.query.get()
-    db.session.delete(rental)
-    db.session.commit()
-    return make_response(rental.to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
+# def create_check_in(request_body):
+#     video_id = request_body["video_id"]
+#     customer_id = request_body["customer_id"]
+#     video = Video.query.get(video_id)
+#     video.inventory_checked_out-=1
+#     inventory_available = video.total_inventory - video.inventory_checked_out
+#     rental = Rental.query.get()
+#     db.session.delete(rental)
+#     db.session.commit()
+#     return make_response(rental.to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
 
 def check_data(check_items, request_body): 
     for key in check_items:
