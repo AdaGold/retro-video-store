@@ -15,7 +15,7 @@ class Customer(db.Model):
                 "name": self.name,
                 "id": self.id,
                 "phone": self.phone,
-                "postal_code": str(self.postal_code)
+                "postal_code": self.postal_code
                 }
 
 

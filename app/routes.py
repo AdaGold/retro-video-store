@@ -96,17 +96,10 @@ video_keys = ["title", "release_date", "total_inventory"]
 @video_bp.route("", methods=["GET"])
 def read_videos():
     videos_response = []
-    #this part can go in a helper function, we can also create sort by release date
-    # if request.args.get("sort") == "asc": 
-    #     videos = Video.query.order_by(Video.title.asc())
-    # elif request.args.get("sort") == "desc":
-    #     videos = Video.query.order_by(Video.title.desc())
-    # else:
-    #     videos = Video.query.all()
     videos = sort_titles(request.args.get("sort"), Video)
-    #print(videos)
     videos_response = [video.to_dict() for video in videos]
     return jsonify(videos_response), 200
+
 
 @video_bp.route("", methods=["POST"])
 def create_video():
@@ -122,6 +115,7 @@ def create_video():
         db.session.commit()
         return make_response(new_video.to_dict(), 201)
 
+#These could be instance methods?
 def sort_titles(sort_by, entity):
     #Thinking about making this a very generic function to sort anything with a simple order_by 
     if sort_by == "asc": 
@@ -133,7 +127,7 @@ def sort_titles(sort_by, entity):
     return sorted
 
 def sort_dates(sort_by):
-    #May want to use this for release_dates if sort_titles can'st be made generic?
+    #May want to use this for release_dates if sort_titles can't be made generic?
     pass 
 
 
@@ -141,7 +135,6 @@ def sort_dates(sort_by):
 def read_a_video(video_id):
     if not video_id.isnumeric():
         return make_response({"message" : "Please enter a valid video id"}, 400)
-    
     video = Video.query.get(video_id)
     return not_found_response("Video", video_id) if not video else make_response(video.to_dict(),200)
 
@@ -189,3 +182,5 @@ def delete_video(video_id):
     response = {"id": video.id}
     return make_response(response, 200)
 
+
+#DRY for error checks: https://stackoverflow.com/questions/38488476/a-dry-approach-to-python-try-except-blocks
