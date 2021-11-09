@@ -9,7 +9,7 @@ class Video(db.Model):
     total_inventory = db.Column(db.Integer)
     customers = db.relationship("Customer", secondary="videos_customers", backref="videos")
     inventory_checked_out = db.Column(db.Integer, default=0)
-
+    
     def to_dict(self):
         return {
                 "title": self.title,

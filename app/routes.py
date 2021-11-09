@@ -18,7 +18,6 @@ rental_bp = Blueprint("rental_bp", __name__, url_prefix="/rentals")
 #----------------------------------------------------------------------------------#
 #---------------------------  Customer Endpoints    -------------------------------#
 #----------------------------------------------------------------------------------#
-
 customer_keys = ["name", "phone", "postal_code"]
 
 @customer_bp.route("", methods=["GET"]) 
@@ -31,42 +30,46 @@ def read_customers():
 @customer_bp.route("", methods=["POST"])
 def create_customer():
     request_body = request.get_json()
-    # is_complete = check_data(customer_keys, request_body)
-    is_complete = check_all_data(method="POST", request_body=request_body, keys=customer_keys)
-    return is_complete if is_complete else create_customer(request_body)
+    check = check_customer_video_data(method="POST", 
+                            request_body=
+                            request_body, 
+                            keys=customer_keys)
+    
+    return check if check else create_customer(request_body)
 
 @customer_bp.route("/<customer_id>", methods=["GET"])
 def read_a_customer(customer_id):
-    response = id_check(customer_id)  # I need to go back and see if i can consolidate this
-    if response:
-        return response
-    customer = Customer.query.get(customer_id)
-    return not_found_response("Customer", customer_id) if not customer else make_response(customer.to_dict(),200)
-    
+    check = check_customer_video_data(method="GET", 
+                            id=customer_id, 
+                            model=Customer, 
+                            entity="Customer")
+    return check if check else make_response(Customer.query.get(customer_id).to_dict(),200)
+
 @customer_bp.route("/<customer_id>", methods=["DELETE"])
 def delete_a_customer(customer_id):
-    response = id_check(customer_id)
-    if response: # I need to go back and see if i can consolidate this
-        return response
+    check = check_customer_video_data(method="DELETE", 
+                            id=customer_id, 
+                            model=Customer,
+                            entity="Customer")
+    if check:
+        return check
     customer = Customer.query.get(customer_id)
-    if not customer:
-        return not_found_response("Customer", customer_id)
     db.session.delete(customer)
     db.session.commit()
     return make_response({"id": int(customer_id)}, 200)
 
 @customer_bp.route("/<customer_id>", methods=["PUT"])
 def update_a_customer(customer_id):
-    response = id_check(customer_id)
-    if response: # I need to go back and see if i can consolidate this
-        return response
-    customer = Customer.query.get(customer_id)
-    if not customer:
-        return not_found_response("Customer", customer_id)
     request_body = request.get_json()
-    is_complete = check_data(customer_keys, request_body)
-    if is_complete:
-        return is_complete
+    check = check_customer_video_data(method="PUT", 
+                            request_body=request_body, 
+                            id=customer_id, 
+                            model=Customer, 
+                            entity="Customer", 
+                            keys=customer_keys)
+    if check:
+        return check
+    customer = Customer.query.get(customer_id)
     customer.name = request_body["name"]
     customer.phone = request_body["phone"]
     customer.postal_code = request_body["postal_code"]
@@ -74,14 +77,10 @@ def update_a_customer(customer_id):
     return make_response(customer.to_dict(), 200)
 
 @customer_bp.route("/<customer_id>/rentals", methods=["GET"])
-def read_rentals_by_customer(customer_id):# I need to go back and see if i can consolidate this function
-    videos = []
-    response = id_check(customer_id)  # I need to go back and see if i can consolidate this
-    if response:
-        return response
-    customer = Customer.query.get(customer_id)
-    if not customer:
-        return not_found_response("Customer", customer_id)
+def read_rentals_by_customer(customer_id):
+    check = check_customer_video_rental_data(customer_id, Customer, "Customer")
+    if check:
+        return check
     rentals = db.session.query(Rental).filter(Rental.customer_id==customer_id)
     videos=[Video.query.get(rental.video_id) for rental in rentals]
     rental_response = [video.to_dict() for video in videos]
@@ -208,7 +207,7 @@ def handle_check_out():
         video = Video.query.get(video_id)
         #customer = Customer.query.get(customer_id)
         # if video.total_inventory == 0 or video.total_inventory is None:
-        if (video.total_inventory - video.inventory_checked_out) >0:
+        if (video.total_inventory - video.inventory_checked_out) > 0:
         #if video is not None and video.total_inventory > 0:
             customer_id = request_body["customer_id"]
             video.inventory_checked_out = video.inventory_checked_out + 1
@@ -312,17 +311,42 @@ def check_rental_data(request_body):
     #     return make_response({"message": "Could not perform checkout"}, 400) 
     return False
 
-def check_all_data(method=None, request_body=None, keys=None, id=None, model=None, entity=None):
+def check_customer_video_data(method=None, request_body=None, keys=None, id=None, model=None, entity=None):
     if method == "POST":
         for key in keys:
             if key not in request_body.keys():
                 return make_response({"details": f"Request body must include {key}."}, 400)
         return False
-    elif method == "GET":
+    elif method == "GET" or method == "DELETE":
         if not id.isnumeric():
             response = make_response({"message" : "Please enter a valid customer id"}, 400)
         elif not model.query.get(id):
             response = make_response({"message" : f"{entity} {id} was not found"}, 404)
+        else:
+            response = False
+        return response
+    elif method == "PUT":
+        if not id.isnumeric():
+            response = make_response({"message" : "Please enter a valid customer id"}, 400)
+        elif not model.query.get(id):
+            response = make_response({"message" : f"{entity} {id} was not found"}, 404)
+        else:
+            response = False
+        for key in keys:
+            if key not in request_body.keys():
+                response = make_response({"details": f"Request body must include {key}."}, 400)
+        return response
+
+def check_customer_video_rental_data(id, model, entity):
+    if not id.isnumeric():
+        response = make_response({"message" : "Please enter a valid customer id"}, 400)
+    elif not model.query.get(id):
+        response = make_response({"message" : f"{entity} {id} was not found"}, 404)
+    else:
+        response = False
+    return response
+
+
 
 #DRY for error checks: https://stackoverflow.com/questions/38488476/a-dry-approach-to-python-try-except-blocks
 
