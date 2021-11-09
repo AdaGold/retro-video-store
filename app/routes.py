@@ -1,0 +1,105 @@
+from app import db
+from flask import Blueprint, jsonify, request
+from datetime import datetime
+from app.models import customer
+from app.models.customer import Customer
+import requests
+
+customers_bp = Blueprint("customers", __name__, url_prefix="/customers")
+
+@customers_bp.route("", methods=["POST"])
+def post_customer():
+    request_body = request.get_json()
+
+    if "name" not in request_body:
+        return {"details": "Request body must include name."}, 400
+    elif "postal_code" not in request_body:
+        return {"details": "Request body must include postal_code."}, 400
+    elif "phone" not in request_body:
+        return {"details": "Request body must include phone."}, 400
+
+    new_customer = Customer(
+        name = request_body["name"],
+        #registered_at = request_body["registered_at"],
+        postal_code = request_body["postal_code"],
+        phone = request_body["phone"]
+    )
+
+    db.session.add(new_customer)
+    db.session.commit()
+
+    return jsonify({"id": new_customer.id}), 201
+
+#Get
+@customers_bp.route("", methods=["GET"])
+def get_customers():
+    customers = Customer.query.all()
+    customers_response = []
+
+    for customer in customers:
+        customers_response.append(
+            {
+            "id" : customer.id,
+            "name" : customer.name,
+            "postal_code" : customer.postal_code,
+            "phone" : customer.phone,
+            "registered_at" : datetime.now()
+            }
+        )
+    return jsonify(customers_response), 200
+
+@customers_bp.route("/<customer_id>", methods=["GET"])
+def get_customer(customer_id):
+    if customer_id.isnumeric() != True:
+        return {"message": "Customer id provided is not a number."}, 400
+    
+    customer = Customer.query.get(customer_id)
+
+    if customer is None:
+        return {"message": f"Customer {customer_id} was not found"}, 404
+
+    return {
+        "id" : customer.id,
+        "name" : customer.name,
+        "postal_code" : customer.postal_code,
+        "phone" : customer.phone
+    }
+@customers_bp.route("/<customer_id>", methods=["PUT"])
+def update_customer(customer_id):
+    customer = Customer.query.get(customer_id)
+    request_body = request.get_json()
+    
+    if customer is None:
+        return {"message": f"Customer {customer.id} was not found"}, 404
+
+    if "name" not in request_body or "postal_code" not in request_body or "phone" not in request_body:
+        return {
+        "details": "Invalid data"
+        }, 400
+        
+    customer.name = request_body["name"]
+    customer.phone = request_body["phone"]
+    customer.postal_code = request_body["postal_code"]
+    
+    db.session.commit()
+
+    return {
+        "id" : customer.id,
+        "name" : customer.name,
+        "postal_code" : customer.postal_code,
+        "phone" : customer.phone,
+        "registered_at" : datetime.now()
+    }
+
+@customers_bp.route("/<customer_id>", methods=["DELETE"])
+def delete_customer(customer_id):
+
+    customer = Customer.query.get(customer_id)
+
+    if customer is None:
+        return {"message": f"Customer {customer_id} was not found"}, 404
+
+    db.session.delete(customer)
+    db.session.commit()
+
+    return jsonify({"id": customer.id}), 200
