@@ -14,7 +14,6 @@ video_bp = Blueprint("video_bp", __name__, url_prefix="/videos")
 customer_bp = Blueprint("customer_bp", __name__, url_prefix="/customers")
 rental_bp = Blueprint("rental_bp", __name__, url_prefix="/rentals")
 
-
 #----------------------------------------------------------------------------------#
 #---------------------------  Customer Endpoints    -------------------------------#
 #----------------------------------------------------------------------------------#
@@ -68,12 +67,14 @@ def update_a_customer(customer_id):
                             keys=customer_keys)
     if check:
         return check
-    customer = Customer.query.get(customer_id)
-    customer.name = request_body["name"]
-    customer.phone = request_body["phone"]
-    customer.postal_code = request_body["postal_code"]
-    db.session.commit()
-    return make_response(customer.to_dict(), 200)
+    # CAN DELETE: Replaced below with edit customer function.
+    # customer = Customer.query.get(customer_id)
+    # customer.name = request_body["name"]
+    # customer.phone = request_body["phone"]
+    # customer.postal_code = request_body["postal_code"]
+    # db.session.commit()
+    # return make_response(customer.to_dict(), 200)
+    return edit_customer(request_body, customer_id)
 
 @customer_bp.route("/<customer_id>/rentals", methods=["GET"])
 def read_rentals_by_customer(customer_id):
@@ -136,13 +137,15 @@ def update_video(video_id):
                                         keys=video_keys)
     if check:
         return check
-    video = Video.query.get(video_id) 
-    video.title = request_body["title"]
-    video.release_date = request_body["release_date"]
-    video.total_inventory = request_body["total_inventory"]
-    db.session.commit()
-    return make_response(video.to_dict(), 200)
-    
+    return edit_video(request_body, video_id)
+    # CAN DELETE: Replaced below with edit video function
+    # video = Video.query.get(video_id) 
+    # video.title = request_body["title"]
+    # video.release_date = request_body["release_date"]
+    # video.total_inventory = request_body["total_inventory"]
+    # db.session.commit()
+    # return make_response(video.to_dict(), 200)
+
 @video_bp.route("/<video_id>", methods=["DELETE"])
 def delete_video(video_id):
     check = check_customer_video_data(method="DELETE", 
@@ -184,47 +187,53 @@ def handle_check_out():
     else: 
         video_id = request_body["video_id"]
         video = Video.query.get(video_id)
-        inventory_available = calculate_inventory_available(video)
-        if inventory_available > 0:
-            video.inventory_checked_out += 1
-            inventory_available = calculate_inventory_available(video)
-            today = datetime.now(timezone.utc)
-            RENTAL_PERIOD = 7
-            due_date = today + timedelta(days=RENTAL_PERIOD)
-            new_rental = create_rental(request_body, due_date) # Replaced the code below with helper function like for video and customer
-            # new_rental = Rental(
-            # video_id=video_id, 
-            # customer_id=customer_id, 
-            # due_date=due_date)
-            # db.session.add(new_rental)
-            # db.session.commit()
-            return make_response(new_rental.to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
+        # CAN DELETE replaced code:
+        # inventory_available = calculate_inventory_available(video)
+        # if inventory_available > 0:
+        if calculate_inventory_available(video):
+            return process_checkout(request_body, video)
+            # CAN DELETE: cleaned up checkout process with helper function called process_checkout
+            # video.inventory_checked_out += 1
+            # inventory_available = calculate_inventory_available(video)
+            # today = datetime.now(timezone.utc)
+            # RENTAL_PERIOD = 7
+            # due_date = today + timedelta(days=RENTAL_PERIOD)
+            # new_rental = create_rental(request_body, due_date) # Replaced the code below with helper function like for video and customer
+            # # new_rental = Rental(
+            # # video_id=video_id, 
+            # # customer_id=customer_id, 
+            # # due_date=due_date)
+            # # db.session.add(new_rental)
+            # # db.session.commit()
+            # return make_response(new_rental.to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
         else:
             return make_response({"message": "Could not perform checkout"}, 400)
 
 @rental_bp.route("/check-in", methods=["POST"])
 def handle_check_in():
     request_body = request.get_json() 
-    check =check_customer_video_rental_data(request_body=request_body, method="POST")
+    check = check_customer_video_rental_data(request_body=request_body, method="POST")
     if check:
         return check
     else:
-        video_id = request_body["video_id"]
-        customer_id = request_body["customer_id"]
-        video = Video.query.get(video_id)
-        video.inventory_checked_out -= 1
-        inventory_available = calculate_inventory_available(video)
-        rentals = Rental.query.filter(Rental.customer_id==customer_id).all() 
-        result = make_response({'message': f"No outstanding rentals for customer {customer_id} and video {video_id}"}, 400)
-        if not rentals:
-            #return a not found type message?
-            return result  
-        for rental in range(len(rentals)):
-            if rentals[rental].video_id == video_id:
-                result = make_response(rentals[rental].to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
-                db.session.delete(rentals[rental])
-                db.session.commit()
-        return result
+        # CAN DELETE: Replaced code below with helper function called process checkin  
+        # video_id = request_body["video_id"]
+        # customer_id = request_body["customer_id"]
+        # video = Video.query.get(video_id)
+        # video.inventory_checked_out -= 1
+        # inventory_available = calculate_inventory_available(video)
+        # rentals = Rental.query.filter(Rental.customer_id==customer_id).all() #
+        # result = make_response({'message': f"No outstanding rentals for customer {customer_id} and video {video_id}"}, 400)
+        # if not rentals:
+        #     #return a not found type message?
+        #     return result  
+        # for rental in range(len(rentals)):
+        #     if rentals[rental].video_id == video_id:
+        #         result = make_response(rentals[rental].to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
+        #         db.session.delete(rentals[rental])
+        #         db.session.commit()
+        # return result
+        return process_checkin(request_body)
 
 
 #----------------------------------------------------------------------------------#
@@ -257,6 +266,50 @@ def create_rental(request_body, due_date):
     db.session.commit()
     return new_rental
 
+#####---------------------    Model Object Edits    -------------------------#####
+def edit_customer(request_body, id):
+    customer = Customer.query.get(id)
+    customer.name = request_body["name"]
+    customer.phone = request_body["phone"]
+    customer.postal_code = request_body["postal_code"]
+    db.session.commit()
+    return make_response(customer.to_dict(), 200)
+
+def edit_video(request_body, id):
+    video = Video.query.get(id) 
+    video.title = request_body["title"]
+    video.release_date = request_body["release_date"]
+    video.total_inventory = request_body["total_inventory"]
+    db.session.commit()
+    return make_response(video.to_dict(), 200)
+
+#####---------------------    Model Processes Handlers    -------------------------#####
+def process_checkout(request_body, video):
+    video.inventory_checked_out += 1
+    inventory_available = calculate_inventory_available(video)
+    today = datetime.now(timezone.utc)
+    RENTAL_PERIOD = 7
+    due_date = today + timedelta(days=RENTAL_PERIOD)
+    new_rental = create_rental(request_body, due_date)
+    return make_response(new_rental.to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
+
+def process_checkin(request_body):
+    video_id = request_body["video_id"]
+    customer_id = request_body["customer_id"]
+    video = Video.query.get(video_id)
+    video.inventory_checked_out -= 1
+    inventory_available = calculate_inventory_available(video)
+    rentals = Rental.query.filter(Rental.customer_id==customer_id).all() #
+    result = make_response({'message': f"No outstanding rentals for customer {customer_id} and video {video_id}"}, 400)
+    if not rentals:
+        return result  
+    for rental in range(len(rentals)):
+        if rentals[rental].video_id == video_id:
+            result = make_response(rentals[rental].to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
+            db.session.delete(rentals[rental])
+            db.session.commit()
+    return result    
+
 #####---------------------------    Sorting   -------------------------------#####
 def sort_titles(sort_by, entity):
     #Thinking about making this a very generic function to sort anything with a simple order_by 
@@ -269,34 +322,23 @@ def sort_titles(sort_by, entity):
     return sorted
 
 def sort_dates(sort_by):
-    #May want to use this for release_dates if sort_titles can'st be made generic?
+    #May want to use this for release_dates if sort_titles can't be made generic?
     pass 
 
 #####------------------------    Data Checking   ----------------------------#####
 def check_customer_video_data(method=None, request_body=None, keys=None, id=None, model=None, entity=None):
-    if method == "POST":
+    if method == "POST" or method == "PUT":
         for key in keys:
             if key not in request_body.keys():
                 return make_response({"details": f"Request body must include {key}."}, 400)
-        return False
-    elif method == "GET" or method == "DELETE":
-        if not id.isnumeric():
-            response = make_response({"message" : "Please enter a valid customer id"}, 400)
+    
+    if method == "GET" or method == "DELETE" or method == "PUT":
+        if not id.isnumeric():#
+            response = make_response({"message" : "Please enter a valid customer id"}, 400)#
         elif not model.query.get(id):
             response = make_response({"message" : f"{entity} {id} was not found"}, 404)
         else:
             response = False
-        return response
-    elif method == "PUT":
-        if not id.isnumeric():
-            response = make_response({"message" : "Please enter a valid customer id"}, 400)
-        elif not model.query.get(id):
-            response = make_response({"message" : f"{entity} {id} was not found"}, 404)
-        else:
-            response = False
-        for key in keys:
-            if key not in request_body.keys():
-                response = make_response({"details": f"Request body must include {key}."}, 400)
         return response
 
 def check_customer_video_rental_data(id=None, model=None, entity=None, method=None, request_body=None):
@@ -319,14 +361,6 @@ def check_customer_video_rental_data(id=None, model=None, entity=None, method=No
 
 def calculate_inventory_available(video):
     return video.total_inventory - video.inventory_checked_out
-
-
-
-
-
-
-
-
 
 
 #----------------------------------------------------------------------------------#
@@ -390,3 +424,30 @@ def calculate_inventory_available(video):
 #     db.session.delete(rental)
 #     db.session.commit()
 #     return make_response(rental.to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
+
+
+# def check_customer_video_data(method=None, request_body=None, keys=None, id=None, model=None, entity=None):
+#     if method == "POST":
+#         for key in keys:
+#             if key not in request_body.keys():
+#                 return make_response({"details": f"Request body must include {key}."}, 400)
+#         return False
+#     elif method == "GET" or method == "DELETE":
+#         if not id.isnumeric():#
+#             response = make_response({"message" : "Please enter a valid customer id"}, 400)#
+#         elif not model.query.get(id):
+#             response = make_response({"message" : f"{entity} {id} was not found"}, 404)
+#         else:
+#             response = False
+#         return response
+#     elif method == "PUT":
+#         if not id.isnumeric():#
+#             response = make_response({"message" : "Please enter a valid customer id"}, 400)#
+#         elif not model.query.get(id):
+#             response = make_response({"message" : f"{entity} {id} was not found"}, 404)
+#         else:
+#             response = False
+#         for key in keys:
+#             if key not in request_body.keys():
+#                 response = make_response({"details": f"Request body must include {key}."}, 400)
+#         return response
