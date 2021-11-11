@@ -1,4 +1,5 @@
 from app import db
+import datetime
 
 class Customer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -13,5 +14,5 @@ class Customer(db.Model):
             "name" : self.name,
             "postal_code" : self.postal_code,
             "phone" : self.phone,
-            "registered_at" : self.registered_at is not None
+            "registered_at" : datetime.now()
         }
