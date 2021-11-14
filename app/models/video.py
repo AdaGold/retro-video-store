@@ -5,8 +5,8 @@ class Video(db.Model):
     title = db.Column(db.String)
     release_date = db.Column(db.DateTime)
     total_inventory = db.Column(db.Integer)
-
-    def to_video_object(self):
+    
+def to_video_object(self):
         return {
         "id": self.id,
         "title": self.title,
