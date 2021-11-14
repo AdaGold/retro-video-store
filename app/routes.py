@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify, request
 from datetime import datetime
 from app.models.video import Video
 from app.models.customer import Customer
+from app.models.rental import Rental
 
 
 videos_bp = Blueprint("videos", __name__, url_prefix=("/videos"))
@@ -202,3 +203,37 @@ def delete_customer(customer_id):
     db.session.commit()
 
     return jsonify({"id": customer.id}), 200
+##Rental code
+rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
+
+@rentals_bp.route("/check-out", methods=["POST"])
+def check_out():
+    request_body = request.get_json()
+    customer = Customer.query.get(request_body["customer_id"])
+    video = Video.query.get(request_body["video_id"])
+
+    if customer or video is None:
+        return jsonify(""), 404
+
+    if "video_id" not in request_body or "customer_id" not in request_body:
+        return {
+        "details": "Invalid data"
+        }, 400
+    
+    checked_out_rental = Rental(
+        customer_id = request_body["customer_id"],
+        video_id = request_body["video_id"]
+    )
+
+    db.session.add(checked_out_rental)
+    db.session.commit()
+
+    response = {
+        "video_id" : checked_out_rental.video_id,
+        "customer_id" : checked_out_rental.customer_id,
+        "due_date" : checked_out_rental.due_date,
+        "videos_checked_out_count" : videos_rental_query(),
+        "available_inventory" : check_out_available_inventory()   
+    }
+
+    return (response), 200
