@@ -21,8 +21,23 @@ customer_keys = ["name", "phone", "postal_code"]
 
 @customer_bp.route("", methods=["GET"]) 
 def read_customers():
+    
+    # if sort_query:
+    # elif num_responses_query:
+    # elif pages_query:
+
+    #instead of the above, how about passing multiple params into request.args.get()?    
+
+    # sort_query = request.args.get("sort") <---- for parameter to sort by
+    # order_query = request.args.get("order") <---- for asc & desc
+    # num_responses_query = request.args.get("n")
+    # pages_query = request.args.get("p")
+    
     customer_response = []
-    customers = sort_titles(request.args.get("sort"), Customer)
+    #customers = sort_titles(request.args.get("sort", "order", "n", "p"), Customer)
+    #this would be a dictionary getting sent so we can use the in operator
+    #perhaps to add to the reqs if we want to keep asc & desc: make a category parameter
+    customers = sort_titles(request.args.get("sort"), Customer) #remember to send the category to sort by readme says by ascending but reqs specify both for titles
     customer_response = [customer.to_dict() for customer in customers]
     return jsonify(customer_response), 200
 
@@ -67,13 +82,6 @@ def update_a_customer(customer_id):
                             keys=customer_keys)
     if check:
         return check
-    # CAN DELETE: Replaced below with edit customer function.
-    # customer = Customer.query.get(customer_id)
-    # customer.name = request_body["name"]
-    # customer.phone = request_body["phone"]
-    # customer.postal_code = request_body["postal_code"]
-    # db.session.commit()
-    # return make_response(customer.to_dict(), 200)
     return edit_customer(request_body, customer_id)
 
 @customer_bp.route("/<customer_id>/rentals", methods=["GET"])
@@ -98,15 +106,7 @@ video_keys = ["title", "release_date", "total_inventory"]
 @video_bp.route("", methods=["GET"])
 def read_videos():
     videos_response = []
-    #this part can go in a helper function, we can also create sort by release date
-    # if request.args.get("sort") == "asc": 
-    #     videos = Video.query.order_by(Video.title.asc())
-    # elif request.args.get("sort") == "desc":
-    #     videos = Video.query.order_by(Video.title.desc())
-    # else:
-    #     videos = Video.query.all()
     videos = sort_titles(request.args.get("sort"), Video)
-    #print(videos)
     videos_response = [video.to_dict() for video in videos]
     return jsonify(videos_response), 200
 
@@ -187,25 +187,8 @@ def handle_check_out():
     else: 
         video_id = request_body["video_id"]
         video = Video.query.get(video_id)
-        # CAN DELETE replaced code:
-        # inventory_available = calculate_inventory_available(video)
-        # if inventory_available > 0:
         if calculate_inventory_available(video):
             return process_checkout(request_body, video)
-            # CAN DELETE: cleaned up checkout process with helper function called process_checkout
-            # video.inventory_checked_out += 1
-            # inventory_available = calculate_inventory_available(video)
-            # today = datetime.now(timezone.utc)
-            # RENTAL_PERIOD = 7
-            # due_date = today + timedelta(days=RENTAL_PERIOD)
-            # new_rental = create_rental(request_body, due_date) # Replaced the code below with helper function like for video and customer
-            # # new_rental = Rental(
-            # # video_id=video_id, 
-            # # customer_id=customer_id, 
-            # # due_date=due_date)
-            # # db.session.add(new_rental)
-            # # db.session.commit()
-            # return make_response(new_rental.to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
         else:
             return make_response({"message": "Could not perform checkout"}, 400)
 
@@ -216,23 +199,6 @@ def handle_check_in():
     if check:
         return check
     else:
-        # CAN DELETE: Replaced code below with helper function called process checkin  
-        # video_id = request_body["video_id"]
-        # customer_id = request_body["customer_id"]
-        # video = Video.query.get(video_id)
-        # video.inventory_checked_out -= 1
-        # inventory_available = calculate_inventory_available(video)
-        # rentals = Rental.query.filter(Rental.customer_id==customer_id).all() #
-        # result = make_response({'message': f"No outstanding rentals for customer {customer_id} and video {video_id}"}, 400)
-        # if not rentals:
-        #     #return a not found type message?
-        #     return result  
-        # for rental in range(len(rentals)):
-        #     if rentals[rental].video_id == video_id:
-        #         result = make_response(rentals[rental].to_dict(checked_out=video.inventory_checked_out, available_inventory=inventory_available), 200)
-        #         db.session.delete(rentals[rental])
-        #         db.session.commit()
-        # return result
         return process_checkin(request_body)
 
 
@@ -311,6 +277,11 @@ def process_checkin(request_body):
     return result    
 
 #####---------------------------    Sorting   -------------------------------#####
+# Customers can be sorted by name, registered_at and postal_code
+# Videos can be sorted by title and release_date
+# Overdue rentals can be sorted by title, name, checkout_date and due_date
+
+
 def sort_titles(sort_by, entity):
     #Thinking about making this a very generic function to sort anything with a simple order_by 
     if sort_by == "asc": 
@@ -321,9 +292,29 @@ def sort_titles(sort_by, entity):
         sorted = entity.query.all()
     return sorted
 
-def sort_dates(sort_by):
+def sort_alpha(sort_by, entity, category): #Rename to: sort_alpha?
+    #Thinking about making this a very generic function to sort anything with a simple order_by 
+    #.limit()
+
+    if sort_by == "asc": 
+        sorted = entity.query.order_by(entity.category.asc())
+    elif sort_by == "desc":
+        sorted = entity.query.order_by(entity.category.desc())
+    else:
+        sorted = entity.query.all()
+    return sorted
+
+def sort_dates(sort_by, entity, category):
     #May want to use this for release_dates if sort_titles can't be made generic?
-    pass 
+    if sort_by == "asc":
+        sorted = entity.query.order_by(entity.category.asc())
+    elif sort_by == "desc":
+        sorted = entity.query.order_by(entity.category.desc())
+    else:
+        sorted = entity.query.all()
+    return sorted
+
+    # ex: entities = MyEntity.query.order_by(desc(MyEntity.time)).limit(3).all()
 
 #####------------------------    Data Checking   ----------------------------#####
 def check_customer_video_data(method=None, request_body=None, keys=None, id=None, model=None, entity=None):
