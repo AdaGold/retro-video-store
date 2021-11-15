@@ -1,15 +1,15 @@
 from app import db
-import datetime
+from datetime import date
 from app.models.rental import Rental
 
 class Customer(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String)
     postal_code = db.Column(db.String)
     phone = db.Column(db.String)
-    registered_at = db.Column(db.DateTime, nullable = True)
-    rentals = db.relationship('Rental', backref = 'customer', lazy=True)
-    #videos = db.relationship("Video", secondary="rental", back_populates="customers")
+    registered_at = db.Column(db.DateTime, default=date.today())
+    #rentals = db.relationship('Rental', backref = 'customer', lazy=True)
+    videos = db.relationship("Video", secondary="rental", backref="customers")
 
 #helper function to return dict
     def to_dict(self):
@@ -18,7 +18,7 @@ class Customer(db.Model):
             "name" : self.name,
             "postal_code" : self.postal_code,
             "phone" : self.phone,
-            "registered_at" : datetime.now()
+            "registered_at" : self.registered_at
         }
 
     def videos_rental_query_by_customer(self):
