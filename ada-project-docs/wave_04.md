@@ -2,10 +2,9 @@
 
 These really are **optional** - if you've gotten here and you have time left, that means you're moving speedy fast!
 
-### More Inventory Management
-All these endpoints should support all 3 query parameters from Wave 3. All fields are sortable.
+## More Inventory Management
 
-#### `GET /rentals/overdue`
+### `GET /rentals/overdue`
 List all customers with overdue videos
 
 Fields to return:
@@ -17,7 +16,7 @@ Fields to return:
 - `checkout_date`
 - `due_date`
 
-#### `GET /customers/<id>/history`
+### `GET /customers/<id>/history`
 List the videos a customer has checked out _in the past_. Current rentals should not be included.                                                                                  
 
 URI parameters:
@@ -27,7 +26,8 @@ Fields to return:
 - `title`
 - `checkout_date`
 - `due_date`
-####  `GET /videos/<id>/history`
+
+###  `GET /videos/<id>/history`
 List customers that have checked out a copy of the video _in the past_
 
 URI parameters:
@@ -40,7 +40,6 @@ Fields to return:
 - `checkout_date`
 - `due_date`
 
-
 ## Enhancements
 
 ### More Query Parameters
@@ -52,8 +51,10 @@ The following 3 _optional_ query parameters:
 | `count`       | integer | Number of responses to return per page
 | `page_num`    | integer | Page of responses to return
 
-should additionally be accepted by the following three endpoints:
+should additionally be accepted by the following endpoints:
 - `GET /video`
+- `GET /customers/<id>/rentals`
+- `GET /videos/<id>/rentals`
 - `GET /customers/<id>/history`
 - `GET /videos/<id>/history`
 
