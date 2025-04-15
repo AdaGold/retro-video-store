@@ -9,7 +9,7 @@ class Video(db.Model):
     rentals: Mapped[list["Rental"]] = relationship(back_populates="video")
 
     def get_available_inventory(self):
-        count = sum(rental.status == "AVAILABLE" for rental in self.rentals)
+        count = sum(rental.status == "RENTED" for rental in self.rentals)
         return self.total_inventory - count
     
     def to_dict(self):

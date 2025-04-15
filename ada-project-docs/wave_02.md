@@ -53,8 +53,8 @@ When successful, this request should:
 
 Request Body Param | Type | Details
 --- | --- | ---
-`customer_id` | integer | ID of the customer attempting to check out this video
-`video_id` | integer | ID of the video to be checked out
+`customer_id` | integer | ID of the customer attempting to check in this video
+`video_id` | integer | ID of the video to be checked in
 
 #### Response
 

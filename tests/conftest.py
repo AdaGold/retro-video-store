@@ -4,6 +4,7 @@ from app.db import db
 from flask.signals import request_finished
 from app.models.video import Video
 from app.models.customer import Customer
+from app.models.rental import Rental
 from dotenv import load_dotenv
 import os
 
@@ -16,6 +17,8 @@ VIDEO_RELEASE_DATE = "01-01-2001"
 CUSTOMER_NAME = "A Brand New Customer"
 CUSTOMER_POSTAL_CODE = "12345"
 CUSTOMER_PHONE = "123-123-1234"
+
+RENTAL_DUE_DATE = "02-12-2008"
 
 @pytest.fixture
 def app():
@@ -116,56 +119,84 @@ def third_customer(app):
 
 @pytest.fixture
 def one_checked_out_video(app, client, one_customer, one_video):
-    response = client.post("/rentals/check-out", json={
-        "customer_id": 1,
-        "video_id": 1
-    })
+    new_rental = Rental(
+        customer_id=1,
+        video_id=1,
+        due_date=RENTAL_DUE_DATE,
+        status="RENTED"
+    )
+
+    db.session.add(new_rental)
+    db.session.commit()
 
 @pytest.fixture
 def second_checked_out_video(app, client, one_customer, second_video):
-    response = client.post("/rentals/check-out", json={
-        "customer_id": 1,
-        "video_id": 2
-    })
+    new_rental = Rental(
+        customer_id=1,
+        video_id=2,
+        due_date=RENTAL_DUE_DATE,
+        status="RENTED"
+    )
+
+    db.session.add(new_rental)
+    db.session.commit()
 
 @pytest.fixture
 def third_checked_out_video(app, client, one_customer, third_video):
-    response = client.post("/rentals/check-out", json={
-        "customer_id": 1,
-        "video_id": 3
-    })
+    new_rental = Rental(
+        customer_id=1,
+        video_id=3,
+        due_date=RENTAL_DUE_DATE,
+        status="RENTED"
+    )
+
+    db.session.add(new_rental)
+    db.session.commit()
 
 @pytest.fixture
 def one_returned_video(app, client, one_customer, second_video):
-    client.post("/rentals/check-out", json={
-        "customer_id": 1,
-        "video_id": 2
-    })
+    new_rental = Rental(
+        customer_id=1,
+        video_id=2,
+        due_date=RENTAL_DUE_DATE,
+        status="AVAILABLE"
+    )
 
-    response = client.post("/rentals/check-in", json = {
-        "customer_id": 1,
-        "video_id": 2
-    })
+    db.session.add(new_rental)
+    db.session.commit()
 
 @pytest.fixture
 def customer_one_video_three(app, client, one_customer, five_copies_video):
-    response = client.post("/rentals/check-out", json={
-        "customer_id": 1,
-        "video_id": 1
-    })
+    new_rental = Rental(
+        customer_id=1,
+        video_id=1,
+        due_date=RENTAL_DUE_DATE,
+        status="AVAILABLE"
+    )
+
+    db.session.add(new_rental)
+    db.session.commit()
 
 @pytest.fixture
 def customer_two_video_three(app, client, second_customer, five_copies_video):
-    response = client.post("/rentals/check-out", json={
-        "customer_id": 2,
-        "video_id": 1
-    })
+    new_rental = Rental(
+        customer_id=2,
+        video_id=1,
+        due_date=RENTAL_DUE_DATE,
+        status="AVAILABLE"
+    )
+
+    db.session.add(new_rental)
+    db.session.commit()
 
 @pytest.fixture
 def customer_three_video_three(app, client, third_customer, five_copies_video):
-    response = client.post("/rentals/check-out", json={
-        "customer_id": 3,
-        "video_id": 1
-    })
+    new_rental = Rental(
+        customer_id=3,
+        video_id=1,
+        due_date=RENTAL_DUE_DATE,
+        status="AVAILABLE"
+    )
 
-
+    db.session.add(new_rental)
+    db.session.commit()

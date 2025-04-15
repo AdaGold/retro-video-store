@@ -6,12 +6,11 @@ from ..db import db
 
 bp = Blueprint("customers_bp", __name__, url_prefix="/customers")
 
+
 @bp.post("")
 def create_customer():
     request_body = request.get_json()
     request_body["registered_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(request_body)
-
     return create_model(Customer, request_body)
 
 @bp.get("")
@@ -38,7 +37,7 @@ def get_customers_with_filters():
         else:
             page_param = 1
 
-        page = query.paginate(page=page_param, per_page=count_param)
+        page = db.paginate(query, page=page_param, per_page=count_param)
         customers = page.items
 
     else:
@@ -76,7 +75,27 @@ def update_customer(customer_id):
 @bp.delete("/<customer_id>")
 def delete_customer(customer_id):
     customer = validate_model(Customer, customer_id)
+
+    for rental in customer.rentals:
+        db.session.delete(rental)
+
     db.session.delete(customer)
     db.session.commit()
 
     return Response(status=204, mimetype="application/json")
+
+@bp.get("/<customer_id>/rentals")
+def get_customer_rentals(customer_id):
+    customer = validate_model(Customer, customer_id)
+
+    current_rentals = []
+    for rental in customer.rentals:
+        if rental.status == "RENTED":
+            data = {
+                "release_date": rental.video.release_date,
+                "title": rental.video.title,
+                "due_date": rental.due_date,
+            }
+            current_rentals.append(data)
+
+    return current_rentals

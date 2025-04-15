@@ -31,6 +31,7 @@ class Customer(db.Model):
     @classmethod
     def validate_required_fields(self, data):
         required_fields = ["name", "postal_code", "phone", "registered_at"]
+
         for field in required_fields:
             if field not in data or not data[field]:
                 raise KeyError(field)
@@ -38,7 +39,6 @@ class Customer(db.Model):
     @classmethod
     def from_dict(cls, data):
         Customer.validate_required_fields(data)
-        print(data)
 
         return cls(
             name=data["name"],

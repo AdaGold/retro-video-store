@@ -17,7 +17,7 @@ def validate_model(cls, model_id):
     
     return model
 
-def create_model(cls, model_data):
+def create_model(cls, model_data, response_code=201):
     try:
         new_model = cls.from_dict(model_data)
         
@@ -28,4 +28,4 @@ def create_model(cls, model_data):
     db.session.add(new_model)
     db.session.commit()
 
-    return new_model.to_dict(), 201
+    return new_model.to_dict(), response_code

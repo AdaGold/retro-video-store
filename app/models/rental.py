@@ -24,10 +24,19 @@ class Rental(db.Model):
         }
     
     @classmethod
+    def validate_required_fields(self, data):
+        required_fields = ["customer_id", "video_id", "due_date"]
+
+        for field in required_fields:
+            if field not in data or not data[field]:
+                raise KeyError(field)
+
+    @classmethod
     def from_dict(cls, data):
+        Rental.validate_required_fields(data)
+
         return cls(
-            customer_id=data.get("customer_id"),
-            video_id=data.get("video_id"),
-            due_date=data.get("due_date"),
-            status=data.get("status", "RENTED")
+            customer_id=data["customer_id"],
+            video_id=data["video_id"],
+            due_date=data["due_date"],
         )

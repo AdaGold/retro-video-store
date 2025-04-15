@@ -6,6 +6,7 @@ from ..db import db
 
 bp = Blueprint("videos_bp", __name__, url_prefix="/videos")
 
+
 @bp.post("")
 def create_video():
     request_body = request.get_json()
@@ -45,7 +46,28 @@ def update_video(video_id):
 @bp.delete("/<video_id>")
 def delete_video(video_id):
     video = validate_model(Video, video_id)
+
+    for rental in video.rentals:
+        db.session.delete(rental)
+
     db.session.delete(video)
     db.session.commit()
 
     return Response(status=204, mimetype="application/json")
+
+@bp.get("/<video_id>/rentals")
+def get_rentals_by_video(video_id):
+    video = validate_model(Video, video_id)
+
+    current_rentals = []
+    for rental in video.rentals:
+        if rental.status == "RENTED":
+            data = {
+                "name": rental.customer.name,
+                "phone": rental.customer.phone,
+                "postal_code": rental.customer.postal_code,
+                "due_date": rental.due_date
+            }
+            current_rentals.append(data)
+    
+    return current_rentals
