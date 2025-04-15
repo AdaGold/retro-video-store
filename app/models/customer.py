@@ -12,7 +12,7 @@ class Customer(db.Model):
     def get_videos_checked_out_count(self):
         count = sum(rental.status == "RENTED" for rental in self.rentals)
         return count
-    
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -23,11 +23,26 @@ class Customer(db.Model):
             "videos_checked_out_count": self.get_videos_checked_out_count(),
         }
     
+    def update_customer(self, data):
+        self.name = data["name"]
+        self.postal_code = data["postal_code"]
+        self.phone = data["phone"]
+    
+    @classmethod
+    def validate_required_fields(self, data):
+        required_fields = ["name", "postal_code", "phone", "registered_at"]
+        for field in required_fields:
+            if field not in data or not data[field]:
+                raise KeyError(field)
+
     @classmethod
     def from_dict(cls, data):
+        Customer.validate_required_fields(data)
+        print(data)
+
         return cls(
-            name=data.get("name"),
-            postal_code=data.get("postal_code"),
-            phone=data.get("phone"),
-            registered_at=data.get("registered_at"),
+            name=data["name"],
+            postal_code=data["postal_code"],
+            phone=data["phone"],
+            registered_at=data["registered_at"]
         )

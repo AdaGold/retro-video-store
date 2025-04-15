@@ -159,7 +159,6 @@ def test_update_video(client, one_video):
         "total_inventory": 2,
         "release_date": "01-01-2021"
     })
-    response_body = response.get_json()
 
     # Assert
     assert response.status_code == 204

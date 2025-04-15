@@ -21,8 +21,22 @@ class Video(db.Model):
             "available_inventory": self.get_available_inventory(),
         }
     
+    def update_video(self, data):
+        self.title = data["title"]
+        self.release_date = data["release_date"]
+        self.total_inventory = data["total_inventory"]
+        
+    @classmethod
+    def validate_required_fields(self, data):
+        required_fields = ["title", "release_date", "total_inventory"]
+        for field in required_fields:
+            if field not in data or not data[field]:
+                raise KeyError(field)
+            
     @classmethod
     def from_dict(cls, data):
+        Video.validate_required_fields(data)
+
         return cls(
             title=data.get("title"),
             release_date=data.get("release_date"),
