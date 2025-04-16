@@ -12,6 +12,9 @@ class Video(db.Model):
         count = sum(rental.status == "RENTED" for rental in self.rentals)
         return self.total_inventory - count
     
+    def is_available(self):
+        return self.get_available_inventory() > 0
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -27,7 +30,7 @@ class Video(db.Model):
         self.total_inventory = data["total_inventory"]
         
     @classmethod
-    def validate_required_fields(self, data):
+    def validate_required_fields(cls, data):
         required_fields = ["title", "release_date", "total_inventory"]
         for field in required_fields:
             if field not in data or not data[field]:

@@ -17,7 +17,7 @@ def validate_model(cls, model_id):
     
     return model
 
-def create_model(cls, model_data, response_code=201):
+def create_response_for_model(cls, model_data, response_code=201):
     try:
         new_model = cls.from_dict(model_data)
         
@@ -29,3 +29,6 @@ def create_model(cls, model_data, response_code=201):
     db.session.commit()
 
     return new_model.to_dict(), response_code
+
+def date_to_str(date):
+    return date.strftime("%Y-%m-%d %H:%M:%S")

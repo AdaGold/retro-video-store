@@ -13,6 +13,21 @@ class Customer(db.Model):
         count = sum(rental.status == "RENTED" for rental in self.rentals)
         return count
 
+    def has_active_rental(self, video_id):
+        try:
+            _ = self.get_active_rental_by_video_id(video_id)
+        except ValueError:
+            return False
+
+        return True
+    
+    def get_active_rental_by_video_id(self, video_id):
+        for rental in self.rentals:
+            if rental.video_id == video_id and rental.status == "RENTED":
+                return rental
+            
+        raise ValueError(f"No rental found for video_id {video_id}")
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -22,14 +37,14 @@ class Customer(db.Model):
             "registered_at": self.registered_at,
             "videos_checked_out_count": self.get_videos_checked_out_count(),
         }
-    
+
     def update_customer(self, data):
         self.name = data["name"]
         self.postal_code = data["postal_code"]
         self.phone = data["phone"]
     
     @classmethod
-    def validate_required_fields(self, data):
+    def validate_required_fields(cls, data):
         required_fields = ["name", "postal_code", "phone", "registered_at"]
 
         for field in required_fields:

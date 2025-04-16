@@ -1,6 +1,6 @@
 from flask import Blueprint, request, Response, abort, make_response
 from app.models.customer import Customer
-from .route_utilities import validate_model, create_model
+from .route_utilities import validate_model, create_response_for_model, date_to_str
 from datetime import datetime
 from ..db import db
 
@@ -10,8 +10,9 @@ bp = Blueprint("customers_bp", __name__, url_prefix="/customers")
 @bp.post("")
 def create_customer():
     request_body = request.get_json()
-    request_body["registered_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    return create_model(Customer, request_body)
+    request_body["registered_at"] = date_to_str(datetime.now())
+
+    return create_response_for_model(Customer, request_body)
 
 @bp.get("")
 def get_customers_with_filters():
@@ -43,9 +44,7 @@ def get_customers_with_filters():
     else:
         customers = db.session.scalars(query)
 
-    customers_response = []
-    for customer in customers:
-        customers_response.append(customer.to_dict())
+    customers_response = [customer.to_dict() for customer in customers]
     return customers_response
 
 @bp.get("/<customer_id>")

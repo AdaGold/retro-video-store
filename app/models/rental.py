@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey
+from datetime import datetime, timedelta
 from ..db import db
 
 class Rental(db.Model):
@@ -24,7 +25,12 @@ class Rental(db.Model):
         }
     
     @classmethod
-    def validate_required_fields(self, data):
+    def calculate_due_date(cls, days=7):
+        due_date = datetime.now() + timedelta(days=days)
+        return due_date
+
+    @classmethod
+    def validate_required_fields(cls, data):
         required_fields = ["customer_id", "video_id", "due_date"]
 
         for field in required_fields:

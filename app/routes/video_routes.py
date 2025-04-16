@@ -1,6 +1,6 @@
 from flask import Blueprint, request, Response, abort, make_response
 from app.models.video import Video
-from .route_utilities import validate_model, create_model
+from .route_utilities import validate_model, create_response_for_model
 from datetime import datetime
 from ..db import db
 
@@ -10,7 +10,7 @@ bp = Blueprint("videos_bp", __name__, url_prefix="/videos")
 @bp.post("")
 def create_video():
     request_body = request.get_json()
-    return create_model(Video, request_body)
+    return create_response_for_model(Video, request_body)
 
 @bp.get("")
 def get_all_videos():
