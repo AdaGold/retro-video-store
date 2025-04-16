@@ -28,6 +28,19 @@ class Customer(db.Model):
             
         raise ValueError(f"No rental found for video_id {video_id}")
 
+    def get_active_rentals_data(self):
+        active_rentals = []
+        for rental in self.rentals:
+            if rental.status == "RENTED":
+                data = {
+                    "release_date": rental.video.release_date,
+                    "title": rental.video.title,
+                    "due_date": rental.due_date,
+                }
+                active_rentals.append(data)
+
+        return active_rentals
+
     def to_dict(self):
         return {
             "id": self.id,

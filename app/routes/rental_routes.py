@@ -43,6 +43,7 @@ def return_rental():
         message = f"No outstanding rentals for customer {customer_id} and video {video_id}"
         return {"message": message}, 400
 
-    rental.status = "AVAILABLE"
+    rental.return_rental()
     db.session.commit()
+    
     return rental.to_dict()

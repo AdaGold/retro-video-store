@@ -86,15 +86,5 @@ def delete_customer(customer_id):
 @bp.get("/<customer_id>/rentals")
 def get_customer_rentals(customer_id):
     customer = validate_model(Customer, customer_id)
-
-    current_rentals = []
-    for rental in customer.rentals:
-        if rental.status == "RENTED":
-            data = {
-                "release_date": rental.video.release_date,
-                "title": rental.video.title,
-                "due_date": rental.due_date,
-            }
-            current_rentals.append(data)
-
+    current_rentals = customer.get_active_rentals_data()
     return current_rentals

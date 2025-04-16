@@ -12,6 +12,9 @@ class Rental(db.Model):
     customer: Mapped["Customer"] = relationship(back_populates="rentals")
     video: Mapped["Video"] = relationship(back_populates="rentals")
 
+    def return_rental(self):
+        self.status = "AVAILABLE"
+
     def to_dict(self):
         videos_checked_out_count = self.customer.get_videos_checked_out_count()
         available_inventory = self.video.get_available_inventory()
