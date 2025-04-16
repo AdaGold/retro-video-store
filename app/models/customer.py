@@ -1,4 +1,6 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from datetime import datetime
+from .model_utilities import date_to_str
 from ..db import db
 
 class Customer(db.Model):
@@ -55,17 +57,10 @@ class Customer(db.Model):
         self.name = data["name"]
         self.postal_code = data["postal_code"]
         self.phone = data["phone"]
-    
-    @classmethod
-    def validate_required_fields(cls, data):
-        required_fields = ["name", "postal_code", "phone", "registered_at"]
-
-        for field in required_fields:
-            if field not in data or not data[field]:
-                raise KeyError(field)
 
     @classmethod
     def from_dict(cls, data):
+        data["registered_at"] = date_to_str(datetime.now())
         Customer.validate_required_fields(data)
 
         return cls(
@@ -74,3 +69,11 @@ class Customer(db.Model):
             phone=data["phone"],
             registered_at=data["registered_at"]
         )
+
+    @classmethod
+    def validate_required_fields(cls, data):
+        required_fields = ["name", "postal_code", "phone", "registered_at"]
+
+        for field in required_fields:
+            if field not in data or not data[field]:
+                raise KeyError(field)

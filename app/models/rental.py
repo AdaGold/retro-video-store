@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey
 from datetime import datetime, timedelta
+from .model_utilities import date_to_str
 from ..db import db
 
 class Rental(db.Model):
@@ -26,22 +27,10 @@ class Rental(db.Model):
             "videos_checked_out_count": videos_checked_out_count,
             "available_inventory": available_inventory
         }
-    
-    @classmethod
-    def calculate_due_date(cls, days=7):
-        due_date = datetime.now() + timedelta(days=days)
-        return due_date
-
-    @classmethod
-    def validate_required_fields(cls, data):
-        required_fields = ["customer_id", "video_id", "due_date"]
-
-        for field in required_fields:
-            if field not in data or not data[field]:
-                raise KeyError(field)
 
     @classmethod
     def from_dict(cls, data):
+        data["due_date"] = date_to_str(Rental.calculate_due_date())
         Rental.validate_required_fields(data)
 
         return cls(
@@ -49,3 +38,16 @@ class Rental(db.Model):
             video_id=data["video_id"],
             due_date=data["due_date"],
         )
+    
+    @classmethod
+    def calculate_due_date(cls, days=7):
+        due_date = datetime.now() + timedelta(days=days)
+        return due_date
+    
+    @classmethod
+    def validate_required_fields(cls, data):
+        required_fields = ["customer_id", "video_id", "due_date"]
+
+        for field in required_fields:
+            if field not in data or not data[field]:
+                raise KeyError(field)

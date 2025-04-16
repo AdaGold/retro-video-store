@@ -2,7 +2,7 @@ from flask import Blueprint, request
 from app.models.rental import Rental
 from app.models.customer import Customer
 from app.models.video import Video
-from .route_utilities import validate_model, create_response_for_model, date_to_str
+from .route_utilities import validate_model, create_response_for_model
 from ..db import db
 
 bp = Blueprint("rentals_bp", __name__, url_prefix="/rentals")
@@ -25,7 +25,6 @@ def create_rental():
         response = {"message": "Could not perform checkout"}
         return response, 400
 
-    request_body["due_date"] = date_to_str(Rental.calculate_due_date())
     return create_response_for_model(Rental, request_body, response_code=200)
 
 @bp.post("/check-in")
@@ -45,5 +44,5 @@ def return_rental():
 
     rental.return_rental()
     db.session.commit()
-    
+
     return rental.to_dict()

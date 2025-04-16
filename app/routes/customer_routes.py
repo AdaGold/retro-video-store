@@ -1,6 +1,6 @@
 from flask import Blueprint, request, Response, abort, make_response
 from app.models.customer import Customer
-from .route_utilities import validate_model, create_response_for_model, date_to_str
+from .route_utilities import validate_model, create_response_for_model
 from datetime import datetime
 from ..db import db
 
@@ -10,8 +10,6 @@ bp = Blueprint("customers_bp", __name__, url_prefix="/customers")
 @bp.post("")
 def create_customer():
     request_body = request.get_json()
-    request_body["registered_at"] = date_to_str(datetime.now())
-
     return create_response_for_model(Customer, request_body)
 
 @bp.get("")
