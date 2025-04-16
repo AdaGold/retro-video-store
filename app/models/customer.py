@@ -9,7 +9,7 @@ class Customer(db.Model):
     postal_code: Mapped[str] = mapped_column()
     phone: Mapped[str] = mapped_column()
     registered_at: Mapped[str] = mapped_column()
-    rentals: Mapped[list["Rental"]] = relationship(back_populates="customer")
+    rentals: Mapped[list["Rental"]] = relationship(back_populates="customer", cascade="all, delete")
 
     def get_videos_checked_out_count(self):
         count = sum(rental.status == "RENTED" for rental in self.rentals)

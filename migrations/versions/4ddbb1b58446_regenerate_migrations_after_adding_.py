@@ -1,8 +1,8 @@
-"""Add customer, rental, and video models
+"""Regenerate migrations after adding cascade delete to Customer & Video relationships back to Rental
 
-Revision ID: c18ec3b7a4f4
+Revision ID: 4ddbb1b58446
 Revises: 
-Create Date: 2025-04-15 10:30:10.484340
+Create Date: 2025-04-16 15:01:51.510543
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'c18ec3b7a4f4'
+revision = '4ddbb1b58446'
 down_revision = None
 branch_labels = None
 depends_on = None

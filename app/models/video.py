@@ -6,7 +6,7 @@ class Video(db.Model):
     title: Mapped[str] = mapped_column()
     release_date: Mapped[str] = mapped_column()
     total_inventory: Mapped[int] = mapped_column()
-    rentals: Mapped[list["Rental"]] = relationship(back_populates="video")
+    rentals: Mapped[list["Rental"]] = relationship(back_populates="video", cascade="all, delete")
 
     def get_available_inventory(self):
         count = sum(rental.status == "RENTED" for rental in self.rentals)
@@ -14,6 +14,20 @@ class Video(db.Model):
     
     def is_available(self):
         return self.get_available_inventory() > 0
+    
+    def get_active_rental_customers_data(self):
+        current_rentals = []
+        for rental in self.rentals:
+            if rental.status == "RENTED":
+                data = {
+                    "name": rental.customer.name,
+                    "phone": rental.customer.phone,
+                    "postal_code": rental.customer.postal_code,
+                    "due_date": rental.due_date
+                }
+                current_rentals.append(data)
+
+        return current_rentals
 
     def to_dict(self):
         return {

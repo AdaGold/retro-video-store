@@ -47,9 +47,6 @@ def update_video(video_id):
 def delete_video(video_id):
     video = validate_model(Video, video_id)
 
-    for rental in video.rentals:
-        db.session.delete(rental)
-
     db.session.delete(video)
     db.session.commit()
 
@@ -57,17 +54,5 @@ def delete_video(video_id):
 
 @bp.get("/<video_id>/rentals")
 def get_rentals_by_video(video_id):
-    video = validate_model(Video, video_id)
-
-    current_rentals = []
-    for rental in video.rentals:
-        if rental.status == "RENTED":
-            data = {
-                "name": rental.customer.name,
-                "phone": rental.customer.phone,
-                "postal_code": rental.customer.postal_code,
-                "due_date": rental.due_date
-            }
-            current_rentals.append(data)
-    
-    return current_rentals
+    video = validate_model(Video, video_id)    
+    return video.get_active_rental_customers_data()
