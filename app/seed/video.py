@@ -2,7 +2,7 @@ from app.models.video import Video
 from datetime import datetime, timedelta
 import random
 
-from app import db
+from app.db import db
 
 def load():
     titles = [
