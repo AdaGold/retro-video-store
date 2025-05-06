@@ -1,4 +1,5 @@
 from app.models.video import Video
+from app.models.model_utilities import date_to_str
 from datetime import datetime, timedelta
 import random
 
@@ -122,7 +123,7 @@ def load():
         params = dict(
             title=title,
             total_inventory=get_total_inventory(),
-            release_date=get_release_date(base_date),
+            release_date=date_to_str(get_release_date(base_date)),
         )
 
         v = Video(**params)
